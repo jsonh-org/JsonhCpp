@@ -145,9 +145,6 @@
   <ItemGroup>
     <ClCompile Include="jsonh_cpp.h" />
   </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="tinyutf8\tinyutf8.h" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

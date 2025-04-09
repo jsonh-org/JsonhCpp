@@ -7,4 +7,6 @@ TEST(TestCaseName, TestName) {
 
   long j = (new jsonh_reader(new std::string("")))->char_counter;
   EXPECT_EQ(j, j);
+
+  EXPECT_TRUE((new jsonh_reader(new std::string("aaa")))->read());
 }
