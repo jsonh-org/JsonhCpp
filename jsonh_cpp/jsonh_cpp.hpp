@@ -1,5 +1,6 @@
 #include <string> // for std::string
 #include <sstream> // for std::istringstream
+#include "nlohmann/json.hpp" // for nlohmann::json
 
 class jsonh_reader_options final {
 public:
@@ -35,7 +36,17 @@ public:
     }
 
     bool read() {
-        while (true) {
+        std::string str = "";
+        str += "\"";
+        str += "a";
+        str += "b";
+        str += "\"";
+
+        nlohmann::json value = nlohmann::json::parse(str);
+
+        return value.is_string() && value == "ab";
+
+        /*while (true) {
             int c = stream->get();
             if (c < 0) {
                 break;
@@ -44,7 +55,7 @@ public:
                 return false;
             }
         }
-        return true;
+        return true;*/
     }
 
 private:

@@ -145,6 +145,9 @@
   <ItemGroup>
     <ClCompile Include="jsonh_cpp.hpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="nlohmann\json.hpp" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
