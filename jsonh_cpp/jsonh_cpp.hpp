@@ -26,7 +26,7 @@ public:
     /// </summary>
     jsonh_reader(std::istream* stream, jsonh_reader_options* options = nullptr) {
         this->stream = stream;
-        this->options = (options == nullptr ? new jsonh_reader_options() : options);
+        this->options = (options != nullptr ? options : new jsonh_reader_options());
     }
     /// <summary>
     /// Constructs a reader that reads JSONH from a string.

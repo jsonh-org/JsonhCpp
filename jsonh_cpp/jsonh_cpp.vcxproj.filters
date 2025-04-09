@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="jsonh_cpp.h">
+    <ClCompile Include="jsonh_cpp.hpp">
       <Filter>Header Files</Filter>
     </ClCompile>
   </ItemGroup>
