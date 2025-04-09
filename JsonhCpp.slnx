@@ -3,6 +3,6 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
-  <Project Path="JsonhCpp.Tests/JsonhCpp.Tests.vcxproj" />
-  <Project Path="JsonhCpp/JsonhCpp.vcxproj" />
+  <Project Path="jsonh_cpp/jsonh_cpp.vcxproj" Id="ec34b661-6705-4d8e-b25e-96a27cf3dfc0" />
+  <Project Path="tests/tests.vcxproj" Id="d8d6d516-2830-4aca-907c-68e252274b9d" />
 </Solution>

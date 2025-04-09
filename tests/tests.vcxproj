@@ -98,13 +98,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="test.cpp" />
+    <ClCompile Include="tests.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\JsonhCpp\JsonhCpp.vcxproj">
+    <ProjectReference Include="../jsonh_cpp/jsonh_cpp.vcxproj">
       <Project>{ec34b661-6705-4d8e-b25e-96a27cf3dfc0}</Project>
     </ProjectReference>
   </ItemGroup>
