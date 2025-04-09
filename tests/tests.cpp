@@ -1,12 +1,9 @@
-#include "../jsonh_cpp/jsonh_cpp.h"
-#include <gtest/gtest.h>
+#include <cassert> // for assert
+#include <iostream> // for std::cout
+#include "../jsonh_cpp/jsonh_cpp.hpp" // for jsonh_cpp
 
-TEST(TestCaseName, TestName) {
-  EXPECT_EQ(1, 1);
-  EXPECT_TRUE(true);
+int main() {
+    assert((new jsonh_reader(new std::string("aaa")))->read());
 
-  long j = (new jsonh_reader(new std::string("")))->char_counter;
-  EXPECT_EQ(j, j);
-
-  EXPECT_TRUE((new jsonh_reader(new std::string("aaa")))->read());
+    std::cout << "All done!";
 }
