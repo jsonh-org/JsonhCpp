@@ -1,0 +1,8 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="JsonhCpp.Tests/JsonhCpp.Tests.vcxproj" />
+  <Project Path="JsonhCpp/JsonhCpp.vcxproj" />
+</Solution>
