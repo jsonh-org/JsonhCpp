@@ -1,9 +1,15 @@
 #include <cassert> // for assert
 #include <iostream> // for std::cout
-#include "../jsonh_cpp/jsonh_cpp.hpp" // for jsonh_cpp
+#include "../jsonh_cpp/jsonh_cpp.hpp" // for jsonh
+
+using namespace jsonh;
 
 int main() {
-    assert((new jsonh_reader(new std::string("aaa")))->read().has_error() == false);
+    jsonh_reader reader("aaa");
+
+    for (result<void, jsonh_error> token : reader.read_element()) {
+        assert(token.has_error() == false);
+    }
 
     std::cout << "All done!";
 }

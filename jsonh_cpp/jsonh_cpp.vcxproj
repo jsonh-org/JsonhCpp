@@ -143,9 +143,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="jsonh_cpp.hpp" />
+    <ClCompile Include="jsonh_error.hpp" />
+    <ClCompile Include="jsonh_reader.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="jsonh_cpp.hpp" />
+    <ClInclude Include="jsonh_reader_options.hpp" />
+    <ClInclude Include="jsonh_token.hpp" />
+    <ClInclude Include="jsonh_token_type.hpp" />
     <ClInclude Include="nlohmann\json.hpp" />
     <ClInclude Include="result\result.hpp" />
   </ItemGroup>

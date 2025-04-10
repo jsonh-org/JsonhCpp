@@ -15,7 +15,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="jsonh_cpp.hpp">
+    <ClCompile Include="jsonh_reader.hpp">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jsonh_error.hpp">
       <Filter>Header Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -24,6 +27,18 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="result\result.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="jsonh_reader_options.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="jsonh_token.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="jsonh_token_type.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="jsonh_cpp.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
