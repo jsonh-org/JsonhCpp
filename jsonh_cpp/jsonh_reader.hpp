@@ -18,11 +18,11 @@ public:
     /// <summary>
     /// The stream to read characters from.
     /// </summary>
-    std::istream* stream;
+    std::unique_ptr<std::istream> stream;
     /// <summary>
     /// The options to use when reading JSONH.
     /// </summary>
-    jsonh_reader_options* options;
+    std::unique_ptr<jsonh_reader_options> options;
     /// <summary>
     /// The number of characters read from <see cref="stream"/>.
     /// </summary>
@@ -31,19 +31,30 @@ public:
     /// <summary>
     /// Constructs a reader that reads JSONH from a stream.
     /// </summary>
-    jsonh_reader(std::istream* stream, jsonh_reader_options* options = nullptr) {
-        this->stream = stream;
-        this->options = (options != nullptr ? options : new jsonh_reader_options());
+    jsonh_reader(std::unique_ptr<std::istream> stream, std::unique_ptr<jsonh_reader_options> options = nullptr) {
+        this->stream = std::move(stream);
+        this->options = (options != nullptr ? std::move(options) : std::unique_ptr<jsonh_reader_options>(new jsonh_reader_options()));
     }
     /// <summary>
     /// Constructs a reader that reads JSONH from a string.
     /// </summary>
-    jsonh_reader(std::string* string, jsonh_reader_options* options = nullptr) : jsonh_reader(new std::istringstream(*string), options) {
+    jsonh_reader(std::unique_ptr<std::string> string, std::unique_ptr<jsonh_reader_options> options = nullptr)
+        : jsonh_reader(std::unique_ptr<std::istringstream>(new std::istringstream(*string)), std::move(options)) {
     }
     /// <summary>
-    /// Constructs a reader that reads JSONH from a string.
+    /// Constructs a reader that reads JSONH from a string.<br/>
+    /// The reader takes ownership of the string.
     /// </summary>
-    jsonh_reader(const char* string, jsonh_reader_options* options = nullptr) : jsonh_reader(new std::string(string), options) {
+    jsonh_reader(const char* string, std::unique_ptr<jsonh_reader_options> options = nullptr)
+        : jsonh_reader(std::unique_ptr<std::string>(new std::string(string)), std::move(options)) {
+    }
+
+    /// <summary>
+    /// Frees the resources used by the reader.
+    /// </summary>
+    ~jsonh_reader() {
+        stream.reset();
+        options.reset();
     }
     
     std::vector<result<void, jsonh_error>> read_element() {
