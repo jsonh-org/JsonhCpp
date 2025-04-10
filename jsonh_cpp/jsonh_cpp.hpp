@@ -2,6 +2,9 @@
 #include <sstream> // for std::istringstream
 #include "nlohmann/json.hpp" // for nlohmann::json
 
+using namespace std;
+using namespace nlohmann;
+
 class jsonh_reader_options final {
 public:
     bool incomplete_inputs = false;
@@ -12,7 +15,7 @@ public:
     /// <summary>
     /// The stream to read characters from.
     /// </summary>
-    std::istream* stream;
+    istream* stream;
     /// <summary>
     /// The options to use when reading JSONH.
     /// </summary>
@@ -25,24 +28,24 @@ public:
     /// <summary>
     /// Constructs a reader that reads JSONH from a stream.
     /// </summary>
-    jsonh_reader(std::istream* stream, jsonh_reader_options* options = nullptr) {
+    jsonh_reader(istream* stream, jsonh_reader_options* options = nullptr) {
         this->stream = stream;
         this->options = (options != nullptr ? options : new jsonh_reader_options());
     }
     /// <summary>
     /// Constructs a reader that reads JSONH from a string.
     /// </summary>
-    jsonh_reader(std::string* string, jsonh_reader_options* options = nullptr) : jsonh_reader(new std::istringstream(*string), options) {
+    jsonh_reader(string* string, jsonh_reader_options* options = nullptr) : jsonh_reader(new istringstream(*string), options) {
     }
 
     bool read() {
-        std::string str = "";
+        string str = "";
         str += "\"";
         str += "a";
         str += "b";
         str += "\"";
 
-        nlohmann::json value = nlohmann::json::parse(str);
+        json value = json::parse(str);
 
         return value.is_string() && value == "ab";
 
