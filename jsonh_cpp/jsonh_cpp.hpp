@@ -1,9 +1,11 @@
 #include <string> // for std::string
 #include <sstream> // for std::istringstream
 #include "nlohmann/json.hpp" // for nlohmann::json
+#include "result/result.hpp" // for cpp::result
 
 using namespace std;
 using namespace nlohmann;
+using namespace cpp;
 
 class jsonh_reader_options final {
 public:
@@ -37,8 +39,11 @@ public:
     /// </summary>
     jsonh_reader(string* string, jsonh_reader_options* options = nullptr) : jsonh_reader(new istringstream(*string), options) {
     }
+    
+    enum narrow_error {
 
-    bool read() {
+    };
+    result<bool, narrow_error> read() {
         string str = "";
         str += "\"";
         str += "a";
@@ -59,6 +64,10 @@ public:
             }
         }
         return true;*/
+    }
+
+    void read_element() {
+
     }
 
 private:
