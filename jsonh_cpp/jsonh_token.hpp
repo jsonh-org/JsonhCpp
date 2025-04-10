@@ -5,6 +5,7 @@
 #include "jsonh_token_type.hpp" // for jsonh::jsonh_token_type
 
 namespace jsonh {
+
 /// <summary>
 /// A single JSONH token with a <see cref="json_token_type"/>.
 /// </summary>
@@ -31,4 +32,5 @@ struct jsonh_token {
         this->value = value;
     }
 };
+
 }

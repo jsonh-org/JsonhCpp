@@ -12,6 +12,7 @@ using namespace nlohmann;
 using namespace cpp;
 
 namespace jsonh {
+
 class jsonh_reader final {
 public:
     /// <summary>
@@ -207,4 +208,5 @@ private:
         return next;
     }
 };
+
 }

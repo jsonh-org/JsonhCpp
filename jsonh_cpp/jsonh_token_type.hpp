@@ -1,6 +1,7 @@
 #pragma once
 
 namespace jsonh {
+
 enum struct json_token_type {
     none = 0,
     start_object = 1,
@@ -15,4 +16,5 @@ enum struct json_token_type {
     false_bool = 10,
     null = 11,
 };
+
 }
