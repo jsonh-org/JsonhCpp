@@ -3,6 +3,9 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
+  <Folder Name="/Solution Items/" Id="8ec462fd-d22e-90a8-e5ce-7e832ba40c5d">
+    <File Path="README.md" />
+  </Folder>
   <Project Path="jsonh_cpp/jsonh_cpp.vcxproj" Id="ec34b661-6705-4d8e-b25e-96a27cf3dfc0" />
   <Project Path="tests/tests.vcxproj" Id="c54c9b22-3409-4311-bc66-8a30aad08861" />
 </Solution>

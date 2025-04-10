@@ -2,6 +2,5 @@
 
 namespace jsonh {
 enum struct jsonh_error {
-
 };
 }

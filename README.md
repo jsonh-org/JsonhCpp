@@ -38,6 +38,19 @@ JsonhCpp is an implementation of [JSONH v1](https://github.com/jsonh-org/Jsonh).
 }
 ```
 
+## Usage
+
+Everything you need is contained within `jsonh_reader`:
+
+```cpp
+std::string jsonh = R"(
+{
+    this is: awesome
+}
+)";
+std::string element = jsonh::jsonh_reader::parse_element<std::string>(jsonh).value();
+```
+
 ## Dependencies
 
 - [nlohmann/json](https://github.com/nlohmann/json)
