@@ -112,7 +112,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard>stdcpp23</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <GenerateXMLDocumentationFiles>true</GenerateXMLDocumentationFiles>
       <AdditionalOptions>/utf-8</AdditionalOptions>
@@ -152,7 +152,7 @@
     <ClInclude Include="jsonh_token.hpp" />
     <ClInclude Include="jsonh_token_type.hpp" />
     <ClInclude Include="nlohmann\json.hpp" />
-    <ClInclude Include="result\result.hpp" />
+    <ClInclude Include="zeus\expected.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

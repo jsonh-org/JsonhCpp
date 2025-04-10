@@ -26,9 +26,6 @@
     <ClInclude Include="nlohmann\json.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="result\result.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="jsonh_reader_options.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>

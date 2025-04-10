@@ -7,8 +7,8 @@ using namespace jsonh;
 int main() {
     jsonh_reader reader("aaa");
 
-    for (result<void, jsonh_error> token : reader.read_element()) {
-        assert(token.has_error() == false);
+    for (std::expected<jsonh_token, jsonh_error>& token : reader.read_element()) {
+        assert(token.has_value());
     }
 
     std::cout << "All done!";

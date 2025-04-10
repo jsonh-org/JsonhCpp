@@ -3,13 +3,13 @@
 #include <string> // for std::string
 #include <sstream> // for std::istringstream
 #include <set> // for std::set
+#include <expected> // for std::expected
 #include "nlohmann/json.hpp" // for nlohmann::json
-#include "result/result.hpp" // for cpp::result
 #include "jsonh_error.hpp" // for jsonh::jsonh_error
+#include "jsonh_token.hpp" // for jsonh::jsonh_token
 #include "jsonh_reader_options.hpp" // for jsonh::jsonh_reader_options
 
 using namespace nlohmann;
-using namespace cpp;
 
 namespace jsonh {
 
@@ -33,7 +33,7 @@ public:
     /// </summary>
     jsonh_reader(std::unique_ptr<std::istream> stream, std::unique_ptr<jsonh_reader_options> options = nullptr) {
         this->stream = std::move(stream);
-        this->options = (options != nullptr ? std::move(options) : std::unique_ptr<jsonh_reader_options>(new jsonh_reader_options()));
+        this->options = options ? std::move(options) : std::unique_ptr<jsonh_reader_options>(new jsonh_reader_options());
     }
     /// <summary>
     /// Constructs a reader that reads JSONH from a string.
@@ -42,11 +42,17 @@ public:
         : jsonh_reader(std::unique_ptr<std::istringstream>(new std::istringstream(*string)), std::move(options)) {
     }
     /// <summary>
+    /// Constructs a reader that reads JSONH from a string.
+    /// </summary>
+    jsonh_reader(std::string string, std::unique_ptr<jsonh_reader_options> options = nullptr)
+        : jsonh_reader(std::unique_ptr<std::string>(&string), std::move(options)) {
+    }
+    /// <summary>
     /// Constructs a reader that reads JSONH from a string.<br/>
     /// The reader takes ownership of the string.
     /// </summary>
     jsonh_reader(const char* string, std::unique_ptr<jsonh_reader_options> options = nullptr)
-        : jsonh_reader(std::unique_ptr<std::string>(new std::string(string)), std::move(options)) {
+        : jsonh_reader(std::string(string), std::move(options)) {
     }
 
     /// <summary>
@@ -57,10 +63,20 @@ public:
         options.reset();
     }
     
-    std::vector<result<void, jsonh_error>> read_element() {
-        for (result<void, jsonh_error> token : read_comments_and_whitespace()) {
+    std::vector<std::expected<jsonh_token, jsonh_error>> read_element() {
+        std::vector<std::expected<jsonh_token, jsonh_error>> tokens = {};
 
+        // Comments & whitespace
+        for (std::expected<jsonh_token, jsonh_error>& token : read_comments_and_whitespace()) {
+            if (!token.has_value()) {
+                tokens.push_back(token);
+                return tokens;
+            }
+            tokens.push_back(token);
         }
+
+        // Peek char
+        std::optional<char> next = peek();
 
         /*
         while (true) {
@@ -75,7 +91,7 @@ public:
         return true;
         */
 
-        return {};
+        return tokens;
     }
 
     /*
@@ -89,16 +105,16 @@ private:
     const std::set<char32_t> newline_chars = { U'\n', U'\r', U'\u2028', U'\u2029' };
     const std::set<char32_t> whitespace_chars = { U' ', U'\t', U'\n', '\r' };
 
-    std::vector<result<void, jsonh_error>> read_comments_and_whitespace() {
-        std::vector<result<void, jsonh_error>> tokens = {};
+    std::vector<std::expected<jsonh_token, jsonh_error>> read_comments_and_whitespace() {
+        std::vector<std::expected<jsonh_token, jsonh_error>> tokens = {};
 
         while (true) {
             // Whitespace
             read_whitespace();
 
             // Comment
-            char* next = peek();
-            if (*next == '#' || *next == '/') {
+            std::optional<char> next = peek();
+            if (next == '#' || next == '/') {
 
                 //yield return ReadComment();
             }
@@ -165,8 +181,8 @@ private:
     void read_whitespace() {
         while (true) {
             // Peek char
-            char* next = peek();
-            if (next == nullptr) {
+            std::optional<char> next = peek();
+            if (!next) {
                 return;
             }
 
@@ -180,39 +196,39 @@ private:
             }
         }
     }
-    char* peek() {
+    std::optional<char> peek() const {
         int next_int = stream->peek();
         if (next_int < 0) {
-            return nullptr;
+            return {};
         }
         char next = (char)next_int;
-        return &next;
+        return next;
     }
-    char* read() {
+    std::optional<char> read() {
         int next_int = stream->get();
         if (next_int < 0) {
-            return nullptr;
+            return {};
         }
         char next = (char)next_int;
         char_counter++;
-        return &next;
+        return next;
     }
     bool read_one(char option) {
-        if (*peek() == option) {
+        if (peek() == option) {
             read();
             return true;
         }
         return false;
     }
-    char* read_any(std::set<char>* options) {
+    std::optional<char> read_any(std::set<char> options) {
         // Peek char
-        char* next = peek();
-        if (next == nullptr) {
-            return nullptr;
+        std::optional<char> next = peek();
+        if (!next) {
+            return {};
         }
         // Match option
-        if (options->contains(*next)) {
-            return nullptr;
+        if (options.contains(next.value())) {
+            return {};
         }
         // Option matched
         read();

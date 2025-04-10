@@ -11,10 +11,6 @@ namespace jsonh {
 /// </summary>
 struct jsonh_token {
     /// <summary>
-    /// The <see cref="JsonhReader"/> that read the token.
-    /// </summary>
-    jsonh_reader* reader;
-    /// <summary>
     /// The type of the token.
     /// </summary>
     json_token_type json_type;
@@ -26,8 +22,7 @@ struct jsonh_token {
     /// <summary>
     /// Constructs a single JSONH token.
     /// </summary>
-    jsonh_token(jsonh_reader* reader, json_token_type json_type, std::string value = "") {
-        this->reader = reader;
+    jsonh_token(json_token_type json_type, std::string value = "") {
         this->json_type = json_type;
         this->value = value;
     }

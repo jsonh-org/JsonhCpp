@@ -54,6 +54,7 @@ std::string element = jsonh::jsonh_reader::parse_element<std::string>(jsonh).val
 ## Dependencies
 
 - [nlohmann/json](https://github.com/nlohmann/json)
-- [bitwizeshift/result](https://github.com/bitwizeshift/result)
 
 _Updated: 2025/04/10_
+
+Minimum C++ version: 23
