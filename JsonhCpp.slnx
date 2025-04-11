@@ -7,5 +7,5 @@
     <File Path="README.md" />
   </Folder>
   <Project Path="jsonh_cpp/jsonh_cpp.vcxproj" Id="ec34b661-6705-4d8e-b25e-96a27cf3dfc0" />
-  <Project Path="tests/tests.vcxproj" Id="c54c9b22-3409-4311-bc66-8a30aad08861" />
+  <Project Path="jsonh_cpp_tests/jsonh_cpp_tests.vcxproj" Id="d958ba92-2ff4-489b-b046-9bc0f30301dc" />
 </Solution>

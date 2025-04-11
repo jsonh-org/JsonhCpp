@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="tests.cpp">
+    <ClCompile Include="jsonh_cpp_tests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
