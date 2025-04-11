@@ -35,5 +35,11 @@
     <ClInclude Include="jsonh_cpp.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="zeus\expected.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="jsonh_number_parser.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

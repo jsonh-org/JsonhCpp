@@ -145,6 +145,7 @@
   <ItemGroup>
     <ClCompile Include="jsonh_reader.hpp" />
     <ClInclude Include="jsonh_cpp.hpp" />
+    <ClInclude Include="jsonh_number_parser.hpp" />
     <ClInclude Include="jsonh_reader_options.hpp" />
     <ClInclude Include="jsonh_token.hpp" />
     <ClInclude Include="jsonh_token_type.hpp" />

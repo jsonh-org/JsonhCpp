@@ -21,6 +21,10 @@ block comment */
 block comment )");
 }
 
+TEST_CASE("NumberParserTest") {
+    REQUIRE((int)jsonh_number_parser::parse("1.2e3.4").value() == 3014);
+}
+
 TEST_CASE("Test 1") {
     jsonh_reader reader(R"(
 // hello

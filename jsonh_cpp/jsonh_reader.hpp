@@ -3,10 +3,12 @@
 #include <string> // for std::string
 #include <sstream> // for std::istringstream
 #include <set> // for std::set
+#include <stack> // for std::stack
 #include <expected> // for std::expected
 #include "nlohmann/json.hpp" // for nlohmann::json
 #include "jsonh_token.hpp" // for jsonh::jsonh_token
 #include "jsonh_reader_options.hpp" // for jsonh::jsonh_reader_options
+#include "jsonh_number_parser.hpp" // for jsonh::jsonh_number_parser
 
 using namespace nlohmann;
 
@@ -52,6 +54,131 @@ public:
     /// </summary>
     ~jsonh_reader() {
         stream.reset();
+    }
+
+    /// <summary>
+    /// Parses a single element from the reader.
+    /// </summary>
+    std::expected<json, std::string_view> parse_element() {
+        std::stack<json> current_nodes;
+        std::optional<std::string> current_property_name;
+
+        auto submit_node = [&](json node) {
+            // Root value
+            if (current_nodes.empty()) {
+                return true;
+            }
+            // Array item
+            if (!current_property_name) {
+                current_nodes.top().push_back(node);
+                return false;
+            }
+            // Object property
+            else {
+                current_nodes.top()[current_property_name.value()] = node;
+                current_property_name.reset();
+                return false;
+            }
+        };
+        auto start_node = [&](json node) {
+            submit_node(node);
+            current_nodes.push(node);
+        };
+
+        for (std::expected<jsonh_token, std::string_view>& token_result : read_element()) {
+            // Check error
+            if (!token_result) {
+                return std::unexpected(token_result.error());
+            }
+            jsonh_token token = token_result.value();
+
+            switch (token.json_type) {
+                // Null
+                case json_token_type::null: {
+                    json node = json(nullptr);
+                    if (submit_node(node)) {
+                        return node;
+                    }
+                    break;
+                }
+                // True
+                case json_token_type::true_bool: {
+                    json node = json(true);
+                    if (submit_node(node)) {
+                        return node;
+                    }
+                    break;
+                }
+                // False
+                case json_token_type::false_bool: {
+                    json node = json(false);
+                    if (submit_node(node)) {
+                        return node;
+                    }
+                    break;
+                }
+                // String
+                case json_token_type::string: {
+                    json node = json(token.value);
+                    if (submit_node(node)) {
+                        return node;
+                    }
+                    break;
+                }
+                // Number
+                case json_token_type::number: {
+                    std::expected<long double, std::string_view> result = jsonh_number_parser::parse(token.value);
+                    if (!result) {
+                        return std::unexpected(result.error());
+                    }
+                    json node = json(result.value());
+                    if (submit_node(node)) {
+                        return node;
+                    }
+                    break;
+                }
+                // Start Object
+                case json_token_type::start_object: {
+                    json node = json::object();
+                    start_node(node);
+                    break;
+                }
+                // Start Array
+                case json_token_type::start_array: {
+                    json node = json::array();
+                    start_node(node);
+                    break;
+                }
+                // End Object/Array
+                case json_token_type::end_object: case json_token_type::end_array: {
+                    // Nested node
+                    if (current_nodes.size() > 1) {
+                        current_nodes.pop();
+                    }
+                    // Root node
+                    else {
+                        return current_nodes.top();
+                    }
+                    break;
+                }
+                // Property Name
+                case json_token_type::property_name: {
+                    current_property_name = token.value;
+                    break;
+                }
+                // Comment
+                case json_token_type::comment: {
+                    break;
+                }
+                // Not implemented
+                default: {
+                    return std::unexpected("Token type not implemented");
+                }
+            }
+
+            // End of input
+            return std::unexpected("Expected token, got end of input");
+        }
     }
     
     std::vector<std::expected<jsonh_token, std::string_view>> read_element() {
@@ -168,58 +295,6 @@ private:
             string_builder += next.value();
         }
     }
-    /*
-    Result<JsonhToken> ReadComment() {
-        bool BlockComment = false;
-
-        // Hash-style comment
-        if (ReadOne('#')) {
-        }
-        else if (ReadOne('/')) {
-            // Line-style comment
-            if (ReadOne('/')) {
-            }
-            // Block-style comment
-            else if (ReadOne('*')) {
-                BlockComment = true;
-            }
-            else {
-                return new Error("Unexpected '/'");
-            }
-        }
-        else {
-            return new Error("Unexpected character");
-        }
-
-        // Read comment
-        using ValueStringBuilder StringBuilder = new(stackalloc char[64]);
-
-        while (true) {
-            // Read char
-            char ? Char = Read();
-
-            if (BlockComment) {
-                // Error
-                if (Char is null) {
-                    return new Error("Expected end of block comment, got end of input");
-                }
-                // End of block comment
-                if (Char is '*' && ReadOne('/')) {
-                    return new JsonhToken(this, JsonTokenType.Comment, StringBuilder.ToString());
-                }
-            }
-            else {
-                // End of line comment
-                if (Char is null || NewlineChars.Contains(Char.Value)) {
-                    return new JsonhToken(this, JsonTokenType.Comment, StringBuilder.ToString());
-                }
-            }
-
-            // Comment char
-            StringBuilder.Append(Char.Value);
-        }
-    }
-    */
     void read_whitespace() {
         while (true) {
             // Peek char
