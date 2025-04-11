@@ -22,7 +22,7 @@ public:
     /// <summary>
     /// The options to use when reading JSONH.
     /// </summary>
-    std::unique_ptr<jsonh_reader_options> options;
+    jsonh_reader_options options;
     /// <summary>
     /// The number of characters read from <see cref="stream"/>.
     /// </summary>
@@ -31,21 +31,21 @@ public:
     /// <summary>
     /// Constructs a reader that reads JSONH from a stream.
     /// </summary>
-    jsonh_reader(std::unique_ptr<std::istream> stream, std::unique_ptr<jsonh_reader_options> options = nullptr) {
+    jsonh_reader(std::unique_ptr<std::istream> stream, jsonh_reader_options options = jsonh_reader_options()) {
         this->stream = std::move(stream);
-        this->options = options ? std::move(options) : std::unique_ptr<jsonh_reader_options>(new jsonh_reader_options());
+        this->options = options;
     }
     /// <summary>
     /// Constructs a reader that reads JSONH from a string.
     /// </summary>
-    jsonh_reader(const std::string& string, std::unique_ptr<jsonh_reader_options> options = nullptr)
-        : jsonh_reader(std::make_unique<std::istringstream>(string), std::move(options)) {
+    jsonh_reader(const std::string& string, jsonh_reader_options options = jsonh_reader_options())
+        : jsonh_reader(std::make_unique<std::istringstream>(string), options) {
     }
     /// <summary>
     /// Constructs a reader that reads JSONH from a string.
     /// </summary>
-    jsonh_reader(const char* string, std::unique_ptr<jsonh_reader_options> options = nullptr)
-        : jsonh_reader(std::string(string), std::move(options)) {
+    jsonh_reader(const char* string, jsonh_reader_options options = jsonh_reader_options())
+        : jsonh_reader(std::string(string), options) {
     }
 
     /// <summary>
@@ -53,7 +53,6 @@ public:
     /// </summary>
     ~jsonh_reader() {
         stream.reset();
-        options.reset();
     }
     
     std::vector<std::expected<jsonh_token, jsonh_error>> read_element() {
