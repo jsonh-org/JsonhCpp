@@ -1,7 +1,6 @@
 #pragma once
 
 #include <string> // for std::string
-#include "jsonh_reader.hpp" // for jsonh::jsonh_reader
 #include "jsonh_token_type.hpp" // for jsonh::jsonh_token_type
 
 namespace jsonh {
