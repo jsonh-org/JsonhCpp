@@ -129,12 +129,16 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="catch2\catch_amalgamated.cpp" />
     <ClCompile Include="jsonh_cpp_tests.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\jsonh_cpp\jsonh_cpp.vcxproj">
       <Project>{ec34b661-6705-4d8e-b25e-96a27cf3dfc0}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="catch2\catch_amalgamated.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
