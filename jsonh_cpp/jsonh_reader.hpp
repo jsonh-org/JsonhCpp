@@ -5,7 +5,6 @@
 #include <set> // for std::set
 #include <expected> // for std::expected
 #include "nlohmann/json.hpp" // for nlohmann::json
-#include "jsonh_error.hpp" // for jsonh::jsonh_error
 #include "jsonh_token.hpp" // for jsonh::jsonh_token
 #include "jsonh_reader_options.hpp" // for jsonh::jsonh_reader_options
 
@@ -55,12 +54,12 @@ public:
         stream.reset();
     }
     
-    std::vector<std::expected<jsonh_token, jsonh_error>> read_element() {
-        std::vector<std::expected<jsonh_token, jsonh_error>> tokens = {};
+    std::vector<std::expected<jsonh_token, std::string_view>> read_element() {
+        std::vector<std::expected<jsonh_token, std::string_view>> tokens = {};
 
         // Comments & whitespace
-        for (std::expected<jsonh_token, jsonh_error>& token : read_comments_and_whitespace()) {
-            if (!token.has_value()) {
+        for (std::expected<jsonh_token, std::string_view>& token : read_comments_and_whitespace()) {
+            if (!token) {
                 tokens.push_back(token);
                 return tokens;
             }
@@ -97,18 +96,19 @@ private:
     const std::set<char32_t> newline_chars = { U'\n', U'\r', U'\u2028', U'\u2029' };
     const std::set<char32_t> whitespace_chars = { U' ', U'\t', U'\n', '\r' };
 
-    std::vector<std::expected<jsonh_token, jsonh_error>> read_comments_and_whitespace() {
-        std::vector<std::expected<jsonh_token, jsonh_error>> tokens = {};
+    std::vector<std::expected<jsonh_token, std::string_view>> read_comments_and_whitespace() {
+        std::vector<std::expected<jsonh_token, std::string_view>> tokens = {};
 
         while (true) {
             // Whitespace
             read_whitespace();
 
-            // Comment
+            // Peek char
             std::optional<char> next = peek();
-            if (next == '#' || next == '/') {
 
-                //yield return ReadComment();
+            // Comment
+            if (next == '#' || next == '/') {
+                tokens.push_back(read_comment());
             }
             // End of comments
             else {
@@ -117,6 +117,56 @@ private:
         }
 
         return tokens;
+    }
+    std::expected<jsonh_token, std::string_view> read_comment() {
+        bool block_comment = false;
+
+        // Hash-styled comment
+        if (read_one('#')) {
+        }
+        else if (read_one('/')) {
+            // Line-styled comment
+            if (read_one('/')) {
+            }
+            // Block-styled comment
+            else if (read_one('*')) {
+                block_comment = true;
+            }
+            else {
+                return std::unexpected("Unexpected '/'");
+            }
+        }
+        else {
+            return std::unexpected("Unexpected character");
+        }
+
+        // Read comment
+        std::string string_builder = "";
+
+        while (true) {
+            // Read char
+            std::optional<char> next = read();
+
+            if (block_comment) {
+                // Error
+                if (!next) {
+                    return std::unexpected("Expected end of block comment, got end of input");
+                }
+                // End of block comment
+                if (next == '*' && read_one('/')) {
+                    return jsonh_token(json_token_type::comment, string_builder);
+                }
+            }
+            else {
+                // End of line comment
+                if (!next || newline_chars.contains(next.value())) {
+                    return jsonh_token(json_token_type::comment, string_builder);
+                }
+            }
+
+            // Comment char
+            string_builder += next.value();
+        }
     }
     /*
     Result<JsonhToken> ReadComment() {

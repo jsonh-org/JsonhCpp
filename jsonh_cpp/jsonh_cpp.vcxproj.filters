@@ -18,9 +18,6 @@
     <ClCompile Include="jsonh_reader.hpp">
       <Filter>Header Files</Filter>
     </ClCompile>
-    <ClCompile Include="jsonh_error.hpp">
-      <Filter>Header Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="nlohmann\json.hpp">

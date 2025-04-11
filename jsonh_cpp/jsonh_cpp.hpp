@@ -1,6 +1,5 @@
 #pragma once
 
-#include "jsonh_error.hpp"
 #include "jsonh_token_type.hpp"
 #include "jsonh_token.hpp"
 #include "jsonh_reader.hpp"

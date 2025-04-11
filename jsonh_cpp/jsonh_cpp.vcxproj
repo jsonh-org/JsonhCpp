@@ -143,7 +143,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="jsonh_error.hpp" />
     <ClCompile Include="jsonh_reader.hpp" />
     <ClInclude Include="jsonh_cpp.hpp" />
     <ClInclude Include="jsonh_reader_options.hpp" />
