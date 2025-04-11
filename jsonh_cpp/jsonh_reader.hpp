@@ -212,7 +212,7 @@ private:
         }
         return false;
     }
-    std::optional<char> read_any(std::set<char> options) {
+    std::optional<char> read_any(const std::set<char>& options) {
         // Peek char
         std::optional<char> next = peek();
         if (!next) {
