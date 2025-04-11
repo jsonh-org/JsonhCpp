@@ -38,18 +38,11 @@ public:
     /// <summary>
     /// Constructs a reader that reads JSONH from a string.
     /// </summary>
-    jsonh_reader(std::unique_ptr<std::string> string, std::unique_ptr<jsonh_reader_options> options = nullptr)
-        : jsonh_reader(std::unique_ptr<std::istringstream>(new std::istringstream(*string)), std::move(options)) {
+    jsonh_reader(const std::string& string, std::unique_ptr<jsonh_reader_options> options = nullptr)
+        : jsonh_reader(std::make_unique<std::istringstream>(string), std::move(options)) {
     }
     /// <summary>
     /// Constructs a reader that reads JSONH from a string.
-    /// </summary>
-    jsonh_reader(std::string string, std::unique_ptr<jsonh_reader_options> options = nullptr)
-        : jsonh_reader(std::unique_ptr<std::string>(new std::string(std::move(string))), std::move(options)) {
-    }
-    /// <summary>
-    /// Constructs a reader that reads JSONH from a string.<br/>
-    /// The reader takes ownership of the string.
     /// </summary>
     jsonh_reader(const char* string, std::unique_ptr<jsonh_reader_options> options = nullptr)
         : jsonh_reader(std::string(string), std::move(options)) {
