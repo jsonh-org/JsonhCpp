@@ -45,7 +45,7 @@ public:
     /// Constructs a reader that reads JSONH from a string.
     /// </summary>
     jsonh_reader(std::string string, std::unique_ptr<jsonh_reader_options> options = nullptr)
-        : jsonh_reader(std::unique_ptr<std::string>(&string), std::move(options)) {
+        : jsonh_reader(std::unique_ptr<std::string>(new std::string(std::move(string))), std::move(options)) {
     }
     /// <summary>
     /// Constructs a reader that reads JSONH from a string.<br/>
