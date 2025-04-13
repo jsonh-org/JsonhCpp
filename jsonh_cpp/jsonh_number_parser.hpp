@@ -17,7 +17,7 @@ public:
     /// Input: <c>+5.2e3.0</c><br/>
     /// Output: <c>5200</c>
     /// </summary>
-    static std::expected<long double, std::string_view> parse(std::string jsonh_number) {
+    static std::expected<long double, std::string_view> parse(std::string jsonh_number) noexcept {
         // Decimal
         std::string base_digits = "0123456789";
         // Hexadecimal
@@ -47,7 +47,7 @@ private:
     /// <summary>
     /// Converts a fractional number with an exponent (e.g. <c>12.3e4.5</c>) from the given base (e.g. <c>01234567</c>) to a base-10 real.
     /// </summary>
-    static std::expected<long double, std::string_view> parse_fractional_number_with_exponent(std::string_view digits, std::string_view base_digits) {
+    static std::expected<long double, std::string_view> parse_fractional_number_with_exponent(std::string_view digits, std::string_view base_digits) noexcept {
         // Find exponent
         size_t dot_index = digits.find_first_of("eE");
         // If no exponent then normalize real
@@ -75,7 +75,7 @@ private:
     /// <summary>
     /// Converts a fractional number (e.g. <c>123.45</c>) from the given base (e.g. <c>01234567</c>) to a base-10 real.
     /// </summary>
-    static std::expected<long double, std::string_view> parse_fractional_number(std::string_view digits, std::string_view base_digits) {
+    static std::expected<long double, std::string_view> parse_fractional_number(std::string_view digits, std::string_view base_digits) noexcept {
         // Optimization for base-10 digits
         if (base_digits == "0123456789") {
             return std::stold(std::string(digits));
@@ -112,7 +112,7 @@ private:
     /// <summary>
     /// Converts a whole number (e.g. <c>12345</c>) from the given base (e.g. <c>01234567</c>) to a base-10 integer.
     /// </summary>
-    static std::expected<long long, std::string_view> parse_whole_number(std::string_view digits, std::string_view base_digits) {
+    static std::expected<long long, std::string_view> parse_whole_number(std::string_view digits, std::string_view base_digits) noexcept {
         // Optimization for base-10 digits
         if (base_digits == "0123456789") {
             return std::stoll(digits.data());

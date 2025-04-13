@@ -32,20 +32,20 @@ public:
     /// <summary>
     /// Constructs a reader that reads JSONH from a stream.
     /// </summary>
-    jsonh_reader(std::unique_ptr<std::istream> stream, jsonh_reader_options options = jsonh_reader_options()) {
+    jsonh_reader(std::unique_ptr<std::istream> stream, jsonh_reader_options options = jsonh_reader_options()) noexcept {
         this->stream = std::move(stream);
         this->options = options;
     }
     /// <summary>
     /// Constructs a reader that reads JSONH from a string.
     /// </summary>
-    jsonh_reader(const std::string& string, jsonh_reader_options options = jsonh_reader_options())
+    jsonh_reader(const std::string& string, jsonh_reader_options options = jsonh_reader_options()) noexcept
         : jsonh_reader(std::make_unique<std::istringstream>(string), options) {
     }
     /// <summary>
     /// Constructs a reader that reads JSONH from a string.
     /// </summary>
-    jsonh_reader(const char* string, jsonh_reader_options options = jsonh_reader_options())
+    jsonh_reader(const char* string, jsonh_reader_options options = jsonh_reader_options()) noexcept
         : jsonh_reader(std::string(string), options) {
     }
 
@@ -59,7 +59,7 @@ public:
     /// <summary>
     /// Parses a single element from the reader.
     /// </summary>
-    std::expected<json, std::string_view> parse_element() {
+    std::expected<json, std::string_view> parse_element() noexcept {
         std::stack<json> current_nodes;
         std::optional<std::string> current_property_name;
 
@@ -223,7 +223,7 @@ private:
     const std::set<char32_t> newline_chars = { U'\n', U'\r', U'\u2028', U'\u2029' };
     const std::set<char32_t> whitespace_chars = { U' ', U'\t', U'\n', '\r' };
 
-    std::vector<std::expected<jsonh_token, std::string_view>> read_comments_and_whitespace() {
+    std::vector<std::expected<jsonh_token, std::string_view>> read_comments_and_whitespace() noexcept {
         std::vector<std::expected<jsonh_token, std::string_view>> tokens = {};
 
         while (true) {
@@ -245,7 +245,7 @@ private:
 
         return tokens;
     }
-    std::expected<jsonh_token, std::string_view> read_comment() {
+    std::expected<jsonh_token, std::string_view> read_comment() noexcept {
         bool block_comment = false;
 
         // Hash-styled comment
@@ -295,7 +295,7 @@ private:
             string_builder += next.value();
         }
     }
-    void read_whitespace() {
+    void read_whitespace() noexcept {
         while (true) {
             // Peek char
             std::optional<char> next = peek();
@@ -313,7 +313,7 @@ private:
             }
         }
     }
-    std::optional<char> peek() const {
+    std::optional<char> peek() const noexcept {
         int next_int = stream->peek();
         if (next_int < 0) {
             return {};
@@ -321,7 +321,7 @@ private:
         char next = (char)next_int;
         return next;
     }
-    std::optional<char> read() {
+    std::optional<char> read() noexcept {
         int next_int = stream->get();
         if (next_int < 0) {
             return {};
@@ -330,14 +330,14 @@ private:
         char_counter++;
         return next;
     }
-    bool read_one(char option) {
+    bool read_one(char option) noexcept {
         if (peek() == option) {
             read();
             return true;
         }
         return false;
     }
-    std::optional<char> read_any(const std::set<char>& options) {
+    std::optional<char> read_any(const std::set<char>& options) noexcept {
         // Peek char
         std::optional<char> next = peek();
         if (!next) {

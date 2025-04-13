@@ -21,7 +21,7 @@ struct jsonh_token {
     /// <summary>
     /// Constructs a single JSONH token.
     /// </summary>
-    jsonh_token(json_token_type json_type, std::string value = "") {
+    jsonh_token(json_token_type json_type, std::string value = "") noexcept {
         this->json_type = json_type;
         this->value = value;
     }
