@@ -60,4 +60,4 @@ _Updated: 2025/04/11_
 - [nlohmann/json](https://github.com/nlohmann/json)
 - [catchorg/Catch2](https://github.com/catchorg/Catch2) ([help](https://stackoverflow.com/a/78804393))
 - C++ 23
-- C 23
+- C 17

@@ -85,7 +85,7 @@ public:
             current_nodes.push(node);
         };
 
-        for (std::expected<jsonh_token, std::string_view>& token_result : read_element()) {
+        for (std::expected<jsonh_token, std::string>& token_result : read_element()) {
             // Check error
             if (!token_result) {
                 return std::unexpected(token_result.error());
@@ -180,12 +180,11 @@ public:
             return std::unexpected("Expected token, got end of input");
         }
     }
-    
-    std::vector<std::expected<jsonh_token, std::string_view>> read_element() {
-        std::vector<std::expected<jsonh_token, std::string_view>> tokens = {};
+    std::vector<std::expected<jsonh_token, std::string>> read_element() noexcept {
+        std::vector<std::expected<jsonh_token, std::string>> tokens = {};
 
         // Comments & whitespace
-        for (std::expected<jsonh_token, std::string_view>& token : read_comments_and_whitespace()) {
+        for (std::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
             if (!token) {
                 tokens.push_back(token);
                 return tokens;
@@ -195,6 +194,36 @@ public:
 
         // Peek char
         std::optional<char> next = peek();
+        if (!next) {
+            tokens.push_back(std::unexpected("Expected token, got end of input"));
+            return tokens;
+        }
+
+        // Object
+        if (next.value() == '{') {
+            for (std::expected<jsonh_token, std::string>& token : read_object()) {
+                if (!token) {
+                    tokens.push_back(token);
+                    return tokens;
+                }
+                tokens.push_back(token);
+            }
+        }
+        // Array
+        else if (next.value() == '[') {
+            for (std::expected<jsonh_token, std::string>& token : read_array()) {
+                if (!token) {
+                    tokens.push_back(token);
+                    return tokens;
+                }
+                tokens.push_back(token);
+            }
+        }
+        // Primitive value (null, true, false, string, number)
+        else {
+            std::expected<jsonh_token, std::string>& token = read_primitive_element();
+
+        }
 
         /*
         while (true) {
@@ -212,19 +241,479 @@ public:
         return tokens;
     }
 
-    /*
-    void read_element() {
-
-    }
-    */
-
 private:
-    const std::set<char32_t> reserved_chars = { U'\\', U',', U':', U'[', U']', U'{', U'}', U'/', U'#', U'"', U'\'' };
-    const std::set<char32_t> newline_chars = { U'\n', U'\r', U'\u2028', U'\u2029' };
-    const std::set<char32_t> whitespace_chars = { U' ', U'\t', U'\n', '\r' };
+    const std::set<char32_t> reserved_chars = { '\\', ',', ':', '[', ']', '{', '}', '/', '#', '"', '\'' };
+    const std::set<char32_t> newline_chars = { '\n', '\r', U'\u2028', U'\u2029' };
+    const std::set<char32_t> whitespace_chars = {
+        U'\u0020', U'\u00A0', U'\u1680', U'\u2000', U'\u2001', U'\u2002', U'\u2003', U'\u2004', U'\u2005',
+        U'\u2006', U'\u2007', U'\u2008', U'\u2009', U'\u200A', U'\u202F', U'\u205F', U'\u3000', U'\u2028',
+        U'\u2029', U'\u0009', U'\u000A', U'\u000B', U'\u000C', U'\u000D', U'\u0085',
+    }; // https://learn.microsoft.com/en-us/dotnet/api/system.char.iswhitespace#remarks
 
-    std::vector<std::expected<jsonh_token, std::string_view>> read_comments_and_whitespace() noexcept {
-        std::vector<std::expected<jsonh_token, std::string_view>> tokens = {};
+    std::vector<std::expected<jsonh_token, std::string>> read_object() noexcept {
+        std::vector<std::expected<jsonh_token, std::string>> tokens = {};
+
+        // Opening brace
+        if (!read_one('{')) {
+            // Braceless object
+            for (std::expected<jsonh_token, std::string>& token : read_braceless_object()) {
+                if (!token) {
+                    tokens.push_back(token);
+                    return tokens;
+                }
+                tokens.push_back(token);
+            }
+            return tokens;
+        }
+        // Start of object
+        tokens.push_back(jsonh_token(json_token_type::start_object));
+
+        while (true) {
+            // Comments & whitespace
+            for (std::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
+                if (!token) {
+                    tokens.push_back(token);
+                    return tokens;
+                }
+                tokens.push_back(token);
+            }
+
+            std::optional<char> next = peek();
+            if (!next) {
+                // End of incomplete object
+                if (options.incomplete_inputs) {
+                    tokens.push_back(jsonh_token(json_token_type::end_object));
+                    return tokens;
+                }
+                // Missing closing brace
+                tokens.push_back(std::unexpected("Expected `}` to end object, got end of input"));
+                return tokens;
+            }
+
+            // Closing brace
+            if (next == '}') {
+                // End of object
+                read();
+                tokens.push_back(jsonh_token(json_token_type::end_object));
+            }
+            // Property
+            else {
+                for (std::expected<jsonh_token, std::string>& token : read_property()) {
+                    if (!token) {
+                        tokens.push_back(token);
+                        return tokens;
+                    }
+                    tokens.push_back(token);
+                }
+            }
+        }
+    }
+    std::vector<std::expected<jsonh_token, std::string>> read_braceless_object(std::optional<std::vector<jsonh_token>> property_name_tokens = std::nullopt) noexcept {
+        std::vector<std::expected<jsonh_token, std::string>> tokens = {};
+
+        // Start of object
+        tokens.push_back(jsonh_token(json_token_type::start_object));
+
+        // Initial tokens
+        if (property_name_tokens) {
+            for (std::expected<jsonh_token, std::string>& token : read_property(property_name_tokens)) {
+                if (!token) {
+                    tokens.push_back(token);
+                    return tokens;
+                }
+                tokens.push_back(token);
+            }
+        }
+
+        while (true) {
+            // Comments & whitespace
+            for (std::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
+                if (!token) {
+                    tokens.push_back(token);
+                    return tokens;
+                }
+                tokens.push_back(token);
+            }
+
+            if (!peek()) {
+                // End of braceless object
+                tokens.push_back(jsonh_token(json_token_type::end_object));
+                return tokens;
+            }
+
+            // Property
+            for (std::expected<jsonh_token, std::string>& token : read_property()) {
+                if (!token) {
+                    tokens.push_back(token);
+                    return tokens;
+                }
+                tokens.push_back(token);
+            }
+        }
+    }
+    std::vector<std::expected<jsonh_token, std::string>> read_property(std::optional<std::vector<jsonh_token>> property_name_tokens = std::nullopt) noexcept {
+        std::vector<std::expected<jsonh_token, std::string>> tokens = {};
+
+        // Property name
+        if (property_name_tokens) {
+            for (jsonh_token& token : property_name_tokens.value()) {
+                tokens.push_back(token);
+            }
+        }
+        else {
+            for (std::expected<jsonh_token, std::string>& token : read_property_name()) {
+                if (!token) {
+                    tokens.push_back(token);
+                    return tokens;
+                }
+                tokens.push_back(token);
+            }
+        }
+
+        // Comments & whitespace
+        for (std::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
+            if (!token) {
+                tokens.push_back(token);
+                return tokens;
+            }
+            tokens.push_back(token);
+        }
+
+        // Property value
+        for (std::expected<jsonh_token, std::string>& token : read_element()) {
+            if (!token) {
+                tokens.push_back(token);
+                return tokens;
+            }
+            tokens.push_back(token);
+        }
+
+        // Comments & whitespace
+        for (std::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
+            if (!token) {
+                tokens.push_back(token);
+                return tokens;
+            }
+            tokens.push_back(token);
+        }
+
+        // Optional comma
+        read_one(',');
+
+        return tokens;
+    }
+    std::vector<std::expected<jsonh_token, std::string>> read_property_name(std::optional<std::unique_ptr<std::string>> string = std::nullopt) noexcept {
+        std::vector<std::expected<jsonh_token, std::string>> tokens = {};
+
+        // String
+        if (!string) {
+            std::expected<jsonh_token, std::string> string_token = read_string();
+            if (!string_token) {
+                tokens.push_back(string_token);
+                return tokens;
+            }
+            string = std::unique_ptr<std::string>(&string_token.value().value);
+        }
+
+        // Comments & whitespace
+        for (std::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
+            if (!token) {
+                tokens.push_back(token);
+                return tokens;
+            }
+            tokens.push_back(token);
+        }
+
+        // Colon
+        if (!read_one(':')) {
+            tokens.push_back(std::unexpected("Expected `:` after property name in object"));
+            return tokens;
+        }
+
+        // End of property name
+        tokens.push_back(jsonh_token(json_token_type::property_name));
+
+        return tokens;
+    }
+    std::vector<std::expected<jsonh_token, std::string>> read_array() noexcept {
+        std::vector<std::expected<jsonh_token, std::string>> tokens = {};
+
+        // Opening bracket
+        if (!read_one('[')) {
+            tokens.push_back(std::unexpected("Expected `[` to start array"));
+            return tokens;
+        }
+        // Start of array
+        tokens.push_back(jsonh_token(json_token_type::start_object));
+
+        while (true) {
+            // Comments & whitespace
+            for (std::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
+                if (!token) {
+                    tokens.push_back(token);
+                    return tokens;
+                }
+                tokens.push_back(token);
+            }
+
+            std::optional<char> next = peek();
+            if (!next) {
+                // End of incomplete array
+                if (options.incomplete_inputs) {
+                    tokens.push_back(jsonh_token(json_token_type::end_array));
+                    return tokens;
+                }
+                // Missing closing bracket
+                tokens.push_back(std::unexpected("Expected `]` to end array, got end of input"));
+                return tokens;
+            }
+
+            // Closing bracket
+            if (next == ']') {
+                // End of array
+                read();
+                tokens.push_back(jsonh_token(json_token_type::end_array));
+            }
+            // Item
+            else {
+                for (std::expected<jsonh_token, std::string>& token : read_item()) {
+                    if (!token) {
+                        tokens.push_back(token);
+                        return tokens;
+                    }
+                    tokens.push_back(token);
+                }
+            }
+        }
+    }
+    std::vector<std::expected<jsonh_token, std::string>> read_item() noexcept {
+        std::vector<std::expected<jsonh_token, std::string>> tokens = {};
+
+        // Element
+        for (std::expected<jsonh_token, std::string>& token : read_element()) {
+            if (!token) {
+                tokens.push_back(token);
+                return tokens;
+            }
+            tokens.push_back(token);
+        }
+
+        // Comments & whitespace
+        for (std::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
+            if (!token) {
+                tokens.push_back(token);
+                return tokens;
+            }
+            tokens.push_back(token);
+        }
+
+        // Optional comma
+        read_one(',');
+
+        return tokens;
+    }
+    std::expected<jsonh_token, std::string> read_string() noexcept {
+        // Start quote
+        std::optional<char> start_quote = read_any({ '"', '\'' });
+        if (!start_quote) {
+            return read_quoteless_string();
+        }
+
+        // Count multiple start quotes
+        size_t start_quote_counter = 1;
+        while (read_one(start_quote.value())) {
+            start_quote_counter++;
+        }
+
+        // Empty string
+        if (start_quote_counter == 2) {
+            return jsonh_token(json_token_type::string, "");
+        }
+
+        // Count multiple end quotes
+        size_t end_quote_counter = 0;
+
+        // Read string
+        std::string string_builder = "";
+
+        while (true) {
+            std::optional<char> next = read();
+            if (!next) {
+                return std::unexpected("Expected end of string, got end of input");
+            }
+
+            // Partial end quote was actually part of string
+            if (next != start_quote) {
+                string_builder.append(end_quote_counter, start_quote.value());
+                end_quote_counter = 0;
+            }
+
+            // End quote
+            if (next == start_quote) {
+                end_quote_counter++;
+                if (end_quote_counter == start_quote_counter) {
+                    break;
+                }
+            }
+            // Escape sequence
+            else if (next == '\\') {
+                std::expected<void, std::string> escape_sequence_result = read_escape_sequence(&string_builder);
+                if (!escape_sequence_result) {
+                    return std::unexpected(escape_sequence_result.error());
+                }
+            }
+            // Literal character
+            else {
+                string_builder += next.value();
+            }
+        }
+
+        // Trim leading whitespace in multiline string
+        if (start_quote_counter > 1) {
+            // Count leading whitespace preceding closing quotes
+            int last_newline_index = -1;
+            for (size_t index = string_builder.length() - 1; index >= 0; index--) {
+                if (newline_chars.contains(string_builder[index])) {
+                    last_newline_index = index;
+                }
+            }
+            if (last_newline_index != -1) {
+                size_t leading_whitespace_count = string_builder.length() - last_newline_index;
+
+                // Remove leading whitespace from each line
+                if (leading_whitespace_count > 0) {
+                    size_t current_leading_whitespace = 0;
+                    bool is_leading_whitespace = true;
+
+                    for (int index = 0; index < string_builder.length(); index++) {
+                        char& next = string_builder[index];
+
+                        // Newline
+                        if (newline_chars.contains(next)) {
+                            // Reset leading whitespace counter
+                            current_leading_whitespace = 0;
+                            // Enter leading whitespace
+                            is_leading_whitespace = true;
+                        }
+                        // Leading whitespace
+                        else if (is_leading_whitespace && current_leading_whitespace <= leading_whitespace_count) {
+                            // Whitespace
+                            if (whitespace_chars.contains(next)) {
+                                // Increment leading whitespace counter
+                                current_leading_whitespace++;
+                                // Maximum leading whitespace reached
+                                if (current_leading_whitespace == leading_whitespace_count) {
+                                    // Remove leading whitespace
+                                    string_builder.erase(index - current_leading_whitespace, current_leading_whitespace);
+                                    // Exit leading whitespace
+                                    is_leading_whitespace = false;
+                                }
+                            }
+                            // Non-whitespace
+                            else {
+                                // Remove partial leading whitespace
+                                string_builder.erase(index - current_leading_whitespace, current_leading_whitespace);
+                                // Exit leading whitespace
+                                is_leading_whitespace = false;
+                            }
+                        }
+                    }
+
+                    // Remove leading whitespace from last line
+                    string_builder.erase(string_builder.length() - leading_whitespace_count, leading_whitespace_count);
+
+                    // Remove leading newline
+                    if (string_builder.length() >= 1) {
+                        char& leading_char = string_builder[0];
+                        if (newline_chars.contains(leading_char)) {
+                            int NewlineLength = 1;
+                            // Join CR LF
+                            if (leading_char == '\r' && string_builder.length() >= 2 && string_builder[1] == '\n') {
+                                NewlineLength = 2;
+                            }
+
+                            // Remove leading newline
+                            string_builder.erase(0, NewlineLength);
+                        }
+                    }
+                }
+            }
+        }
+
+        // End of string
+        return jsonh_token(json_token_type::string, string_builder);
+    }
+    std::expected<jsonh_token, std::string> read_quoteless_string(std::string initial_chars = "") noexcept {
+        bool is_named_literal_possible = false;
+
+        // Read quoteless string
+        std::string string_builder = initial_chars;
+
+        while (true) {
+            // Read char
+            std::optional<char> next = peek();
+            if (!next) {
+                break;
+            }
+
+            // Read escape sequence
+            if (next.value() == '\\') {
+                read();
+                std::expected<void, std::string> escape_sequence_result = read_escape_sequence(&string_builder);
+                if (!escape_sequence_result) {
+                    return std::unexpected(escape_sequence_result.error());
+                }
+                is_named_literal_possible = false;
+            }
+            // End on reserved character
+            else if (reserved_chars.contains(next.value())) {
+                break;
+            }
+            // End on newline
+            else if (newline_chars.contains(next.value())) {
+                break;
+            }
+            // Append string char
+            else {
+                read();
+                string_builder += next.value();
+            }
+
+            // Ensure not empty
+            if (string_builder.empty()) {
+                return std::unexpected("Empty quoteless string");
+            }
+
+            // Trim trailing whitespace
+            int trailing_whitespace_index = -1;
+            for (size_t index = string_builder.length() - 1; index >= 0; index--) {
+                if (whitespace_chars.contains(string_builder[index])) {
+                    trailing_whitespace_index = index;
+                }
+            }
+            if (trailing_whitespace_index >= 0) {
+                string_builder.erase(trailing_whitespace_index);
+            }
+
+            // Match named literal
+            if (is_named_literal_possible) {
+                if (string_builder == "null") {
+                    return jsonh_token(json_token_type::null);
+                }
+                else if (string_builder == "true") {
+                    return jsonh_token(json_token_type::true_bool);
+                }
+                else if (string_builder == "false") {
+                    return jsonh_token(json_token_type::false_bool);
+                }
+            }
+
+            // End quoteless string
+            return jsonh_token(json_token_type::string, string_builder);
+        }
+    }
+    std::vector<std::expected<jsonh_token, std::string>> read_comments_and_whitespace() noexcept {
+        std::vector<std::expected<jsonh_token, std::string>> tokens = {};
 
         while (true) {
             // Whitespace
@@ -245,7 +734,7 @@ private:
 
         return tokens;
     }
-    std::expected<jsonh_token, std::string_view> read_comment() noexcept {
+    std::expected<jsonh_token, std::string> read_comment() noexcept {
         bool block_comment = false;
 
         // Hash-styled comment
@@ -313,6 +802,106 @@ private:
             }
         }
     }
+    std::expected<unsigned int, std::string> read_hex_sequence(int length) {
+        std::vector<char> hex_chars(length);
+
+        for (int index = 0; index < length; index++) {
+            std::optional<char> next = read();
+
+            // Hex digit
+            if ((next >= '0' && next <= '9') || (next >= 'A' && next <= 'F') || (next >= 'a' && next <= 'f')) {
+                hex_chars[index] = next.value();
+            }
+            // Unexpected char
+            else {
+                return std::unexpected("Incorrect number of hexadecimal digits in unicode escape sequence");
+            }
+        }
+
+        // Parse unicode character from hex digits
+        unsigned int z;
+        return std::from_chars(hex_chars.begin(), hex_chars.end(), &z, 16);
+        //return std::stoul(hex_chars, nullptr, 16);
+    }
+    /*private Result read_escape_character(scoped ref ValueStringBuilder StringBuilder) {
+        if (Read() is not char EscapeChar) {
+            return new Error("Expected escape sequence, got end of input");
+        }
+
+        // Reverse solidus
+        if (EscapeChar is '\\') {
+            StringBuilder.Append('\\');
+        }
+        // Backspace
+        else if (EscapeChar is 'b') {
+            StringBuilder.Append('\b');
+        }
+        // Form feed
+        else if (EscapeChar is 'f') {
+            StringBuilder.Append('\f');
+        }
+        // Newline
+        else if (EscapeChar is 'n') {
+            StringBuilder.Append('\n');
+        }
+        // Carriage return
+        else if (EscapeChar is 'r') {
+            StringBuilder.Append('\r');
+        }
+        // Tab
+        else if (EscapeChar is 't') {
+            StringBuilder.Append('\t');
+        }
+        // Vertical tab
+        else if (EscapeChar is 'v') {
+            StringBuilder.Append('\v');
+        }
+        // Null
+        else if (EscapeChar is '0') {
+            StringBuilder.Append('\0');
+        }
+        // Alert
+        else if (EscapeChar is 'a') {
+            StringBuilder.Append('\a');
+        }
+        // Escape
+        else if (EscapeChar is 'e') {
+            StringBuilder.Append('\e');
+        }
+        // Unicode hex sequence
+        else if (EscapeChar is 'u') {
+            if (!ReadHexSequence(4).TryGetValue(out uint Result, out Error Error)) {
+                return Error;
+            }
+            StringBuilder.Append((char)Result);
+        }
+        // Short unicode hex sequence
+        else if (EscapeChar is 'x') {
+            if (!ReadHexSequence(2).TryGetValue(out uint Result, out Error Error)) {
+                return Error;
+            }
+            StringBuilder.Append((char)Result);
+        }
+        // Long unicode hex sequence
+        else if (EscapeChar is 'U') {
+            if (!ReadHexSequence(8).TryGetValue(out uint Result, out Error Error)) {
+                return Error;
+            }
+            StringBuilder.Append((Rune)Result);
+        }
+        // Escaped newline
+        else if (NewlineChars.Contains(EscapeChar)) {
+            // Join CR LF
+            if (EscapeChar is '\r') {
+                ReadOne('\n');
+            }
+        }
+        // Other
+        else {
+            StringBuilder.Append(EscapeChar);
+        }
+        return Result.Success;
+    }*/
     std::optional<char> peek() const noexcept {
         int next_int = stream->peek();
         if (next_int < 0) {
