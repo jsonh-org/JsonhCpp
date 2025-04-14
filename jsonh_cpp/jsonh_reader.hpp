@@ -1005,8 +1005,7 @@ private:
         }
     }
     std::expected<unsigned int, std::string> read_hex_sequence(int length) noexcept {
-        std::string hex_chars;
-        hex_chars.reserve(length);
+        std::string hex_chars(length, '\0');
 
         for (int index = 0; index < length; index++) {
             std::optional<char> next = read();
