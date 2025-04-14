@@ -14,6 +14,9 @@ using namespace nlohmann;
 
 namespace jsonh {
 
+/// <summary>
+/// A reader that reads tokens from an input stream encoded as UTF-8.
+/// </summary>
 class jsonh_reader final {
 public:
     /// <summary>
@@ -221,9 +224,41 @@ public:
         }
         // Primitive value (null, true, false, string, number)
         else {
-            //std::expected<jsonh_token, std::string>& token = read_primitive_element();
-            // TODO
-            tokens.push_back(read_string());
+            std::expected<jsonh_token, std::string> token = read_primitive_element();
+            if (!token) {
+                tokens.push_back(std::unexpected(token.error()));
+                return tokens;
+            }
+
+            // Detect braceless object from property name
+            if (token.value().json_type == json_token_type::string) {
+                // Try read property name
+                std::vector<jsonh_token> property_name_tokens = {};
+                for (std::expected<jsonh_token, std::string> property_name_token : read_property_name(token.value().value)) {
+                    // Possible braceless object
+                    if (property_name_token) {
+                        property_name_tokens.push_back(property_name_token.value());
+                    }
+                    // Primitive value (error reading property name)
+                    else {
+                        tokens.push_back(token.value());
+                        tokens.append_range(property_name_tokens);
+                        return tokens;
+                    }
+                }
+                // Braceless object
+                for (std::expected<jsonh_token, std::string> object_token : read_braceless_object(property_name_tokens)) {
+                    if (!object_token) {
+                        tokens.push_back(object_token);
+                        return tokens;
+                    }
+                    tokens.push_back(object_token);
+                }
+            }
+            // Primitive value
+            else {
+                tokens.push_back(token);
+            }
         }
 
         return tokens;
@@ -390,7 +425,7 @@ private:
 
         return tokens;
     }
-    std::vector<std::expected<jsonh_token, std::string>> read_property_name(std::optional<std::unique_ptr<std::string>> string = std::nullopt) noexcept {
+    std::vector<std::expected<jsonh_token, std::string>> read_property_name(std::optional<std::string> string = std::nullopt) noexcept {
         std::vector<std::expected<jsonh_token, std::string>> tokens = {};
 
         // String
@@ -400,7 +435,7 @@ private:
                 tokens.push_back(string_token);
                 return tokens;
             }
-            string = std::unique_ptr<std::string>(&string_token.value().value);
+            string = string_token.value().value;
         }
 
         // Comments & whitespace
@@ -419,7 +454,7 @@ private:
         }
 
         // End of property name
-        tokens.push_back(jsonh_token(json_token_type::property_name));
+        tokens.push_back(jsonh_token(json_token_type::property_name, string.value()));
 
         return tokens;
     }
@@ -702,6 +737,182 @@ private:
             return jsonh_token(json_token_type::string, string_builder);
         }
     }
+    bool detect_quoteless_string(std::string& whitespace_builder) {
+        while (true) {
+            // Read char
+            std::optional<char> next = peek();
+            if (!next) {
+                break;
+            }
+
+            // Newline
+            if (newline_chars.contains(next.value())) {
+                // Quoteless strings cannot contain unescaped newlines
+                return false;
+            }
+
+            // End of whitespace
+            if (!whitespace_chars.contains(next.value())) {
+                break;
+            }
+
+            // Whitespace
+            whitespace_builder += next.value();
+            read();
+        }
+
+        // Found quoteless string if found backslash or non-reserved char
+        std::optional<char> next_char = peek();
+        return next_char && (next_char.value() == '\\' || !reserved_chars.contains(next_char.value()));
+    }
+    std::expected<jsonh_token, std::string> read_number_or_quoteless_string() noexcept {
+        // Read number
+        std::string number_builder;
+        number_builder.reserve(64);
+        std::expected<jsonh_token, std::string> number = read_number(number_builder);
+        if (!read_number(number_builder)) {
+            // Try read quoteless string starting with number
+            std::string whitespace_chars;
+            whitespace_chars.reserve(64);
+            if (detect_quoteless_string(whitespace_chars)) {
+                return read_quoteless_string(number.value().value + whitespace_chars);
+            }
+            // Otherwise, accept number
+            else {
+                return number;
+            }
+        }
+        // Read quoteless string starting with malformed number
+        else {
+            return read_quoteless_string(number_builder);
+        }
+    }
+    std::expected<jsonh_token, std::string> read_number(std::string& number_builder) noexcept {
+        // Read base
+        std::string base_digits = "0123456789";
+        if (read_one('0')) {
+            number_builder += '0';
+
+            std::optional<char> hex_base_char = read_any({ 'x', 'X' });
+            if (hex_base_char) {
+                number_builder += hex_base_char.value();
+                base_digits = "0123456789ABCDEFabcdef";
+            }
+            else {
+                std::optional<char> binary_base_char = read_any({ 'b', 'B' });
+                if (hex_base_char) {
+                    number_builder += binary_base_char.value();
+                    base_digits = "01";
+                }
+                else {
+                    std::optional<char> octal_base_char = read_any({ 'o', 'O' });
+                    if (octal_base_char) {
+                        number_builder += octal_base_char.value();
+                        base_digits = "01234567";
+                    }
+                }
+            }
+        }
+
+        // Read main number
+        std::expected<void, std::string> main_result = read_number_no_exponent(number_builder, base_digits);
+        if (!main_result) {
+            return std::unexpected(main_result.error());
+        }
+
+        // Exponent
+        std::optional<char> exponent_char = read_any({ 'e', 'E' });
+        if (exponent_char) {
+            number_builder += exponent_char.value();
+
+            // Read exponent number
+            std::expected<void, std::string> exponent_result = read_number_no_exponent(number_builder, base_digits);
+            if (!exponent_result) {
+                return std::unexpected(exponent_result.error());
+            }
+        }
+
+        // End of number
+        return jsonh_token(json_token_type::number, number_builder);
+    }
+    std::expected<void, std::string> read_number_no_exponent(std::string& number_builder, std::string_view base_digits) noexcept {
+        // Read sign
+        read_any({ '-', '+' });
+
+        // Leading underscore
+        if (read_one('_')) {
+            return std::unexpected("Leading `_` in number");
+        }
+
+        bool is_fraction = false;
+
+        while (true) {
+            // Peek char
+            std::optional<char> next = peek();
+            if (!next) {
+                break;
+            }
+
+            // Digit
+            if (base_digits.contains(next.value())) {
+                read();
+                number_builder += next.value();
+            }
+            // Decimal point
+            else if (next.value() == '.') {
+                read();
+                number_builder += next.value();
+
+                // Duplicate decimal point
+                if (is_fraction) {
+                    return std::unexpected("Duplicate `.` in number");
+                }
+                is_fraction = true;
+            }
+            // Underscore
+            else if (next.value() == '_') {
+                read();
+                number_builder += next.value();
+            }
+            // Other
+            else {
+                break;
+            }
+        }
+
+        // Ensure not empty
+        if (number_builder.empty()) {
+            return std::unexpected("Empty number");
+        }
+
+        // Trailing underscore
+        if (number_builder.ends_with('_')) {
+            return std::unexpected("Trailing `_` in number");
+        }
+
+        // End of number
+        return std::expected<void, std::string>(); // Success
+    }
+    std::expected<jsonh_token, std::string> read_primitive_element() noexcept {
+        // Peek char
+        std::optional<char> next = peek();
+        if (!next) {
+            return std::unexpected("Expected primitive element, got end of input");
+        }
+
+        // Number
+        if ((next >= '0' && next <= '9') || (next == '-' || next == '+') || next == '.') {
+            return read_number_or_quoteless_string();
+        }
+        // String
+        else if (next == '"' || next == '\'') {
+            return read_string();
+        }
+        // Quoteless string (or named literal)
+        else {
+            return read_quoteless_string();
+        }
+    }
     std::vector<std::expected<jsonh_token, std::string>> read_comments_and_whitespace() noexcept {
         std::vector<std::expected<jsonh_token, std::string>> tokens = {};
 
@@ -747,8 +958,8 @@ private:
         }
 
         // Read comment
-        std::string string_builder;
-        string_builder.reserve(64);
+        std::string comment_builder;
+        comment_builder.reserve(64);
 
         while (true) {
             // Read char
@@ -761,18 +972,18 @@ private:
                 }
                 // End of block comment
                 if (next == '*' && read_one('/')) {
-                    return jsonh_token(json_token_type::comment, string_builder);
+                    return jsonh_token(json_token_type::comment, comment_builder);
                 }
             }
             else {
                 // End of line comment
                 if (!next || newline_chars.contains(next.value())) {
-                    return jsonh_token(json_token_type::comment, string_builder);
+                    return jsonh_token(json_token_type::comment, comment_builder);
                 }
             }
 
             // Comment char
-            string_builder += next.value();
+            comment_builder += next.value();
         }
     }
     void read_whitespace() noexcept {
@@ -793,7 +1004,7 @@ private:
             }
         }
     }
-    std::expected<unsigned int, std::string> read_hex_sequence(int length) {
+    std::expected<unsigned int, std::string> read_hex_sequence(int length) noexcept {
         std::string hex_chars;
         hex_chars.reserve(length);
 
@@ -813,7 +1024,7 @@ private:
         // Parse unicode character from hex digits
         return (unsigned int)std::stoul(hex_chars, nullptr, 16);
     }
-    std::expected<void, std::string> read_escape_sequence(std::string& string_builder) {
+    std::expected<void, std::string> read_escape_sequence(std::string& string_builder) noexcept {
         std::optional<char> escape_char = read();
         if (!escape_char) {
             return std::unexpected("Expected escape sequence, got end of input");
@@ -857,7 +1068,7 @@ private:
         }
         // Escape
         else if (escape_char.value() == 'e') {
-            string_builder += '\e';
+            string_builder += '\u001b';
         }
         // Unicode hex sequence
         else if (escape_char.value() == 'u') {
@@ -865,7 +1076,8 @@ private:
             if (!hex_code) {
                 return std::unexpected(hex_code.error());
             }
-            string_builder += (char16_t)hex_code.value();
+            char16_t utf16_char = (char16_t)hex_code.value();
+            string_builder += convert_utf16_to_utf8(utf16_char);
         }
         // Short unicode hex sequence
         else if (escape_char.value() == 'x') {
@@ -873,7 +1085,8 @@ private:
             if (!hex_code) {
                 return std::unexpected(hex_code.error());
             }
-            string_builder += (char8_t)hex_code.value();
+            char8_t utf8_char = (char8_t)hex_code.value();
+            string_builder += utf8_char;
         }
         // Long unicode hex sequence
         else if (escape_char.value() == 'U') {
@@ -881,7 +1094,8 @@ private:
             if (!hex_code) {
                 return std::unexpected(hex_code.error());
             }
-            string_builder += (char32_t)hex_code.value();
+            char32_t utf32_char = (char32_t)hex_code.value();
+            string_builder += convert_utf32_to_utf8(utf32_char);
         }
         // Escaped newline
         else if (newline_chars.contains(escape_char.value())) {
@@ -933,6 +1147,48 @@ private:
         // Option matched
         read();
         return next;
+    }
+    static std::string convert_utf16_to_utf8(const char16_t utf16_char) noexcept {
+        std::string result;
+
+        if (utf16_char <= 0x7F) {
+            result += static_cast<char>(utf16_char);
+        }
+        else if (utf16_char <= 0x7FF) {
+            result += static_cast<char>(0xC0 | (utf16_char >> 6));
+            result += static_cast<char>(0x80 | (utf16_char & 0x3F));
+        }
+        else {
+            result += static_cast<char>(0xE0 | (utf16_char >> 12));
+            result += static_cast<char>(0x80 | ((utf16_char >> 6) & 0x3F));
+            result += static_cast<char>(0x80 | (utf16_char & 0x3F));
+        }
+
+        return result;
+    }
+    static std::string convert_utf32_to_utf8(const char32_t utf32_char) noexcept {
+        std::string result;
+
+        if (utf32_char <= 0x7F) {
+            result += static_cast<char>(utf32_char);
+        }
+        else if (utf32_char <= 0x7FF) {
+            result += static_cast<char>(0xC0 | (utf32_char >> 6));
+            result += static_cast<char>(0x80 | (utf32_char & 0x3F));
+        }
+        else if (utf32_char <= 0xFFFF) {
+            result += static_cast<char>(0xE0 | (utf32_char >> 12));
+            result += static_cast<char>(0x80 | ((utf32_char >> 6) & 0x3F));
+            result += static_cast<char>(0x80 | (utf32_char & 0x3F));
+        }
+        else {
+            result += static_cast<char>(0xF0 | (utf32_char >> 18));
+            result += static_cast<char>(0x80 | ((utf32_char >> 12) & 0x3F));
+            result += static_cast<char>(0x80 | ((utf32_char >> 6) & 0x3F));
+            result += static_cast<char>(0x80 | (utf32_char & 0x3F));
+        }
+
+        return result;
     }
 };
 
