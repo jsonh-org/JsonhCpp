@@ -7,7 +7,7 @@
 
 using namespace jsonh;
 
-TEST_CASE("A") {
+TEST_CASE("Basic Test") {
     std::cout << jsonh_reader("'hello'").parse_element().value() << '\n';
     /*for (std::expected<jsonh_token, std::string> v : jsonh_reader("'hello'").read_element()) {
         std::cout << (int)v.value().json_type << '\n';
@@ -15,10 +15,10 @@ TEST_CASE("A") {
     }*/
 }
 
-TEST_CASE("B") {
-    std::cout << jsonh_reader("'\\u00E7'").parse_element().value() << '\n';
-    std::cout << jsonh_reader("'\\xE7'").parse_element().value() << '\n';
-    std::cout << jsonh_reader("'\\U0001F47D'").parse_element().value() << '\n';
+TEST_CASE("Unicode Escape Sequences") {
+    REQUIRE(jsonh_reader("'\\u00E7'").parse_element().value() == "ç");
+    REQUIRE(jsonh_reader("'\\xE7'").parse_element().value() == "ç");
+    REQUIRE(jsonh_reader("'\\U0001F47D'").parse_element().value() == "👽");
 }
 
 TEST_CASE("Comments") {
