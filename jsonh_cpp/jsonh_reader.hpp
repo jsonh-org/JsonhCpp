@@ -57,7 +57,7 @@ public:
     /// <summary>
     /// Frees the resources used by the reader.
     /// </summary>
-    ~jsonh_reader() {
+    ~jsonh_reader() noexcept {
         stream.reset();
     }
 
