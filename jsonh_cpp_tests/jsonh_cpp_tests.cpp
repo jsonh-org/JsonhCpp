@@ -7,6 +7,14 @@
 
 using namespace jsonh;
 
+TEST_CASE("A") {
+    std::cout << jsonh_reader("'hello'").parse_element().value() << '\n';
+    /*for (std::expected<jsonh_token, std::string> v : jsonh_reader("'hello'").read_element()) {
+        std::cout << (int)v.value().json_type << '\n';
+        std::cout << v.value().value << '\n';
+    }*/
+}
+
 TEST_CASE("Comments") {
     jsonh_reader reader(R"(
 // line comment
@@ -31,7 +39,7 @@ TEST_CASE("Test 1") {
 /* hi */
 aaa
 )");
-    for (std::expected<jsonh_token, std::string_view>& token : reader.read_element()) {
+    for (std::expected<jsonh_token, std::string>& token : reader.read_element()) {
         REQUIRE(token);
     }
 }
@@ -43,7 +51,7 @@ TEST_CASE("Test 2") {
 aaa
 )");
     bool found_error = false;
-    for (std::expected<jsonh_token, std::string_view>& token : reader.read_element()) {
+    for (std::expected<jsonh_token, std::string>& token : reader.read_element()) {
         if (!token) {
             found_error = true;
             break;

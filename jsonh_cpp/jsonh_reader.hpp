@@ -221,22 +221,10 @@ public:
         }
         // Primitive value (null, true, false, string, number)
         else {
-            std::expected<jsonh_token, std::string>& token = read_primitive_element();
-
+            //std::expected<jsonh_token, std::string>& token = read_primitive_element();
+            // TODO
+            tokens.push_back(read_string());
         }
-
-        /*
-        while (true) {
-            int c = stream->get();
-            if (c < 0) {
-                break;
-            }
-            if (c != 'a') {
-                return false;
-            }
-        }
-        return true;
-        */
 
         return tokens;
     }
@@ -534,7 +522,8 @@ private:
         size_t end_quote_counter = 0;
 
         // Read string
-        std::string string_builder = "";
+        std::string string_builder;
+        string_builder.reserve(64);
 
         while (true) {
             std::optional<char> next = read();
@@ -557,7 +546,7 @@ private:
             }
             // Escape sequence
             else if (next == '\\') {
-                std::expected<void, std::string> escape_sequence_result = read_escape_sequence(&string_builder);
+                std::expected<void, std::string> escape_sequence_result = read_escape_sequence(string_builder);
                 if (!escape_sequence_result) {
                     return std::unexpected(escape_sequence_result.error());
                 }
@@ -572,7 +561,7 @@ private:
         if (start_quote_counter > 1) {
             // Count leading whitespace preceding closing quotes
             int last_newline_index = -1;
-            for (size_t index = string_builder.length() - 1; index >= 0; index--) {
+            for (int index = string_builder.length() - 1; index >= 0; index--) {
                 if (newline_chars.contains(string_builder[index])) {
                     last_newline_index = index;
                 }
@@ -648,6 +637,7 @@ private:
 
         // Read quoteless string
         std::string string_builder = initial_chars;
+        string_builder.reserve(64);
 
         while (true) {
             // Read char
@@ -659,7 +649,7 @@ private:
             // Read escape sequence
             if (next.value() == '\\') {
                 read();
-                std::expected<void, std::string> escape_sequence_result = read_escape_sequence(&string_builder);
+                std::expected<void, std::string> escape_sequence_result = read_escape_sequence(string_builder);
                 if (!escape_sequence_result) {
                     return std::unexpected(escape_sequence_result.error());
                 }
@@ -686,7 +676,7 @@ private:
 
             // Trim trailing whitespace
             int trailing_whitespace_index = -1;
-            for (size_t index = string_builder.length() - 1; index >= 0; index--) {
+            for (int index = string_builder.length() - 1; index >= 0; index--) {
                 if (whitespace_chars.contains(string_builder[index])) {
                     trailing_whitespace_index = index;
                 }
@@ -757,7 +747,8 @@ private:
         }
 
         // Read comment
-        std::string string_builder = "";
+        std::string string_builder;
+        string_builder.reserve(64);
 
         while (true) {
             // Read char
@@ -803,7 +794,8 @@ private:
         }
     }
     std::expected<unsigned int, std::string> read_hex_sequence(int length) {
-        std::vector<char> hex_chars(length);
+        std::string hex_chars;
+        hex_chars.reserve(length);
 
         for (int index = 0; index < length; index++) {
             std::optional<char> next = read();
@@ -819,89 +811,91 @@ private:
         }
 
         // Parse unicode character from hex digits
-        unsigned int z;
-        return std::from_chars(hex_chars.begin(), hex_chars.end(), &z, 16);
-        //return std::stoul(hex_chars, nullptr, 16);
+        return (unsigned int)std::stoul(hex_chars, nullptr, 16);
     }
-    /*private Result read_escape_character(scoped ref ValueStringBuilder StringBuilder) {
-        if (Read() is not char EscapeChar) {
-            return new Error("Expected escape sequence, got end of input");
+    std::expected<void, std::string> read_escape_sequence(std::string& string_builder) {
+        std::optional<char> escape_char = read();
+        if (!escape_char) {
+            return std::unexpected("Expected escape sequence, got end of input");
         }
 
         // Reverse solidus
-        if (EscapeChar is '\\') {
-            StringBuilder.Append('\\');
+        if (escape_char.value() == '\\') {
+            string_builder += '\\';
         }
         // Backspace
-        else if (EscapeChar is 'b') {
-            StringBuilder.Append('\b');
+        else if (escape_char.value() == 'b') {
+            string_builder += '\b';
         }
         // Form feed
-        else if (EscapeChar is 'f') {
-            StringBuilder.Append('\f');
+        else if (escape_char.value() == 'f') {
+            string_builder += '\f';
         }
         // Newline
-        else if (EscapeChar is 'n') {
-            StringBuilder.Append('\n');
+        else if (escape_char.value() == 'n') {
+            string_builder += '\n';
         }
         // Carriage return
-        else if (EscapeChar is 'r') {
-            StringBuilder.Append('\r');
+        else if (escape_char.value() == 'r') {
+            string_builder += '\r';
         }
         // Tab
-        else if (EscapeChar is 't') {
-            StringBuilder.Append('\t');
+        else if (escape_char.value() == 't') {
+            string_builder += '\t';
         }
         // Vertical tab
-        else if (EscapeChar is 'v') {
-            StringBuilder.Append('\v');
+        else if (escape_char.value() == 'v') {
+            string_builder += '\v';
         }
         // Null
-        else if (EscapeChar is '0') {
-            StringBuilder.Append('\0');
+        else if (escape_char.value() == '0') {
+            string_builder += '\0';
         }
         // Alert
-        else if (EscapeChar is 'a') {
-            StringBuilder.Append('\a');
+        else if (escape_char.value() == 'a') {
+            string_builder += '\a';
         }
         // Escape
-        else if (EscapeChar is 'e') {
-            StringBuilder.Append('\e');
+        else if (escape_char.value() == 'e') {
+            string_builder += '\e';
         }
         // Unicode hex sequence
-        else if (EscapeChar is 'u') {
-            if (!ReadHexSequence(4).TryGetValue(out uint Result, out Error Error)) {
-                return Error;
+        else if (escape_char.value() == 'u') {
+            std::expected<unsigned int, std::string> hex_code = read_hex_sequence(4);
+            if (!hex_code) {
+                return std::unexpected(hex_code.error());
             }
-            StringBuilder.Append((char)Result);
+            string_builder += (char16_t)hex_code.value();
         }
         // Short unicode hex sequence
-        else if (EscapeChar is 'x') {
-            if (!ReadHexSequence(2).TryGetValue(out uint Result, out Error Error)) {
-                return Error;
+        else if (escape_char.value() == 'x') {
+            std::expected<unsigned int, std::string> hex_code = read_hex_sequence(2);
+            if (!hex_code) {
+                return std::unexpected(hex_code.error());
             }
-            StringBuilder.Append((char)Result);
+            string_builder += (char8_t)hex_code.value();
         }
         // Long unicode hex sequence
-        else if (EscapeChar is 'U') {
-            if (!ReadHexSequence(8).TryGetValue(out uint Result, out Error Error)) {
-                return Error;
+        else if (escape_char.value() == 'U') {
+            std::expected<unsigned int, std::string> hex_code = read_hex_sequence(8);
+            if (!hex_code) {
+                return std::unexpected(hex_code.error());
             }
-            StringBuilder.Append((Rune)Result);
+            string_builder += (char32_t)hex_code.value();
         }
         // Escaped newline
-        else if (NewlineChars.Contains(EscapeChar)) {
+        else if (newline_chars.contains(escape_char.value())) {
             // Join CR LF
-            if (EscapeChar is '\r') {
-                ReadOne('\n');
+            if (escape_char == '\r') {
+                read_one('\n');
             }
         }
         // Other
         else {
-            StringBuilder.Append(EscapeChar);
+            string_builder += escape_char.value();
         }
-        return Result.Success;
-    }*/
+        return std::expected<void, std::string>(); // Success
+    }
     std::optional<char> peek() const noexcept {
         int next_int = stream->peek();
         if (next_int < 0) {
@@ -933,7 +927,7 @@ private:
             return {};
         }
         // Match option
-        if (options.contains(next.value())) {
+        if (!options.contains(next.value())) {
             return {};
         }
         // Option matched
