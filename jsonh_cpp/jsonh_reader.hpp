@@ -61,10 +61,15 @@ public:
         stream.reset();
     }
 
+    template <typename T>
+    std::expected<T, std::string> parse_element() noexcept {
+        return parse_element().value().template get<T>();
+    }
+
     /// <summary>
     /// Parses a single element from the reader.
     /// </summary>
-    std::expected<json, std::string_view> parse_element() noexcept {
+    std::expected<json, std::string> parse_element() noexcept {
         std::stack<json> current_nodes;
         std::optional<std::string> current_property_name;
 
@@ -132,7 +137,7 @@ public:
                 }
                 // Number
                 case json_token_type::number: {
-                    std::expected<long double, std::string_view> result = jsonh_number_parser::parse(token.value);
+                    std::expected<long double, std::string> result = jsonh_number_parser::parse(token.value);
                     if (!result) {
                         return std::unexpected(result.error());
                     }
@@ -718,6 +723,9 @@ private:
             if (whitespace_chars.contains(string_builder[index])) {
                 trailing_whitespace_index = index;
             }
+            else {
+                break;
+            }
         }
         if (trailing_whitespace_index >= 0) {
             string_builder.erase(trailing_whitespace_index);
@@ -772,7 +780,7 @@ private:
         std::string number_builder;
         number_builder.reserve(64);
         std::expected<jsonh_token, std::string> number = read_number(number_builder);
-        if (!read_number(number_builder)) {
+        if (read_number(number_builder)) {
             // Try read quoteless string starting with number
             std::string whitespace_chars;
             whitespace_chars.reserve(64);

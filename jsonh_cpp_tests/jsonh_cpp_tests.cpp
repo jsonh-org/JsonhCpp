@@ -13,6 +13,13 @@ TEST_CASE("Basic Test") {
         std::cout << (int)v.value().json_type << '\n';
         std::cout << v.value().value << '\n';
     }*/
+
+
+    std::string jsonh = R"(
+6 ab a
+)";
+    std::string element = jsonh::jsonh_reader(jsonh).parse_element<std::string>().value();
+    std::cout << element << '\n';
 }
 
 TEST_CASE("Unicode Escape Sequences") {

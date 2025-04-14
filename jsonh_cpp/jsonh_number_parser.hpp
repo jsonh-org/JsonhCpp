@@ -17,7 +17,7 @@ public:
     /// Input: <c>+5.2e3.0</c><br/>
     /// Output: <c>5200</c>
     /// </summary>
-    static std::expected<long double, std::string_view> parse(std::string jsonh_number) noexcept {
+    static std::expected<long double, std::string> parse(std::string jsonh_number) noexcept {
         // Decimal
         std::string base_digits = "0123456789";
         // Hexadecimal
@@ -47,7 +47,7 @@ private:
     /// <summary>
     /// Converts a fractional number with an exponent (e.g. <c>12.3e4.5</c>) from the given base (e.g. <c>01234567</c>) to a base-10 real.
     /// </summary>
-    static std::expected<long double, std::string_view> parse_fractional_number_with_exponent(std::string_view digits, std::string_view base_digits) noexcept {
+    static std::expected<long double, std::string> parse_fractional_number_with_exponent(std::string_view digits, std::string_view base_digits) noexcept {
         // Find exponent
         size_t dot_index = digits.find_first_of("eE");
         // If no exponent then normalize real
@@ -60,11 +60,11 @@ private:
         std::string_view exponent_part = digits.substr(dot_index + 1);
 
         // Parse mantissa and exponent
-        std::expected<long double, std::string_view> mantissa = parse_fractional_number(mantissa_part, base_digits);
+        std::expected<long double, std::string> mantissa = parse_fractional_number(mantissa_part, base_digits);
         if (!mantissa) {
             return std::unexpected(mantissa.error());
         }
-        std::expected<long double, std::string_view> exponent = parse_fractional_number(exponent_part, base_digits);
+        std::expected<long double, std::string> exponent = parse_fractional_number(exponent_part, base_digits);
         if (!exponent) {
             return std::unexpected(exponent.error());
         }
@@ -75,7 +75,7 @@ private:
     /// <summary>
     /// Converts a fractional number (e.g. <c>123.45</c>) from the given base (e.g. <c>01234567</c>) to a base-10 real.
     /// </summary>
-    static std::expected<long double, std::string_view> parse_fractional_number(std::string_view digits, std::string_view base_digits) noexcept {
+    static std::expected<long double, std::string> parse_fractional_number(std::string_view digits, std::string_view base_digits) noexcept {
         // Optimization for base-10 digits
         if (base_digits == "0123456789") {
             return std::stold(std::string(digits));
@@ -85,7 +85,7 @@ private:
         size_t dot_index = digits.find('.');
         // If no dot then normalize integer
         if (dot_index < 0) {
-            std::expected<long long, std::string_view> integer = parse_whole_number(digits, base_digits);
+            std::expected<long long, std::string> integer = parse_whole_number(digits, base_digits);
             if (!integer) {
                 return std::unexpected(integer.error());
             }
@@ -97,11 +97,11 @@ private:
         std::string_view fraction_part = digits.substr(dot_index + 1);
 
         // Parse parts of number
-        std::expected<long long, std::string_view> whole = parse_whole_number(whole_part, base_digits);
+        std::expected<long long, std::string> whole = parse_whole_number(whole_part, base_digits);
         if (!whole) {
             return std::unexpected(whole.error());
         }
-        std::expected<long long, std::string_view> fraction = parse_whole_number(fraction_part, base_digits);
+        std::expected<long long, std::string> fraction = parse_whole_number(fraction_part, base_digits);
         if (!fraction) {
             return std::unexpected(fraction.error());
         }
@@ -112,7 +112,7 @@ private:
     /// <summary>
     /// Converts a whole number (e.g. <c>12345</c>) from the given base (e.g. <c>01234567</c>) to a base-10 integer.
     /// </summary>
-    static std::expected<long long, std::string_view> parse_whole_number(std::string_view digits, std::string_view base_digits) noexcept {
+    static std::expected<long long, std::string> parse_whole_number(std::string_view digits, std::string_view base_digits) noexcept {
         // Optimization for base-10 digits
         if (base_digits == "0123456789") {
             return std::stoll(digits.data());
