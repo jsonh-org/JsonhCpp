@@ -55,9 +55,7 @@ std::string element = jsonh::jsonh_reader::parse_element<std::string>(jsonh).val
 
 ## Dependencies
 
-_Updated: 2025/04/11_
-
-- [nlohmann/json](https://github.com/nlohmann/json)
-- [catchorg/Catch2](https://github.com/catchorg/Catch2) ([help](https://stackoverflow.com/a/78804393))
-- C++ 23
-- C 17
+- [nlohmann/json](https://github.com/nlohmann/json) (up-to-date 2025/04/11)
+- [nemtrif/utfcpp](https://github.com/nemtrif/utfcpp) (up-to-date 2025/04/14)
+- [catchorg/Catch2](https://github.com/catchorg/Catch2) ([help](https://stackoverflow.com/a/78804393)) (up-to-date 2025/04/11)
+- C++23

@@ -6,6 +6,8 @@
 #include <stack> // for std::stack
 #include <expected> // for std::expected
 #include "nlohmann/json.hpp" // for nlohmann::json
+#define UTF_CPP_CPLUSPLUS 202302L // for utf8 (C++23)
+#include "utf8cpp/utf8.h" // for utf8
 #include "jsonh_token.hpp" // for jsonh::jsonh_token
 #include "jsonh_reader_options.hpp" // for jsonh::jsonh_reader_options
 #include "jsonh_number_parser.hpp" // for jsonh::jsonh_number_parser
@@ -178,10 +180,10 @@ public:
                     return std::unexpected("Token type not implemented");
                 }
             }
-
-            // End of input
-            return std::unexpected("Expected token, got end of input");
         }
+
+        // End of input
+        return std::unexpected("Expected token, got end of input");
     }
     std::vector<std::expected<jsonh_token, std::string>> read_element() noexcept {
         std::vector<std::expected<jsonh_token, std::string>> tokens = {};
@@ -596,7 +598,7 @@ private:
         if (start_quote_counter > 1) {
             // Count leading whitespace preceding closing quotes
             int last_newline_index = -1;
-            for (int index = string_builder.length() - 1; index >= 0; index--) {
+            for (int index = (int)(string_builder.length() - 1); index >= 0; index--) {
                 if (newline_chars.contains(string_builder[index])) {
                     last_newline_index = index;
                 }
@@ -650,14 +652,14 @@ private:
                     if (string_builder.length() >= 1) {
                         char& leading_char = string_builder[0];
                         if (newline_chars.contains(leading_char)) {
-                            int NewlineLength = 1;
+                            int newline_length = 1;
                             // Join CR LF
                             if (leading_char == '\r' && string_builder.length() >= 2 && string_builder[1] == '\n') {
-                                NewlineLength = 2;
+                                newline_length = 2;
                             }
 
                             // Remove leading newline
-                            string_builder.erase(0, NewlineLength);
+                            string_builder.erase(0, newline_length);
                         }
                     }
                 }
@@ -703,39 +705,39 @@ private:
                 read();
                 string_builder += next.value();
             }
-
-            // Ensure not empty
-            if (string_builder.empty()) {
-                return std::unexpected("Empty quoteless string");
-            }
-
-            // Trim trailing whitespace
-            int trailing_whitespace_index = -1;
-            for (int index = string_builder.length() - 1; index >= 0; index--) {
-                if (whitespace_chars.contains(string_builder[index])) {
-                    trailing_whitespace_index = index;
-                }
-            }
-            if (trailing_whitespace_index >= 0) {
-                string_builder.erase(trailing_whitespace_index);
-            }
-
-            // Match named literal
-            if (is_named_literal_possible) {
-                if (string_builder == "null") {
-                    return jsonh_token(json_token_type::null);
-                }
-                else if (string_builder == "true") {
-                    return jsonh_token(json_token_type::true_bool);
-                }
-                else if (string_builder == "false") {
-                    return jsonh_token(json_token_type::false_bool);
-                }
-            }
-
-            // End quoteless string
-            return jsonh_token(json_token_type::string, string_builder);
         }
+
+        // Ensure not empty
+        if (string_builder.empty()) {
+            return std::unexpected("Empty quoteless string");
+        }
+
+        // Trim trailing whitespace
+        int trailing_whitespace_index = -1;
+        for (int index = (int)(string_builder.length() - 1); index >= 0; index--) {
+            if (whitespace_chars.contains(string_builder[index])) {
+                trailing_whitespace_index = index;
+            }
+        }
+        if (trailing_whitespace_index >= 0) {
+            string_builder.erase(trailing_whitespace_index);
+        }
+
+        // Match named literal
+        if (is_named_literal_possible) {
+            if (string_builder == "null") {
+                return jsonh_token(json_token_type::null);
+            }
+            else if (string_builder == "true") {
+                return jsonh_token(json_token_type::true_bool);
+            }
+            else if (string_builder == "false") {
+                return jsonh_token(json_token_type::false_bool);
+            }
+        }
+
+        // End quoteless string
+        return jsonh_token(json_token_type::string, string_builder);
     }
     bool detect_quoteless_string(std::string& whitespace_builder) {
         while (true) {
@@ -1084,8 +1086,8 @@ private:
             if (!hex_code) {
                 return std::unexpected(hex_code.error());
             }
-            char8_t utf8_char = (char8_t)hex_code.value();
-            string_builder += utf8_char;
+            char16_t utf16_char = (char16_t)hex_code.value();
+            string_builder += convert_utf16_to_utf8(utf16_char);
         }
         // Long unicode hex sequence
         else if (escape_char.value() == 'U') {
@@ -1148,46 +1150,14 @@ private:
         return next;
     }
     static std::string convert_utf16_to_utf8(const char16_t utf16_char) noexcept {
-        std::string result;
-
-        if (utf16_char <= 0x7F) {
-            result += static_cast<char>(utf16_char);
-        }
-        else if (utf16_char <= 0x7FF) {
-            result += static_cast<char>(0xC0 | (utf16_char >> 6));
-            result += static_cast<char>(0x80 | (utf16_char & 0x3F));
-        }
-        else {
-            result += static_cast<char>(0xE0 | (utf16_char >> 12));
-            result += static_cast<char>(0x80 | ((utf16_char >> 6) & 0x3F));
-            result += static_cast<char>(0x80 | (utf16_char & 0x3F));
-        }
-
-        return result;
+        std::u16string utf16_string = { utf16_char };
+        std::string utf8_result = utf8::utf16to8(utf16_string);
+        return utf8_result;
     }
     static std::string convert_utf32_to_utf8(const char32_t utf32_char) noexcept {
-        std::string result;
-
-        if (utf32_char <= 0x7F) {
-            result += static_cast<char>(utf32_char);
-        }
-        else if (utf32_char <= 0x7FF) {
-            result += static_cast<char>(0xC0 | (utf32_char >> 6));
-            result += static_cast<char>(0x80 | (utf32_char & 0x3F));
-        }
-        else if (utf32_char <= 0xFFFF) {
-            result += static_cast<char>(0xE0 | (utf32_char >> 12));
-            result += static_cast<char>(0x80 | ((utf32_char >> 6) & 0x3F));
-            result += static_cast<char>(0x80 | (utf32_char & 0x3F));
-        }
-        else {
-            result += static_cast<char>(0xF0 | (utf32_char >> 18));
-            result += static_cast<char>(0x80 | ((utf32_char >> 12) & 0x3F));
-            result += static_cast<char>(0x80 | ((utf32_char >> 6) & 0x3F));
-            result += static_cast<char>(0x80 | (utf32_char & 0x3F));
-        }
-
-        return result;
+        std::u32string utf32_string = { utf32_char };
+        std::string utf8_result = utf8::utf32to8(utf32_string);
+        return utf8_result;
     }
 };
 

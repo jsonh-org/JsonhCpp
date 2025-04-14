@@ -150,6 +150,7 @@
     <ClInclude Include="jsonh_token.hpp" />
     <ClInclude Include="jsonh_token_type.hpp" />
     <ClInclude Include="nlohmann\json.hpp" />
+    <ClInclude Include="utf8cpp\utf8.h" />
     <ClInclude Include="zeus\expected.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

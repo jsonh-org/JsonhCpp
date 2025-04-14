@@ -15,6 +15,12 @@ TEST_CASE("A") {
     }*/
 }
 
+TEST_CASE("B") {
+    std::cout << jsonh_reader("'\\u00E7'").parse_element().value() << '\n';
+    std::cout << jsonh_reader("'\\xE7'").parse_element().value() << '\n';
+    std::cout << jsonh_reader("'\\U0001F47D'").parse_element().value() << '\n';
+}
+
 TEST_CASE("Comments") {
     jsonh_reader reader(R"(
 // line comment
