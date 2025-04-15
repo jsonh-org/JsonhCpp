@@ -17,12 +17,12 @@ using namespace nlohmann;
 namespace jsonh {
 
 /// <summary>
-/// A reader that reads tokens from an input stream encoded as UTF-8.
+/// A reader that reads tokens from a UTF-8 input stream.
 /// </summary>
 class jsonh_reader final {
 public:
     /// <summary>
-    /// The stream to read characters from.
+    /// The UTF-8 stream to read characters from.
     /// </summary>
     std::unique_ptr<std::istream> stream;
     /// <summary>
@@ -35,38 +35,44 @@ public:
     long char_counter = 0;
 
     /// <summary>
-    /// Constructs a reader that reads JSONH from a stream.
+    /// Constructs a reader that reads JSONH from a UTF-8 stream.
     /// </summary>
     jsonh_reader(std::unique_ptr<std::istream> stream, jsonh_reader_options options = jsonh_reader_options()) noexcept {
         this->stream = std::move(stream);
         this->options = options;
     }
     /// <summary>
-    /// Constructs a reader that reads JSONH from a string.
+    /// Constructs a reader that reads JSONH from a UTF-8 string.
     /// </summary>
     jsonh_reader(const std::string& string, jsonh_reader_options options = jsonh_reader_options()) noexcept
         : jsonh_reader(std::make_unique<std::istringstream>(string), options) {
     }
     /// <summary>
-    /// Constructs a reader that reads JSONH from a string.
+    /// Constructs a reader that reads JSONH from a UTF-8 string_view converted to a string.
+    /// </summary>
+    jsonh_reader(const std::string_view& string_view, jsonh_reader_options options = jsonh_reader_options()) noexcept
+        : jsonh_reader(std::string(string_view), options) {
+    }
+    /// <summary>
+    /// Constructs a reader that reads JSONH from a UTF-8 char pointer converted to a string.
     /// </summary>
     jsonh_reader(const char* string, jsonh_reader_options options = jsonh_reader_options()) noexcept
         : jsonh_reader(std::string(string), options) {
     }
     /// <summary>
-    /// Constructs a reader that reads JSONH from a string.
+    /// Constructs a reader that reads JSONH from a UTF-8 string converted to a string.
     /// </summary>
     jsonh_reader(const std::u8string& string, jsonh_reader_options options = jsonh_reader_options()) noexcept
         : jsonh_reader((const char*)string.data(), options) {
     }
     /// <summary>
-    /// Constructs a reader that reads JSONH from a UTF-16 string converted to UTF-8.
+    /// Constructs a reader that reads JSONH from a UTF-16 string converted to a string in UTF-8.
     /// </summary>
     jsonh_reader(const std::u16string& string, jsonh_reader_options options = jsonh_reader_options()) noexcept
         : jsonh_reader(utf8::utf16to8(string), options) {
     }
     /// <summary>
-    /// Constructs a reader that reads JSONH from a UTF-32 string converted to UTF-8.
+    /// Constructs a reader that reads JSONH from a UTF-32 string converted to a string in UTF-8.
     /// </summary>
     jsonh_reader(const std::u32string& string, jsonh_reader_options options = jsonh_reader_options()) noexcept
         : jsonh_reader(utf8::utf32to8(string), options) {
