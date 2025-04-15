@@ -121,7 +121,7 @@ public:
             current_nodes.push(node);
         };
 
-        for (std::expected<jsonh_token, std::string>& token_result : read_element()) {
+        for (const std::expected<jsonh_token, std::string>& token_result : read_element()) {
             // Check error
             if (!token_result) {
                 return std::unexpected(token_result.error());
@@ -220,7 +220,7 @@ public:
         std::vector<std::expected<jsonh_token, std::string>> tokens = {};
 
         // Comments & whitespace
-        for (std::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
+        for (const std::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
             if (!token) {
                 tokens.push_back(token);
                 return tokens;
@@ -237,7 +237,7 @@ public:
 
         // Object
         if (next.value() == '{') {
-            for (std::expected<jsonh_token, std::string>& token : read_object()) {
+            for (const std::expected<jsonh_token, std::string>& token : read_object()) {
                 if (!token) {
                     tokens.push_back(token);
                     return tokens;
@@ -247,7 +247,7 @@ public:
         }
         // Array
         else if (next.value() == '[') {
-            for (std::expected<jsonh_token, std::string>& token : read_array()) {
+            for (const std::expected<jsonh_token, std::string>& token : read_array()) {
                 if (!token) {
                     tokens.push_back(token);
                     return tokens;
@@ -267,7 +267,7 @@ public:
             if (token.value().json_type == json_token_type::string) {
                 // Try read property name
                 std::vector<jsonh_token> property_name_tokens = {};
-                for (std::expected<jsonh_token, std::string> property_name_token : read_property_name(token.value().value)) {
+                for (const std::expected<jsonh_token, std::string>& property_name_token : read_property_name(token.value().value)) {
                     // Possible braceless object
                     if (property_name_token) {
                         property_name_tokens.push_back(property_name_token.value());
@@ -280,7 +280,7 @@ public:
                     }
                 }
                 // Braceless object
-                for (std::expected<jsonh_token, std::string> object_token : read_braceless_object(property_name_tokens)) {
+                for (const std::expected<jsonh_token, std::string> object_token : read_braceless_object(property_name_tokens)) {
                     if (!object_token) {
                         tokens.push_back(object_token);
                         return tokens;
@@ -312,7 +312,7 @@ private:
         // Opening brace
         if (!read_one('{')) {
             // Braceless object
-            for (std::expected<jsonh_token, std::string>& token : read_braceless_object()) {
+            for (const std::expected<jsonh_token, std::string>& token : read_braceless_object()) {
                 if (!token) {
                     tokens.push_back(token);
                     return tokens;
@@ -326,7 +326,7 @@ private:
 
         while (true) {
             // Comments & whitespace
-            for (std::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
+            for (const std::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
                 if (!token) {
                     tokens.push_back(token);
                     return tokens;
@@ -354,7 +354,7 @@ private:
             }
             // Property
             else {
-                for (std::expected<jsonh_token, std::string>& token : read_property()) {
+                for (const std::expected<jsonh_token, std::string>& token : read_property()) {
                     if (!token) {
                         tokens.push_back(token);
                         return tokens;
@@ -372,7 +372,7 @@ private:
 
         // Initial tokens
         if (property_name_tokens) {
-            for (std::expected<jsonh_token, std::string>& token : read_property(property_name_tokens)) {
+            for (const std::expected<jsonh_token, std::string>& token : read_property(property_name_tokens)) {
                 if (!token) {
                     tokens.push_back(token);
                     return tokens;
@@ -383,7 +383,7 @@ private:
 
         while (true) {
             // Comments & whitespace
-            for (std::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
+            for (const std::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
                 if (!token) {
                     tokens.push_back(token);
                     return tokens;
@@ -398,7 +398,7 @@ private:
             }
 
             // Property
-            for (std::expected<jsonh_token, std::string>& token : read_property()) {
+            for (const std::expected<jsonh_token, std::string>& token : read_property()) {
                 if (!token) {
                     tokens.push_back(token);
                     return tokens;
@@ -412,12 +412,12 @@ private:
 
         // Property name
         if (property_name_tokens) {
-            for (jsonh_token& token : property_name_tokens.value()) {
+            for (const jsonh_token& token : property_name_tokens.value()) {
                 tokens.push_back(token);
             }
         }
         else {
-            for (std::expected<jsonh_token, std::string>& token : read_property_name()) {
+            for (const std::expected<jsonh_token, std::string>& token : read_property_name()) {
                 if (!token) {
                     tokens.push_back(token);
                     return tokens;
@@ -427,7 +427,7 @@ private:
         }
 
         // Comments & whitespace
-        for (std::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
+        for (const std::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
             if (!token) {
                 tokens.push_back(token);
                 return tokens;
@@ -436,7 +436,7 @@ private:
         }
 
         // Property value
-        for (std::expected<jsonh_token, std::string>& token : read_element()) {
+        for (const std::expected<jsonh_token, std::string>& token : read_element()) {
             if (!token) {
                 tokens.push_back(token);
                 return tokens;
@@ -445,7 +445,7 @@ private:
         }
 
         // Comments & whitespace
-        for (std::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
+        for (const std::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
             if (!token) {
                 tokens.push_back(token);
                 return tokens;
@@ -472,7 +472,7 @@ private:
         }
 
         // Comments & whitespace
-        for (std::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
+        for (const std::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
             if (!token) {
                 tokens.push_back(token);
                 return tokens;
@@ -504,7 +504,7 @@ private:
 
         while (true) {
             // Comments & whitespace
-            for (std::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
+            for (const std::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
                 if (!token) {
                     tokens.push_back(token);
                     return tokens;
@@ -532,7 +532,7 @@ private:
             }
             // Item
             else {
-                for (std::expected<jsonh_token, std::string>& token : read_item()) {
+                for (const std::expected<jsonh_token, std::string>& token : read_item()) {
                     if (!token) {
                         tokens.push_back(token);
                         return tokens;
@@ -546,7 +546,7 @@ private:
         std::vector<std::expected<jsonh_token, std::string>> tokens = {};
 
         // Element
-        for (std::expected<jsonh_token, std::string>& token : read_element()) {
+        for (const std::expected<jsonh_token, std::string>& token : read_element()) {
             if (!token) {
                 tokens.push_back(token);
                 return tokens;
@@ -555,7 +555,7 @@ private:
         }
 
         // Comments & whitespace
-        for (std::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
+        for (const std::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
             if (!token) {
                 tokens.push_back(token);
                 return tokens;
