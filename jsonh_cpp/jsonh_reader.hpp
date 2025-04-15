@@ -1145,10 +1145,10 @@ private:
         }
         return std::expected<void, std::string>(); // Success
     }
-    std::optional<char32_t> peek() const noexcept {
+    std::optional<char> peek() const noexcept {
         int next_as_int = stream->peek();
         if (next_as_int < 0) {
-            return {};
+            return std::nullopt;
         }
         char next = (char)next_as_int;
         return next;
@@ -1156,7 +1156,7 @@ private:
     std::optional<char> read() noexcept {
         int next_as_int = stream->get();
         if (next_as_int < 0) {
-            return {};
+            return std::nullopt;
         }
         char next = (char)next_as_int;
         char_counter++;
@@ -1173,11 +1173,11 @@ private:
         // Peek char
         std::optional<char> next = peek();
         if (!next) {
-            return {};
+            return std::nullopt;
         }
         // Match option
         if (!options.contains(next.value())) {
-            return {};
+            return std::nullopt;
         }
         // Option matched
         read();
@@ -1186,10 +1186,10 @@ private:
     std::optional<char> peek_one_byte_rune() const noexcept {
         std::optional<char> next = peek();
         if (!next) {
-            return {};
+            return std::nullopt;
         }
         if (!utf8::is_valid(&next.value())) {
-            return {};
+            return std::nullopt;
         }
         return next.value();
     }
