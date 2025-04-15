@@ -602,8 +602,8 @@ private:
         // Trim leading whitespace in multiline string
         if (start_quote_counter > 1) {
             // Count leading whitespace preceding closing quotes
-            int last_newline_index = -1;
-            for (int index = (int)(string_builder.length() - 1); index >= 0; index--) {
+            long last_newline_index = -1;
+            for (long index = (long)(string_builder.length() - 1); index >= 0; index--) {
                 if (newline_chars.contains(string_builder[index])) {
                     last_newline_index = index;
                 }
@@ -616,7 +616,7 @@ private:
                     size_t current_leading_whitespace = 0;
                     bool is_leading_whitespace = true;
 
-                    for (int index = 0; index < string_builder.length(); index++) {
+                    for (long index = 0; index < string_builder.length(); index++) {
                         char& next = string_builder[index];
 
                         // Newline
@@ -657,7 +657,7 @@ private:
                     if (string_builder.length() >= 1) {
                         char& leading_char = string_builder[0];
                         if (newline_chars.contains(leading_char)) {
-                            int newline_length = 1;
+                            long newline_length = 1;
                             // Join CR LF
                             if (leading_char == '\r' && string_builder.length() >= 2 && string_builder[1] == '\n') {
                                 newline_length = 2;
@@ -718,8 +718,8 @@ private:
         }
 
         // Trim trailing whitespace
-        int trailing_whitespace_index = -1;
-        for (int index = (int)(string_builder.length() - 1); index >= 0; index--) {
+        long trailing_whitespace_index = -1;
+        for (long index = (long)(string_builder.length() - 1); index >= 0; index--) {
             if (whitespace_chars.contains(string_builder[index])) {
                 trailing_whitespace_index = index;
             }
@@ -1120,19 +1120,19 @@ private:
         return std::expected<void, std::string>(); // Success
     }
     std::optional<char> peek() const noexcept {
-        int next_int = stream->peek();
-        if (next_int < 0) {
+        int next_as_int = stream->peek();
+        if (next_as_int < 0) {
             return {};
         }
-        char next = (char)next_int;
+        char next = (char)next_as_int;
         return next;
     }
     std::optional<char> read() noexcept {
-        int next_int = stream->get();
-        if (next_int < 0) {
+        int next_as_int = stream->get();
+        if (next_as_int < 0) {
             return {};
         }
-        char next = (char)next_int;
+        char next = (char)next_as_int;
         char_counter++;
         return next;
     }
