@@ -53,6 +53,24 @@ public:
     jsonh_reader(const char* string, jsonh_reader_options options = jsonh_reader_options()) noexcept
         : jsonh_reader(std::string(string), options) {
     }
+    /// <summary>
+    /// Constructs a reader that reads JSONH from a string.
+    /// </summary>
+    jsonh_reader(const std::u8string& string, jsonh_reader_options options = jsonh_reader_options()) noexcept
+        : jsonh_reader((const char*)string.data(), options) {
+    }
+    /// <summary>
+    /// Constructs a reader that reads JSONH from a UTF-16 string converted to UTF-8.
+    /// </summary>
+    jsonh_reader(const std::u16string& string, jsonh_reader_options options = jsonh_reader_options()) noexcept
+        : jsonh_reader(utf8::utf16to8(string), options) {
+    }
+    /// <summary>
+    /// Constructs a reader that reads JSONH from a UTF-32 string converted to UTF-8.
+    /// </summary>
+    jsonh_reader(const std::u32string& string, jsonh_reader_options options = jsonh_reader_options()) noexcept
+        : jsonh_reader(utf8::utf32to8(string), options) {
+    }
 
     /// <summary>
     /// Frees the resources used by the reader.

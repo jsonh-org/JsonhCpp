@@ -7,6 +7,8 @@
 
 using namespace jsonh;
 
+const std::string unicode_character = "私"; // \u79C1
+
 TEST_CASE("Basic Test") {
     std::cout << jsonh_reader("'hello'").parse_element().value() << '\n';
     /*for (std::expected<jsonh_token, std::string> v : jsonh_reader("'hello'").read_element()) {
@@ -73,4 +75,24 @@ aaa
     if (!found_error) {
         REQUIRE(false);
     }
+}
+
+TEST_CASE("string") {
+    jsonh_reader reader(unicode_character);
+    REQUIRE(reader.parse_element<std::string>() == unicode_character);
+}
+
+TEST_CASE("u8string") {
+    jsonh_reader reader(utf8::utf32tou8(utf8::utf8to32(std::string(unicode_character))));
+    REQUIRE(reader.parse_element<std::string>() == unicode_character);
+}
+
+TEST_CASE("u16string") {
+    jsonh_reader reader(utf8::utf8to16(std::string(unicode_character)));
+    REQUIRE(reader.parse_element<std::string>() == unicode_character);
+}
+
+TEST_CASE("u32string") {
+    jsonh_reader reader(utf8::utf8to32(std::string(unicode_character)));
+    REQUIRE(reader.parse_element<std::string>() == unicode_character);
 }
