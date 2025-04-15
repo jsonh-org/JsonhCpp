@@ -1005,7 +1005,7 @@ private:
             }
 
             // Whitespace
-            if (whitespace_chars.contains(*next)) {
+            if (whitespace_chars.contains(next.value())) {
                 read();
             }
             // End of whitespace
