@@ -2,8 +2,10 @@
 
 #include <string> // for std::string
 #include <sstream> // for std::istringstream
+#include <vector> // for std::vector
 #include <set> // for std::set
 #include <stack> // for std::stack
+#include <optional> // for std::optional
 #include <expected> // for std::expected
 #include "nlohmann/json.hpp" // for nlohmann::json
 #define UTF_CPP_CPLUSPLUS 202302L // for utf8 (C++23)
@@ -1143,7 +1145,7 @@ private:
         }
         return std::expected<void, std::string>(); // Success
     }
-    std::optional<char> peek() const noexcept {
+    std::optional<char32_t> peek() const noexcept {
         int next_as_int = stream->peek();
         if (next_as_int < 0) {
             return {};
@@ -1180,6 +1182,32 @@ private:
         // Option matched
         read();
         return next;
+    }
+    std::optional<char> peek_one_byte_rune() const noexcept {
+        std::optional<char> next = peek();
+        if (!next) {
+            return {};
+        }
+        if (!utf8::is_valid(&next.value())) {
+            return {};
+        }
+        return next.value();
+    }
+    std::optional<std::string> read_rune() noexcept {
+        std::string next_rune;
+        while (true) {
+            std::optional<char> next = read();
+            if (!next) {
+                return std::nullopt;
+            }
+
+            next_rune += next.value();
+
+            if (utf8::is_valid(next_rune)) {
+                break;
+            }
+        }
+        return next_rune;
     }
     static std::string convert_utf16_to_utf8(const char16_t utf16_char) noexcept {
         std::u16string utf16_string = { utf16_char };
