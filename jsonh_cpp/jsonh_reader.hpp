@@ -13,6 +13,7 @@
 #include "jsonh_token.hpp" // for jsonh::jsonh_token
 #include "jsonh_reader_options.hpp" // for jsonh::jsonh_reader_options
 #include "jsonh_number_parser.hpp" // for jsonh::jsonh_number_parser
+#include "utf8_reader.hpp" // for jsonh::utf8_reader
 
 using namespace nlohmann;
 
@@ -21,12 +22,8 @@ namespace jsonh {
 /// <summary>
 /// A reader that reads tokens from a UTF-8 input stream.
 /// </summary>
-class jsonh_reader final {
+class jsonh_reader : utf8_reader {
 public:
-    /// <summary>
-    /// The UTF-8 stream to read characters from.
-    /// </summary>
-    std::unique_ptr<std::istream> stream;
     /// <summary>
     /// The options to use when reading JSONH.
     /// </summary>
@@ -39,8 +36,15 @@ public:
     /// <summary>
     /// Constructs a reader that reads JSONH from a UTF-8 stream.
     /// </summary>
-    jsonh_reader(std::unique_ptr<std::istream> stream, jsonh_reader_options options = jsonh_reader_options()) noexcept {
-        this->stream = std::move(stream);
+    jsonh_reader(std::unique_ptr<std::istream> stream, jsonh_reader_options options = jsonh_reader_options()) noexcept
+        : utf8_reader(std::move(stream)) {
+        this->options = options;
+    }
+    /// <summary>
+    /// Constructs a reader that reads JSONH from a UTF-8 stream.
+    /// </summary>
+    jsonh_reader(std::istream& stream, jsonh_reader_options options = jsonh_reader_options()) noexcept
+        : utf8_reader(stream) {
         this->options = options;
     }
     /// <summary>
@@ -78,13 +82,6 @@ public:
     /// </summary>
     jsonh_reader(const std::u32string& string, jsonh_reader_options options = jsonh_reader_options()) noexcept
         : jsonh_reader(utf8::utf32to8(string), options) {
-    }
-
-    /// <summary>
-    /// Frees the resources used by the reader.
-    /// </summary>
-    ~jsonh_reader() noexcept {
-        stream.reset();
     }
 
     template <typename T>
@@ -229,14 +226,14 @@ public:
         }
 
         // Peek char
-        std::optional<char> next = peek();
+        std::optional<std::string> next = peek();
         if (!next) {
             tokens.push_back(std::unexpected("Expected token, got end of input"));
             return tokens;
         }
 
         // Object
-        if (next.value() == '{') {
+        if (next.value() == "{") {
             for (const std::expected<jsonh_token, std::string>& token : read_object()) {
                 if (!token) {
                     tokens.push_back(token);
@@ -246,7 +243,7 @@ public:
             }
         }
         // Array
-        else if (next.value() == '[') {
+        else if (next.value() == "[") {
             for (const std::expected<jsonh_token, std::string>& token : read_array()) {
                 if (!token) {
                     tokens.push_back(token);
@@ -298,19 +295,19 @@ public:
     }
 
 private:
-    const std::set<char32_t> reserved_chars = { '\\', ',', ':', '[', ']', '{', '}', '/', '#', '"', '\'' };
-    const std::set<char32_t> newline_chars = { '\n', '\r', U'\u2028', U'\u2029' };
-    const std::set<char32_t> whitespace_chars = {
-        U'\u0020', U'\u00A0', U'\u1680', U'\u2000', U'\u2001', U'\u2002', U'\u2003', U'\u2004', U'\u2005',
-        U'\u2006', U'\u2007', U'\u2008', U'\u2009', U'\u200A', U'\u202F', U'\u205F', U'\u3000', U'\u2028',
-        U'\u2029', U'\u0009', U'\u000A', U'\u000B', U'\u000C', U'\u000D', U'\u0085',
+    const std::set<std::string> reserved_runes = { "\\", ",", ":", "[", "]", "{", "}", "/", "#", "\"", "'" };
+    const std::set<std::string> newline_runes = { "\n", "\r", "\u2028", "\u2029" };
+    const std::set<std::string> whitespace_runes = {
+        "\u0020", "\u00A0", "\u1680", "\u2000", "\u2001", "\u2002", "\u2003", "\u2004", "\u2005",
+        "\u2006", "\u2007", "\u2008", "\u2009", "\u200A", "\u202F", "\u205F", "\u3000", "\u2028",
+        "\u2029", "\u0009", "\u000A", "\u000B", "\u000C", "\u000D", "\u0085",
     }; // https://learn.microsoft.com/en-us/dotnet/api/system.char.iswhitespace#remarks
 
     std::vector<std::expected<jsonh_token, std::string>> read_object() noexcept {
         std::vector<std::expected<jsonh_token, std::string>> tokens = {};
 
         // Opening brace
-        if (!read_one('{')) {
+        if (!read_one("{")) {
             // Braceless object
             for (const std::expected<jsonh_token, std::string>& token : read_braceless_object()) {
                 if (!token) {
@@ -334,7 +331,7 @@ private:
                 tokens.push_back(token);
             }
 
-            std::optional<char> next = peek();
+            std::optional<std::string> next = peek();
             if (!next) {
                 // End of incomplete object
                 if (options.incomplete_inputs) {
@@ -347,7 +344,7 @@ private:
             }
 
             // Closing brace
-            if (next == '}') {
+            if (next == "}") {
                 // End of object
                 read();
                 tokens.push_back(jsonh_token(json_token_type::end_object));
@@ -454,7 +451,7 @@ private:
         }
 
         // Optional comma
-        read_one(',');
+        read_one(",");
 
         return tokens;
     }
@@ -481,7 +478,7 @@ private:
         }
 
         // Colon
-        if (!read_one(':')) {
+        if (!read_one(":")) {
             tokens.push_back(std::unexpected("Expected `:` after property name in object"));
             return tokens;
         }
@@ -495,7 +492,7 @@ private:
         std::vector<std::expected<jsonh_token, std::string>> tokens = {};
 
         // Opening bracket
-        if (!read_one('[')) {
+        if (!read_one("[")) {
             tokens.push_back(std::unexpected("Expected `[` to start array"));
             return tokens;
         }
@@ -512,7 +509,7 @@ private:
                 tokens.push_back(token);
             }
 
-            std::optional<char> next = peek();
+            std::optional<std::string> next = peek();
             if (!next) {
                 // End of incomplete array
                 if (options.incomplete_inputs) {
@@ -525,7 +522,7 @@ private:
             }
 
             // Closing bracket
-            if (next == ']') {
+            if (next == "]") {
                 // End of array
                 read();
                 tokens.push_back(jsonh_token(json_token_type::end_array));
@@ -564,16 +561,17 @@ private:
         }
 
         // Optional comma
-        read_one(',');
+        read_one(",");
 
         return tokens;
     }
     std::expected<jsonh_token, std::string> read_string() noexcept {
         // Start quote
-        std::optional<char> start_quote = read_any({ '"', '\'' });
+        std::optional<std::string> start_quote = read_any({ "\"", "'" });
         if (!start_quote) {
             return read_quoteless_string();
         }
+        char start_quote_char = start_quote.value()[0];
 
         // Count multiple start quotes
         size_t start_quote_counter = 1;
@@ -588,20 +586,22 @@ private:
 
         // Count multiple end quotes
         size_t end_quote_counter = 0;
+        // Find last newline
+        size_t last_newline_index = -1;
 
         // Read string
         std::string string_builder;
         string_builder.reserve(64);
 
         while (true) {
-            std::optional<char> next = read();
+            std::optional<std::string> next = read();
             if (!next) {
                 return std::unexpected("Expected end of string, got end of input");
             }
 
             // Partial end quote was actually part of string
             if (next != start_quote) {
-                string_builder.append(end_quote_counter, start_quote.value());
+                string_builder.append(end_quote_counter, start_quote_char);
                 end_quote_counter = 0;
             }
 
@@ -613,7 +613,7 @@ private:
                 }
             }
             // Escape sequence
-            else if (next == '\\') {
+            else if (next == "\\") {
                 std::expected<void, std::string> escape_sequence_result = read_escape_sequence(string_builder);
                 if (!escape_sequence_result) {
                     return std::unexpected(escape_sequence_result.error());
@@ -621,6 +621,11 @@ private:
             }
             // Literal character
             else {
+                // Newline
+                if (newline_runes.contains(next.value())) {
+                    last_newline_index = string_builder.size();
+                }
+
                 string_builder += next.value();
             }
         }
@@ -628,25 +633,23 @@ private:
         // Trim leading whitespace in multiline string
         if (start_quote_counter > 1) {
             // Count leading whitespace preceding closing quotes
-            long last_newline_index = -1;
-            for (long index = (long)(string_builder.length() - 1); index >= 0; index--) {
-                if (newline_chars.contains(string_builder[index])) {
-                    last_newline_index = index;
-                }
-            }
             if (last_newline_index != -1) {
-                size_t leading_whitespace_count = string_builder.length() - last_newline_index;
+                size_t leading_whitespace_count = string_builder.size() - last_newline_index;
 
                 // Remove leading whitespace from each line
                 if (leading_whitespace_count > 0) {
                     size_t current_leading_whitespace = 0;
                     bool is_leading_whitespace = true;
 
-                    for (long index = 0; index < string_builder.length(); index++) {
-                        char& next = string_builder[index];
+                    utf8_reader string_builder_reader = utf8_reader(std::make_unique<std::istringstream>(string_builder));
+                    while (true) {
+                        std::optional<std::string> next = string_builder_reader.read();
+                        if (!next) {
+                            break;
+                        }
 
                         // Newline
-                        if (newline_chars.contains(next)) {
+                        if (newline_runes.contains(next.value())) {
                             // Reset leading whitespace counter
                             current_leading_whitespace = 0;
                             // Enter leading whitespace
@@ -655,13 +658,13 @@ private:
                         // Leading whitespace
                         else if (is_leading_whitespace && current_leading_whitespace <= leading_whitespace_count) {
                             // Whitespace
-                            if (whitespace_chars.contains(next)) {
+                            if (whitespace_runes.contains(next.value())) {
                                 // Increment leading whitespace counter
                                 current_leading_whitespace++;
                                 // Maximum leading whitespace reached
                                 if (current_leading_whitespace == leading_whitespace_count) {
                                     // Remove leading whitespace
-                                    string_builder.erase(index - current_leading_whitespace, current_leading_whitespace);
+                                    string_builder.erase(string_builder_reader.position() - current_leading_whitespace, current_leading_whitespace);
                                     // Exit leading whitespace
                                     is_leading_whitespace = false;
                                 }
@@ -669,7 +672,7 @@ private:
                             // Non-whitespace
                             else {
                                 // Remove partial leading whitespace
-                                string_builder.erase(index - current_leading_whitespace, current_leading_whitespace);
+                                string_builder.erase(string_builder_reader.position() - current_leading_whitespace, current_leading_whitespace);
                                 // Exit leading whitespace
                                 is_leading_whitespace = false;
                             }
@@ -677,15 +680,16 @@ private:
                     }
 
                     // Remove leading whitespace from last line
-                    string_builder.erase(string_builder.length() - leading_whitespace_count, leading_whitespace_count);
+                    string_builder.erase(string_builder.size() - leading_whitespace_count, leading_whitespace_count);
 
                     // Remove leading newline
-                    if (string_builder.length() >= 1) {
+                    if (string_builder.size() >= 1) {
+                        //utf8_reader::read(string_builder.data());
                         char& leading_char = string_builder[0];
-                        if (newline_chars.contains(leading_char)) {
+                        if (newline_runes.contains(leading_char)) {
                             long newline_length = 1;
                             // Join CR LF
-                            if (leading_char == '\r' && string_builder.length() >= 2 && string_builder[1] == '\n') {
+                            if (leading_char == '\r' && string_builder.size() >= 2 && string_builder[1] == '\n') {
                                 newline_length = 2;
                             }
 
@@ -708,14 +712,14 @@ private:
         string_builder.reserve(64);
 
         while (true) {
-            // Read char
-            std::optional<char> next = peek();
+            // Peek char
+            std::optional<std::string> next = peek();
             if (!next) {
                 break;
             }
 
             // Read escape sequence
-            if (next.value() == '\\') {
+            if (next.value() == "\\") {
                 read();
                 std::expected<void, std::string> escape_sequence_result = read_escape_sequence(string_builder);
                 if (!escape_sequence_result) {
@@ -724,11 +728,11 @@ private:
                 is_named_literal_possible = false;
             }
             // End on reserved character
-            else if (reserved_chars.contains(next.value())) {
+            else if (reserved_runes.contains(next.value())) {
                 break;
             }
             // End on newline
-            else if (newline_chars.contains(next.value())) {
+            else if (newline_runes.contains(next.value())) {
                 break;
             }
             // Append string char
@@ -745,8 +749,8 @@ private:
 
         // Trim trailing whitespace
         long trailing_whitespace_index = -1;
-        for (long index = (long)(string_builder.length() - 1); index >= 0; index--) {
-            if (whitespace_chars.contains(string_builder[index])) {
+        for (long index = (long)(string_builder.size() - 1); index >= 0; index--) {
+            if (whitespace_runes.contains(string_builder[index])) {
                 trailing_whitespace_index = index;
             }
             else {
@@ -776,19 +780,19 @@ private:
     bool detect_quoteless_string(std::string& whitespace_builder) {
         while (true) {
             // Read char
-            std::optional<char> next = peek();
+            std::optional<std::string> next = peek();
             if (!next) {
                 break;
             }
 
             // Newline
-            if (newline_chars.contains(next.value())) {
+            if (newline_runes.contains(next.value())) {
                 // Quoteless strings cannot contain unescaped newlines
                 return false;
             }
 
             // End of whitespace
-            if (!whitespace_chars.contains(next.value())) {
+            if (!whitespace_runes.contains(next.value())) {
                 break;
             }
 
@@ -798,8 +802,8 @@ private:
         }
 
         // Found quoteless string if found backslash or non-reserved char
-        std::optional<char> next_char = peek();
-        return next_char && (next_char.value() == '\\' || !reserved_chars.contains(next_char.value()));
+        std::optional<std::string> next_char = peek();
+        return next_char && (next_char.value() == "\\" || !reserved_runes.contains(next_char.value()));
     }
     std::expected<jsonh_token, std::string> read_number_or_quoteless_string() noexcept {
         // Read number
@@ -826,22 +830,22 @@ private:
     std::expected<jsonh_token, std::string> read_number(std::string& number_builder) noexcept {
         // Read base
         std::string base_digits = "0123456789";
-        if (read_one('0')) {
+        if (read_one("0")) {
             number_builder += '0';
 
-            std::optional<char> hex_base_char = read_any({ 'x', 'X' });
+            std::optional<std::string> hex_base_char = read_any({ "x", "X" });
             if (hex_base_char) {
                 number_builder += hex_base_char.value();
                 base_digits = "0123456789ABCDEFabcdef";
             }
             else {
-                std::optional<char> binary_base_char = read_any({ 'b', 'B' });
+                std::optional<std::string> binary_base_char = read_any({ "b", "B" });
                 if (hex_base_char) {
                     number_builder += binary_base_char.value();
                     base_digits = "01";
                 }
                 else {
-                    std::optional<char> octal_base_char = read_any({ 'o', 'O' });
+                    std::optional<std::string> octal_base_char = read_any({ "o", "O" });
                     if (octal_base_char) {
                         number_builder += octal_base_char.value();
                         base_digits = "01234567";
@@ -857,7 +861,7 @@ private:
         }
 
         // Exponent
-        std::optional<char> exponent_char = read_any({ 'e', 'E' });
+        std::optional<std::string> exponent_char = read_any({ "e", "E" });
         if (exponent_char) {
             number_builder += exponent_char.value();
 
@@ -873,10 +877,10 @@ private:
     }
     std::expected<void, std::string> read_number_no_exponent(std::string& number_builder, std::string_view base_digits) noexcept {
         // Read sign
-        read_any({ '-', '+' });
+        read_any({ "-", "+" });
 
         // Leading underscore
-        if (read_one('_')) {
+        if (read_one("_")) {
             return std::unexpected("Leading `_` in number");
         }
 
@@ -884,7 +888,7 @@ private:
 
         while (true) {
             // Peek char
-            std::optional<char> next = peek();
+            std::optional<std::string> next = peek();
             if (!next) {
                 break;
             }
@@ -895,7 +899,7 @@ private:
                 number_builder += next.value();
             }
             // Decimal point
-            else if (next.value() == '.') {
+            else if (next.value() == ".") {
                 read();
                 number_builder += next.value();
 
@@ -906,7 +910,7 @@ private:
                 is_fraction = true;
             }
             // Underscore
-            else if (next.value() == '_') {
+            else if (next.value() == "_") {
                 read();
                 number_builder += next.value();
             }
@@ -931,17 +935,17 @@ private:
     }
     std::expected<jsonh_token, std::string> read_primitive_element() noexcept {
         // Peek char
-        std::optional<char> next = peek();
+        std::optional<std::string> next = peek();
         if (!next) {
             return std::unexpected("Expected primitive element, got end of input");
         }
 
         // Number
-        if ((next >= '0' && next <= '9') || (next == '-' || next == '+') || next == '.') {
+        if ((next >= "0" && next <= "9") || (next == "-" || next == "+") || next == ".") {
             return read_number_or_quoteless_string();
         }
         // String
-        else if (next == '"' || next == '\'') {
+        else if (next == "\"" || next == "'") {
             return read_string();
         }
         // Quoteless string (or named literal)
@@ -957,10 +961,10 @@ private:
             read_whitespace();
 
             // Peek char
-            std::optional<char> next = peek();
+            std::optional<std::string> next = peek();
 
             // Comment
-            if (next == '#' || next == '/') {
+            if (next == "#" || next == "/") {
                 tokens.push_back(read_comment());
             }
             // End of comments
@@ -975,14 +979,14 @@ private:
         bool block_comment = false;
 
         // Hash-styled comment
-        if (read_one('#')) {
+        if (read_one("#")) {
         }
-        else if (read_one('/')) {
+        else if (read_one("/")) {
             // Line-styled comment
-            if (read_one('/')) {
+            if (read_one("/")) {
             }
             // Block-styled comment
-            else if (read_one('*')) {
+            else if (read_one("*")) {
                 block_comment = true;
             }
             else {
@@ -999,7 +1003,7 @@ private:
 
         while (true) {
             // Read char
-            std::optional<char> next = read();
+            std::optional<std::string> next = read();
 
             if (block_comment) {
                 // Error
@@ -1007,13 +1011,13 @@ private:
                     return std::unexpected("Expected end of block comment, got end of input");
                 }
                 // End of block comment
-                if (next == '*' && read_one('/')) {
+                if (next == "*" && read_one("/")) {
                     return jsonh_token(json_token_type::comment, comment_builder);
                 }
             }
             else {
                 // End of line comment
-                if (!next || newline_chars.contains(next.value())) {
+                if (!next || newline_runes.contains(next.value())) {
                     return jsonh_token(json_token_type::comment, comment_builder);
                 }
             }
@@ -1025,13 +1029,13 @@ private:
     void read_whitespace() noexcept {
         while (true) {
             // Peek char
-            std::optional<char> next = peek();
+            std::optional<std::string> next = peek();
             if (!next) {
                 return;
             }
 
             // Whitespace
-            if (whitespace_chars.contains(next.value())) {
+            if (whitespace_runes.contains(next.value())) {
                 read();
             }
             // End of whitespace
@@ -1044,11 +1048,12 @@ private:
         std::string hex_chars(length, '\0');
 
         for (int index = 0; index < length; index++) {
-            std::optional<char> next = read();
+            std::optional<std::string> next = read();
 
             // Hex digit
-            if ((next >= '0' && next <= '9') || (next >= 'A' && next <= 'F') || (next >= 'a' && next <= 'f')) {
-                hex_chars[index] = next.value();
+            if ((next >= "0" && next <= "9") || (next >= "A" && next <= "F") || (next >= "a" && next <= "f")) {
+                char next_char = next.value()[0];
+                hex_chars[index] = next_char;
             }
             // Unexpected char
             else {
@@ -1060,53 +1065,53 @@ private:
         return (unsigned int)std::stoul(hex_chars, nullptr, 16);
     }
     std::expected<void, std::string> read_escape_sequence(std::string& string_builder) noexcept {
-        std::optional<char> escape_char = read();
+        std::optional<std::string> escape_char = read();
         if (!escape_char) {
             return std::unexpected("Expected escape sequence, got end of input");
         }
 
         // Reverse solidus
-        if (escape_char.value() == '\\') {
+        if (escape_char.value() == "\\") {
             string_builder += '\\';
         }
         // Backspace
-        else if (escape_char.value() == 'b') {
+        else if (escape_char.value() == "b") {
             string_builder += '\b';
         }
         // Form feed
-        else if (escape_char.value() == 'f') {
+        else if (escape_char.value() == "f") {
             string_builder += '\f';
         }
         // Newline
-        else if (escape_char.value() == 'n') {
+        else if (escape_char.value() == "n") {
             string_builder += '\n';
         }
         // Carriage return
-        else if (escape_char.value() == 'r') {
+        else if (escape_char.value() == "r") {
             string_builder += '\r';
         }
         // Tab
-        else if (escape_char.value() == 't') {
+        else if (escape_char.value() == "t") {
             string_builder += '\t';
         }
         // Vertical tab
-        else if (escape_char.value() == 'v') {
+        else if (escape_char.value() == "v") {
             string_builder += '\v';
         }
         // Null
-        else if (escape_char.value() == '0') {
+        else if (escape_char.value() == "0") {
             string_builder += '\0';
         }
         // Alert
-        else if (escape_char.value() == 'a') {
+        else if (escape_char.value() == "a") {
             string_builder += '\a';
         }
         // Escape
-        else if (escape_char.value() == 'e') {
+        else if (escape_char.value() == "e") {
             string_builder += '\u001b';
         }
         // Unicode hex sequence
-        else if (escape_char.value() == 'u') {
+        else if (escape_char.value() == "u") {
             std::expected<unsigned int, std::string> hex_code = read_hex_sequence(4);
             if (!hex_code) {
                 return std::unexpected(hex_code.error());
@@ -1115,7 +1120,7 @@ private:
             string_builder += convert_utf16_to_utf8(utf16_char);
         }
         // Short unicode hex sequence
-        else if (escape_char.value() == 'x') {
+        else if (escape_char.value() == "x") {
             std::expected<unsigned int, std::string> hex_code = read_hex_sequence(2);
             if (!hex_code) {
                 return std::unexpected(hex_code.error());
@@ -1124,7 +1129,7 @@ private:
             string_builder += convert_utf16_to_utf8(utf16_char);
         }
         // Long unicode hex sequence
-        else if (escape_char.value() == 'U') {
+        else if (escape_char.value() == "U") {
             std::expected<unsigned int, std::string> hex_code = read_hex_sequence(8);
             if (!hex_code) {
                 return std::unexpected(hex_code.error());
@@ -1133,10 +1138,10 @@ private:
             string_builder += convert_utf32_to_utf8(utf32_char);
         }
         // Escaped newline
-        else if (newline_chars.contains(escape_char.value())) {
+        else if (newline_runes.contains(escape_char.value())) {
             // Join CR LF
-            if (escape_char == '\r') {
-                read_one('\n');
+            if (escape_char == "\r") {
+                read_one("\n");
             }
         }
         // Other
@@ -1144,70 +1149,6 @@ private:
             string_builder += escape_char.value();
         }
         return std::expected<void, std::string>(); // Success
-    }
-    std::optional<char> peek() const noexcept {
-        int next_as_int = stream->peek();
-        if (next_as_int < 0) {
-            return std::nullopt;
-        }
-        char next = (char)next_as_int;
-        return next;
-    }
-    std::optional<char> read() noexcept {
-        int next_as_int = stream->get();
-        if (next_as_int < 0) {
-            return std::nullopt;
-        }
-        char next = (char)next_as_int;
-        char_counter++;
-        return next;
-    }
-    bool read_one(char option) noexcept {
-        if (peek() == option) {
-            read();
-            return true;
-        }
-        return false;
-    }
-    std::optional<char> read_any(const std::set<char>& options) noexcept {
-        // Peek char
-        std::optional<char> next = peek();
-        if (!next) {
-            return std::nullopt;
-        }
-        // Match option
-        if (!options.contains(next.value())) {
-            return std::nullopt;
-        }
-        // Option matched
-        read();
-        return next;
-    }
-    std::optional<char> peek_one_byte_rune() const noexcept {
-        std::optional<char> next = peek();
-        if (!next) {
-            return std::nullopt;
-        }
-        if (!utf8::is_valid(&next.value())) {
-            return std::nullopt;
-        }
-        return next.value();
-    }
-    std::optional<std::string> read_rune() noexcept {
-        std::string next_rune;
-        while (true) {
-            std::optional<char> next = read();
-            if (!next) {
-                return std::nullopt;
-            }
-
-            next_rune += next.value();
-
-            if (utf8::is_valid(next_rune)) {
-                break;
-            }
-        }
-        return next_rune;
     }
     static std::string convert_utf16_to_utf8(const char16_t utf16_char) noexcept {
         std::u16string utf16_string = { utf16_char };

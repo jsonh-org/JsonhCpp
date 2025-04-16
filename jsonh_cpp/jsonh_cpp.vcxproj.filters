@@ -44,7 +44,7 @@
     <ClInclude Include="utf8cpp\utf8.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="stream_rune_reader.hpp">
+    <ClInclude Include="utf8_reader.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
