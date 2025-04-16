@@ -8,8 +8,6 @@
 #include <optional> // for std::optional
 #include <expected> // for std::expected
 #include "nlohmann/json.hpp" // for nlohmann::json
-#define UTF_CPP_CPLUSPLUS 202302L // for utf8 (C++23)
-#include "utf8cpp/utf8.h" // for utf8
 #include "jsonh_token.hpp" // for jsonh::jsonh_token
 #include "jsonh_reader_options.hpp" // for jsonh::jsonh_reader_options
 #include "jsonh_number_parser.hpp" // for jsonh::jsonh_number_parser
@@ -69,18 +67,6 @@ public:
     /// </summary>
     jsonh_reader(const std::u8string& string, jsonh_reader_options options = jsonh_reader_options()) noexcept
         : jsonh_reader((const char*)string.data(), options) {
-    }
-    /// <summary>
-    /// Constructs a reader that reads JSONH from a UTF-16 string converted to a string in UTF-8.
-    /// </summary>
-    jsonh_reader(const std::u16string& string, jsonh_reader_options options = jsonh_reader_options()) noexcept
-        : jsonh_reader(utf8::utf16to8(string), options) {
-    }
-    /// <summary>
-    /// Constructs a reader that reads JSONH from a UTF-32 string converted to a string in UTF-8.
-    /// </summary>
-    jsonh_reader(const std::u32string& string, jsonh_reader_options options = jsonh_reader_options()) noexcept
-        : jsonh_reader(utf8::utf32to8(string), options) {
     }
 
     template <typename T>
@@ -1174,8 +1160,11 @@ private:
             if (!hex_code) {
                 return std::unexpected(hex_code.error());
             }
-            char16_t utf16_char = (char16_t)hex_code.value();
-            string_builder += convert_utf16_to_utf8(utf16_char);
+            std::expected<std::string, std::string> hex_rune = codepoint_to_utf8(hex_code.value());
+            if (!hex_rune) {
+                return std::unexpected(hex_rune.error());
+            }
+            string_builder += hex_rune.value();
         }
         // Short unicode hex sequence
         else if (escape_char.value() == "x") {
@@ -1183,8 +1172,11 @@ private:
             if (!hex_code) {
                 return std::unexpected(hex_code.error());
             }
-            char16_t utf16_char = (char16_t)hex_code.value();
-            string_builder += convert_utf16_to_utf8(utf16_char);
+            std::expected<std::string, std::string> hex_rune = codepoint_to_utf8(hex_code.value());
+            if (!hex_rune) {
+                return std::unexpected(hex_rune.error());
+            }
+            string_builder += hex_rune.value();
         }
         // Long unicode hex sequence
         else if (escape_char.value() == "U") {
@@ -1192,8 +1184,11 @@ private:
             if (!hex_code) {
                 return std::unexpected(hex_code.error());
             }
-            char32_t utf32_char = (char32_t)hex_code.value();
-            string_builder += convert_utf32_to_utf8(utf32_char);
+            std::expected<std::string, std::string> hex_rune = codepoint_to_utf8(hex_code.value());
+            if (!hex_rune) {
+                return std::unexpected(hex_rune.error());
+            }
+            string_builder += hex_rune.value();
         }
         // Escaped newline
         else if (newline_runes.contains(escape_char.value())) {
@@ -1208,15 +1203,35 @@ private:
         }
         return std::expected<void, std::string>(); // Success
     }
-    static std::string convert_utf16_to_utf8(const char16_t utf16_char) noexcept {
-        std::u16string utf16_string = { utf16_char };
-        std::string utf8_result = utf8::utf16to8(utf16_string);
-        return utf8_result;
-    }
-    static std::string convert_utf32_to_utf8(const char32_t utf32_char) noexcept {
-        std::u32string utf32_string = { utf32_char };
-        std::string utf8_result = utf8::utf32to8(utf32_string);
-        return utf8_result;
+    static std::expected<std::string, std::string> codepoint_to_utf8(unsigned int code_point) {
+        std::string result;
+        // 1-byte UTF-8
+        if (code_point <= 0x7F) {
+            result += (char)code_point;
+        }
+        // 2-byte UTF-8
+        else if (code_point <= 0x7FF) {
+            result += (char)(0xC0 | (code_point >> 6));
+            result += (char)(0x80 | (code_point & 0x3F));
+        }
+        // 3-byte UTF-8
+        else if (code_point <= 0xFFFF) {
+            result += (char)(0xE0 | (code_point >> 12));
+            result += (char)(0x80 | ((code_point >> 6) & 0x3F));
+            result += (char)(0x80 | (code_point & 0x3F));
+        }
+        // 4-byte UTF-8
+        else if (code_point <= 0x10FFFF) {
+            result += (char)(0xF0 | (code_point >> 18));
+            result += (char)(0x80 | ((code_point >> 12) & 0x3F));
+            result += (char)(0x80 | ((code_point >> 6) & 0x3F));
+            result += (char)(0x80 | (code_point & 0x3F));
+        }
+        // Invalid UTF-8
+        else {
+            return std::unexpected("Invalid Unicode code point");
+        }
+        return result;
     }
 };
 
