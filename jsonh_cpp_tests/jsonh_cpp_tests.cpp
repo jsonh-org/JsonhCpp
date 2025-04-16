@@ -7,7 +7,7 @@
 
 using namespace jsonh;
 
-const std::string unicode_character = "\u79C1"; // 私
+const std::string kanji_character = "\u79C1"; // 私
 
 TEST_CASE("Basic Test") {
     std::cout << jsonh_reader("'hello'").parse_element().value() << '\n';
@@ -78,8 +78,8 @@ aaa
 }
 
 TEST_CASE("string") {
-    jsonh_reader reader(unicode_character);
-    REQUIRE(reader.parse_element<std::string>() == unicode_character);
+    jsonh_reader reader(kanji_character);
+    REQUIRE(reader.parse_element<std::string>() == kanji_character);
 }
 
 TEST_CASE("qstring") {
@@ -100,4 +100,75 @@ TEST_CASE("u16string") {
 TEST_CASE("u32string") {
     jsonh_reader reader(utf8::utf8to32(std::string(unicode_character)));
     REQUIRE(reader.parse_element<std::string>() == unicode_character);
+}*/
+
+TEST_CASE("QuotelessStringStartingWithKeywordTest") {
+    std::string jsonh = ""
+        "[nulla, null b, null]"
+        "";
+    std::vector<json> element = jsonh_reader::parse_element<std::vector<json>>(jsonh).value();
+
+    REQUIRE(element.size() == 3);
+    REQUIRE(element[0] == "nulla");
+    REQUIRE(element[1] == "null b");
+    REQUIRE(element[2] == nullptr);
+}
+/*TEST_CASE("BracelessObjectWithInvalidValueTest") {
+    string Jsonh = """
+        a: {
+        """;
+    JsonhReader.ParseElement<string[]>(Jsonh).IsError.ShouldBeTrue();
+}
+TEST_CASE("NestedBracelessObjectTest") {
+    string Jsonh = """
+        [
+            a: b
+            c: d
+        ]
+        """;
+    JsonhReader.ParseElement<string[]>(Jsonh).IsError.ShouldBeTrue();
+}
+TEST_CASE("QuotelessStringsLeadingTrailingWhitespaceTest") {
+    string Jsonh = """
+        [
+            a b  , 
+        ]
+        """;
+    JsonhReader.ParseElement<string[]>(Jsonh).Value.ShouldBe(["a b"]);
+}
+TEST_CASE("SpaceInQuotelessPropertyNameTest") {
+    string Jsonh = """
+        {
+            a b: c d
+        }
+        """;
+    JsonElement Element = JsonhReader.ParseElement(Jsonh).Value;
+    Element.GetPropertyCount().ShouldBe(1);
+    Element.GetProperty("a b").Deserialize<string>(JsonhReader.MiniJson).ShouldBe("c d");
+}
+TEST_CASE("QuotelessStringsEscapeTest") {
+    string Jsonh = """
+        a: \"5
+        b: \\z
+        c: 5 \\
+        """;
+    JsonElement Element = JsonhReader.ParseElement(Jsonh).Value;
+    Element.GetPropertyCount().ShouldBe(3);
+    Element.GetProperty("a").Deserialize<string>(JsonhReader.MiniJson).ShouldBe("\"5");
+    Element.GetProperty("b").Deserialize<string>(JsonhReader.MiniJson).ShouldBe("\\z");
+    Element.GetProperty("c").Deserialize<string>(JsonhReader.MiniJson).ShouldBe("5 \\");
+}
+TEST_CASE("MultiQuotedStringsNoLastNewlineWhitespaceTest") {
+    string Jsonh = """"
+        """
+            hello world  """
+        """";
+    JsonhReader.ParseElement(Jsonh).Value.Deserialize<string>(JsonhReader.MiniJson).ShouldBe("\n  hello world  ");
+}
+TEST_CASE("MultiQuotedStringsNoFirstWhitespaceNewlineTest") {
+    string Jsonh = """"
+        """  hello world
+            """
+        """";
+    JsonhReader.ParseElement(Jsonh).Value.Deserialize<string>(JsonhReader.MiniJson).ShouldBe("  hello world\n  ");
 }*/

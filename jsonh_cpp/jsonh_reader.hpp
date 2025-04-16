@@ -26,10 +26,6 @@ public:
     /// The options to use when reading JSONH.
     /// </summary>
     jsonh_reader_options options;
-    /// <summary>
-    /// The number of characters read from <see cref="inner_stream"/>.
-    /// </summary>
-    long char_counter = 0;
 
     /// <summary>
     /// Constructs a reader that reads JSONH from a UTF-8 stream.
@@ -69,15 +65,52 @@ public:
         : jsonh_reader((const char*)string.data(), options) {
     }
 
-    template <typename T>
-    std::expected<T, std::string> parse_element() noexcept {
+    /// <summary>
+    /// Parses a single element from a UTF-8 stream and deserializes it as <c>t</c>.
+    /// </summary>
+    template <typename t>
+    static std::expected<t, std::string> parse_element(std::istream& stream) noexcept {
+        std::expected<json, std::string> node = parse_element(stream);
+        if (!node) {
+            return std::unexpected(node.error());
+        }
+        return node.value().template get<t>();
+    }
+    /// <summary>
+    /// Parses a single element from a UTF-8 stream.
+    /// </summary>
+    static std::expected<json, std::string> parse_element(std::istream& stream) noexcept {
+        return jsonh_reader(stream).parse_element();
+    }
+    /// <summary>
+    /// Parses a single element from a UTF-8 string and deserializes it as <c>t</c>.
+    /// </summary>
+    template <typename t>
+    static std::expected<t, std::string> parse_element(const std::string& string) noexcept {
+        std::expected<json, std::string> node = parse_element(string);
+        if (!node) {
+            return std::unexpected(node.error());
+        }
+        return node.value().template get<t>();
+    }
+    /// <summary>
+    /// Parses a single element from a UTF-8 string.
+    /// </summary>
+    static std::expected<json, std::string> parse_element(const std::string& string) noexcept {
+        return jsonh_reader(string).parse_element();
+    }
+
+    /// <summary>
+    /// Parses a single element from the reader and deserializes it as <c>t</c>.
+    /// </summary>
+    template <typename t>
+    std::expected<t, std::string> parse_element() noexcept {
         std::expected<json, std::string> node = parse_element();
         if (!node) {
             return std::unexpected(node.error());
         }
-        return node.value().template get<T>();
+        return node.value().template get<t>();
     }
-
     /// <summary>
     /// Parses a single element from the reader.
     /// </summary>
@@ -486,7 +519,7 @@ private:
             return tokens;
         }
         // Start of array
-        tokens.push_back(jsonh_token(json_token_type::start_object));
+        tokens.push_back(jsonh_token(json_token_type::start_array));
 
         while (true) {
             // Comments & whitespace
@@ -749,7 +782,7 @@ private:
         return jsonh_token(json_token_type::string, string_builder);
     }
     std::expected<jsonh_token, std::string> read_quoteless_string(std::string initial_chars = "") noexcept {
-        bool is_named_literal_possible = false;
+        bool is_named_literal_possible = true;
 
         // Read quoteless string
         std::string string_builder = initial_chars;
