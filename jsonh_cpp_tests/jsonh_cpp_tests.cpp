@@ -82,6 +82,11 @@ TEST_CASE("string") {
     REQUIRE(reader.parse_element<std::string>() == unicode_character);
 }
 
+TEST_CASE("qstring") {
+    jsonh_reader reader("a b ");
+    REQUIRE(reader.parse_element<std::string>() == "a b");
+}
+
 /*TEST_CASE("u8string") {
     jsonh_reader reader(utf8::utf32tou8(utf8::utf8to32(std::string(unicode_character))));
     REQUIRE(reader.parse_element<std::string>() == unicode_character);

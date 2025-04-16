@@ -805,30 +805,18 @@ private:
             return std::unexpected("Empty quoteless string");
         }
 
-        // Find trailing whitespace
+        // Trim trailing whitespace
         utf8_reader string_builder_reader(string_builder);
-        std::optional<size_t> trailing_whitespace_index = std::nullopt;
+        string_builder_reader.seek(0, std::ios_base::end);
         while (true) {
-            std::optional<std::string> next = string_builder_reader.read();
-            if (!next) {
+            size_t original_position = string_builder_reader.position();
+            std::optional<std::string> next = string_builder_reader.read_reverse();
+
+            // Non-whitespace
+            if (!next || !whitespace_runes.contains(next.value())) {
+                string_builder.erase(original_position);
                 break;
             }
-            size_t index = string_builder_reader.position();
-
-            // Whitespace
-            if (whitespace_runes.contains(next.value())) {
-                if (!trailing_whitespace_index) {
-                    trailing_whitespace_index = index;
-                }
-            }
-            // Non-whitespace
-            else {
-                trailing_whitespace_index = std::nullopt;
-            }
-        }
-        // Trim trailing whitespace
-        if (trailing_whitespace_index) {
-            string_builder.erase(trailing_whitespace_index.value());
         }
 
         // Match named literal
