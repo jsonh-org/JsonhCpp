@@ -70,11 +70,7 @@ public:
     /// </summary>
     template <typename t>
     static std::expected<t, std::string> parse_element(std::istream& stream) noexcept {
-        std::expected<json, std::string> node = parse_element(stream);
-        if (!node) {
-            return std::unexpected(node.error());
-        }
-        return node.value().template get<t>();
+        return jsonh_reader(stream).parse_element<t>();
     }
     /// <summary>
     /// Parses a single element from a UTF-8 stream.
@@ -87,11 +83,7 @@ public:
     /// </summary>
     template <typename t>
     static std::expected<t, std::string> parse_element(const std::string& string) noexcept {
-        std::expected<json, std::string> node = parse_element(string);
-        if (!node) {
-            return std::unexpected(node.error());
-        }
-        return node.value().template get<t>();
+        return jsonh_reader(string).parse_element<t>();
     }
     /// <summary>
     /// Parses a single element from a UTF-8 string.
