@@ -12,18 +12,35 @@ public:
     /// </summary>
     std::unique_ptr<std::istream> inner_stream;
 
+    /// <summary>
+    /// Constructs a reader that reads UTF-8 runes from a UTF-8 stream.
+    /// </summary>
     utf8_reader(std::unique_ptr<std::istream> stream) noexcept {
         this->inner_stream = std::move(stream);
     }
+    /// <summary>
+    /// Constructs a reader that reads UTF-8 runes from a UTF-8 stream.
+    /// </summary>
     utf8_reader(std::istream& stream) noexcept
         : utf8_reader(std::unique_ptr<std::istream>(&stream)) {
     }
-
     /// <summary>
-    /// Frees the resources used by the stream.
+    /// Constructs a reader that reads UTF-8 runes from a UTF-8 string.
     /// </summary>
-    ~utf8_reader() noexcept {
-        inner_stream.reset();
+    utf8_reader(const std::string& string) noexcept
+        : utf8_reader(std::make_unique<std::istringstream>(string)) {
+    }
+    /// <summary>
+    /// Constructs a reader that reads UTF-8 runes from a UTF-8 string_view converted to a string.
+    /// </summary>
+    utf8_reader(const std::string_view& string_view) noexcept
+        : utf8_reader(std::string(string_view)) {
+    }
+    /// <summary>
+    /// Constructs a reader that reads UTF-8 runes from a UTF-8 char pointer converted to a string.
+    /// </summary>
+    utf8_reader(const char* string) noexcept
+        : utf8_reader(std::string(string)) {
     }
 
     size_t position() const noexcept {
@@ -31,9 +48,6 @@ public:
     }
     void set_position(size_t value) const noexcept {
         inner_stream->seekg(value);
-    }
-    void rewind() const noexcept {
-        set_position(0);
     }
 
     /*static std::optional<std::string> read(const char* string) noexcept {
@@ -89,7 +103,7 @@ public:
         return bytes;
     }
     std::optional<std::string> peek() const noexcept {
-        long original_position = position();
+        size_t original_position = position();
         std::optional<std::string> next = read();
         set_position(original_position);
         return next;
@@ -115,6 +129,28 @@ public:
         read();
         return next;
     }
+    /*std::optional<std::string> read_reverse() const noexcept {
+        // Read first byte
+        int first_byte = inner_stream->get();
+        if (first_byte < 0) {
+            return std::nullopt;
+        }
+
+        // Single byte character performance optimisation
+        if (first_byte <= 127) {
+            return std::string({ (char)first_byte });
+        }
+
+        // Get number of bytes in UTF8 character
+        int sequence_length = get_utf8_sequence_length((char)first_byte);
+
+        // Read remaining bytes (up to 3 more)
+        std::string bytes;
+        bytes.reserve((size_t)(1 + sequence_length));
+        bytes[0] = (char)first_byte;
+        inner_stream->read(bytes.data() + 1, sequence_length);
+        return bytes;
+    }*/
 
 private:
     /// <summary>
@@ -123,7 +159,10 @@ private:
     /// </summary>
     static int get_utf8_sequence_length(char first_byte) {
         // https://codegolf.stackexchange.com/a/173577
-        return (first_byte - 160 >> 20 - first_byte / 16) + 2;
+        return ((first_byte - 160) >> (20 - (first_byte / 16))) + 2;
+    }
+    static bool is_utf8_continuation(char byte) {
+        return (byte & 192) == 128;
     }
     /*/// <summary>
     /// Calculates the 2-byte char count of a single UTF-16 rune from the bits in its first two bytes.<br/>

@@ -29,7 +29,7 @@ public:
     /// </summary>
     jsonh_reader_options options;
     /// <summary>
-    /// The number of characters read from <see cref="stream"/>.
+    /// The number of characters read from <see cref="inner_stream"/>.
     /// </summary>
     long char_counter = 0;
 
@@ -44,8 +44,7 @@ public:
     /// Constructs a reader that reads JSONH from a UTF-8 stream.
     /// </summary>
     jsonh_reader(std::istream& stream, jsonh_reader_options options = jsonh_reader_options()) noexcept
-        : utf8_reader(stream) {
-        this->options = options;
+        : jsonh_reader(std::unique_ptr<std::istream>(&stream)) {
     }
     /// <summary>
     /// Constructs a reader that reads JSONH from a UTF-8 string.
@@ -636,25 +635,23 @@ private:
 
         // Condition: skip remaining steps unless started with multiple quotes
         if (start_quote_counter > 1) {
-            std::istringstream string_builder_stream(std::string(string_builder.data()));
-            utf8_reader string_builder_reader(string_builder_stream);
-
             // Pass 1: count leading whitespace -> newline
+            utf8_reader string_builder_reader1(string_builder);
             bool has_leading_whitespace_newline = false;
             size_t leading_whitespace_newline_counter = 0;
             while (true) {
-                std::optional<std::string> next = string_builder_reader.read();
+                std::optional<std::string> next = string_builder_reader1.read();
                 if (!next) {
                     break;
                 }
-                size_t index = string_builder_reader.position();
+                size_t index = string_builder_reader1.position();
 
                 // Newline
                 if (newline_runes.contains(next.value())) {
                     // Join CR LF
                     if (next.value() == "\r" && peek() == "\n") {
-                        string_builder_reader.read();
-                        index = string_builder_reader.position();
+                        string_builder_reader1.read();
+                        index = string_builder_reader1.position();
                     }
 
                     has_leading_whitespace_newline = true;
@@ -669,18 +666,17 @@ private:
 
             // Condition: skip remaining steps if pass 1 failed
             if (has_leading_whitespace_newline) {
-                string_builder_reader.rewind();
-
                 // Pass 2: count trailing newline -> whitespace
+                utf8_reader string_builder_reader2(string_builder);
                 bool has_trailing_newline_whitespace = false;
                 size_t last_newline_index = 0;
                 int trailing_whitespace_counter = 0;
                 while (true) {
-                    std::optional<std::string> next = string_builder_reader.read();
+                    std::optional<std::string> next = string_builder_reader2.read();
                     if (!next) {
                         break;
                     }
-                    size_t index = string_builder_reader.position();
+                    size_t index = string_builder_reader2.position();
 
                     // Newline
                     if (newline_runes.contains(next.value())) {
@@ -690,8 +686,8 @@ private:
 
                         // Join CR LF
                         if (next.value() == "\r" && peek() == "\n") {
-                            string_builder_reader.read();
-                            index = string_builder_reader.position();
+                            string_builder_reader2.read();
+                            index = string_builder_reader2.position();
                         }
                     }
                     // Whitespace
@@ -715,17 +711,16 @@ private:
 
                     // Condition: skip remaining steps if no trailing whitespace
                     if (trailing_whitespace_counter > 0) {
-                        string_builder_reader.rewind();
-
                         // Pass 5: strip line-leading whitespace
+                        utf8_reader string_builder_reader3(string_builder);
                         bool is_line_leading_whitespace = true;
                         int line_leading_whitespace_counter = 0;
                         while (true) {
-                            std::optional<std::string> next = string_builder_reader.read();
+                            std::optional<std::string> next = string_builder_reader3.read();
                             if (!next) {
                                 break;
                             }
-                            size_t index = string_builder_reader.position();
+                            size_t index = string_builder_reader3.position();
 
                             // Newline
                             if (newline_runes.contains(next.value())) {
@@ -811,8 +806,7 @@ private:
         }
 
         // Find trailing whitespace
-        std::istringstream string_builder_stream(std::string(string_builder.data()));
-        utf8_reader string_builder_reader(string_builder_stream);
+        utf8_reader string_builder_reader(string_builder);
         std::optional<size_t> trailing_whitespace_index = std::nullopt;
         while (true) {
             std::optional<std::string> next = string_builder_reader.read();

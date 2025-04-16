@@ -3,7 +3,7 @@
 namespace jsonh {
 
 /// <summary>
-/// Options for a <see cref="jsonh_reader"/>.
+/// Options for a jsonh_reader.
 /// </summary>
 struct jsonh_reader_options final {
     /// <summary>
