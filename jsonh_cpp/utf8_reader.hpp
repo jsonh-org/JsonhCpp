@@ -120,7 +120,7 @@ public:
             bytes += (char)next_as_int;
 
             // End if reached first byte
-            if (!is_utf8_continuation((char)next_as_int)) {
+            if (is_utf8_first_byte((char)next_as_int)) {
                 return bytes;
             }
         }
@@ -138,27 +138,19 @@ public:
 
 private:
     /// <summary>
-    /// Calculates the 1-byte char count of a single UTF-8 rune from the bits in its first byte.<br/>
+    /// Calculates the byte count of a UTF-8 rune from the bits in its first byte.<br/>
     /// The result will be 1, 2, 3 or 4.
     /// </summary>
     static int get_utf8_sequence_length(char first_byte) {
         // https://codegolf.stackexchange.com/a/173577
         return ((first_byte - 160) >> (20 - (first_byte / 16))) + 2;
     }
-    static bool is_utf8_continuation(char byte) {
-        return (byte & 192) == 128;
-    }
-    /*/// <summary>
-    /// Calculates the 2-byte char count of a single UTF-16 rune from the bits in its first two bytes.<br/>
-    /// The result will be 1 or 2.
+    /// <summary>
+    /// Returns whether the byte is the first (or only) byte of a UTF-8 rune as opposed to a continuation byte.
     /// </summary>
-    static int get_utf16_sequence_length(char first_byte, char second_byte, bool is_big_endian = false) {
-        unsigned short value = is_big_endian
-            ? (unsigned short)((first_byte << 8) | second_byte)  // Big-endian: Most Significant Byte first
-            : (unsigned short)((second_byte << 8) | first_byte); // Little-endian: Least Significant Byte first
-        bool is_high_surrogate = value >= 0xD800 && value <= 0xDBFF;
-        return is_high_surrogate ? 2 : 1;
-    }*/
+    static bool is_utf8_first_byte(char byte) {
+        return (byte & 192) != 128;
+    }
 };
 
 }
