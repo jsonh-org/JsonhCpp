@@ -86,7 +86,11 @@ public:
 
     template <typename T>
     std::expected<T, std::string> parse_element() noexcept {
-        return parse_element().value().template get<T>();
+        std::expected<json, std::string> node = parse_element();
+        if (!node) {
+            return std::unexpected(node.error());
+        }
+        return node.value().template get<T>();
     }
 
     /// <summary>
@@ -225,7 +229,7 @@ public:
             tokens.push_back(token);
         }
 
-        // Peek char
+        // Peek rune
         std::optional<std::string> next = peek();
         if (!next) {
             tokens.push_back(std::unexpected("Expected token, got end of input"));
@@ -630,71 +634,130 @@ private:
             }
         }
 
-        // Trim leading whitespace in multiline string
+        // Condition: skip remaining steps unless started with multiple quotes
         if (start_quote_counter > 1) {
-            // Count leading whitespace preceding closing quotes
-            if (last_newline_index != -1) {
-                size_t leading_whitespace_count = string_builder.size() - last_newline_index;
+            std::istringstream string_builder_stream(std::string(string_builder.data()));
+            utf8_reader string_builder_reader(string_builder_stream);
 
-                // Remove leading whitespace from each line
-                if (leading_whitespace_count > 0) {
-                    size_t current_leading_whitespace = 0;
-                    bool is_leading_whitespace = true;
+            // Pass 1: count leading whitespace -> newline
+            bool has_leading_whitespace_newline = false;
+            size_t leading_whitespace_newline_counter = 0;
+            while (true) {
+                std::optional<std::string> next = string_builder_reader.read();
+                if (!next) {
+                    break;
+                }
+                size_t index = string_builder_reader.position();
 
-                    utf8_reader string_builder_reader = utf8_reader(std::make_unique<std::istringstream>(string_builder));
-                    while (true) {
-                        std::optional<std::string> next = string_builder_reader.read();
-                        if (!next) {
-                            break;
+                // Newline
+                if (newline_runes.contains(next.value())) {
+                    // Join CR LF
+                    if (next.value() == "\r" && peek() == "\n") {
+                        string_builder_reader.read();
+                        index = string_builder_reader.position();
+                    }
+
+                    has_leading_whitespace_newline = true;
+                    leading_whitespace_newline_counter = index + 1;
+                    break;
+                }
+                // Non-whitespace
+                else if (!whitespace_runes.contains(next.value())) {
+                    break;
+                }
+            }
+
+            // Condition: skip remaining steps if pass 1 failed
+            if (has_leading_whitespace_newline) {
+                string_builder_reader.rewind();
+
+                // Pass 2: count trailing newline -> whitespace
+                bool has_trailing_newline_whitespace = false;
+                size_t last_newline_index = 0;
+                int trailing_whitespace_counter = 0;
+                while (true) {
+                    std::optional<std::string> next = string_builder_reader.read();
+                    if (!next) {
+                        break;
+                    }
+                    size_t index = string_builder_reader.position();
+
+                    // Newline
+                    if (newline_runes.contains(next.value())) {
+                        has_trailing_newline_whitespace = true;
+                        last_newline_index = index;
+                        trailing_whitespace_counter = 0;
+
+                        // Join CR LF
+                        if (next.value() == "\r" && peek() == "\n") {
+                            string_builder_reader.read();
+                            index = string_builder_reader.position();
                         }
+                    }
+                    // Whitespace
+                    else if (whitespace_runes.contains(next.value())) {
+                        trailing_whitespace_counter++;
+                    }
+                    // Non-whitespace
+                    else {
+                        has_trailing_newline_whitespace = false;
+                        trailing_whitespace_counter = 0;
+                    }
+                }
 
-                        // Newline
-                        if (newline_runes.contains(next.value())) {
-                            // Reset leading whitespace counter
-                            current_leading_whitespace = 0;
-                            // Enter leading whitespace
-                            is_leading_whitespace = true;
-                        }
-                        // Leading whitespace
-                        else if (is_leading_whitespace && current_leading_whitespace <= leading_whitespace_count) {
+                // Condition: skip remaining steps if pass 2 failed
+                if (has_trailing_newline_whitespace) {
+                    // Pass 3: strip last newline -> whitespace
+                    string_builder.erase(last_newline_index, string_builder.size() - last_newline_index);
+
+                    // Pass 4: strip first whitespace -> newline
+                    string_builder.erase(0, leading_whitespace_newline_counter);
+
+                    // Condition: skip remaining steps if no trailing whitespace
+                    if (trailing_whitespace_counter > 0) {
+                        string_builder_reader.rewind();
+
+                        // Pass 5: strip line-leading whitespace
+                        bool is_line_leading_whitespace = true;
+                        int line_leading_whitespace_counter = 0;
+                        while (true) {
+                            std::optional<std::string> next = string_builder_reader.read();
+                            if (!next) {
+                                break;
+                            }
+                            size_t index = string_builder_reader.position();
+
+                            // Newline
+                            if (newline_runes.contains(next.value())) {
+                                is_line_leading_whitespace = true;
+                                line_leading_whitespace_counter = 0;
+                            }
                             // Whitespace
-                            if (whitespace_runes.contains(next.value())) {
-                                // Increment leading whitespace counter
-                                current_leading_whitespace++;
-                                // Maximum leading whitespace reached
-                                if (current_leading_whitespace == leading_whitespace_count) {
-                                    // Remove leading whitespace
-                                    string_builder.erase(string_builder_reader.position() - current_leading_whitespace, current_leading_whitespace);
-                                    // Exit leading whitespace
-                                    is_leading_whitespace = false;
+                            else if (whitespace_runes.contains(next.value())) {
+                                if (is_line_leading_whitespace) {
+                                    // Increment line-leading whitespace
+                                    line_leading_whitespace_counter++;
+
+                                    // Maximum line-leading whitespace reached
+                                    if (line_leading_whitespace_counter == trailing_whitespace_counter) {
+                                        // Remove line-leading whitespace
+                                        string_builder.erase(index + 1 - line_leading_whitespace_counter, line_leading_whitespace_counter);
+                                        index -= line_leading_whitespace_counter;
+                                        // Exit line-leading whitespace
+                                        is_line_leading_whitespace = false;
+                                    }
                                 }
                             }
                             // Non-whitespace
                             else {
-                                // Remove partial leading whitespace
-                                string_builder.erase(string_builder_reader.position() - current_leading_whitespace, current_leading_whitespace);
-                                // Exit leading whitespace
-                                is_leading_whitespace = false;
+                                if (is_line_leading_whitespace) {
+                                    // Remove partial line-leading whitespace
+                                    string_builder.erase(index - line_leading_whitespace_counter, line_leading_whitespace_counter);
+                                    index -= line_leading_whitespace_counter;
+                                    // Exit line-leading whitespace
+                                    is_line_leading_whitespace = false;
+                                }
                             }
-                        }
-                    }
-
-                    // Remove leading whitespace from last line
-                    string_builder.erase(string_builder.size() - leading_whitespace_count, leading_whitespace_count);
-
-                    // Remove leading newline
-                    if (string_builder.size() >= 1) {
-                        //utf8_reader::read(string_builder.data());
-                        char& leading_char = string_builder[0];
-                        if (newline_runes.contains(leading_char)) {
-                            long newline_length = 1;
-                            // Join CR LF
-                            if (leading_char == '\r' && string_builder.size() >= 2 && string_builder[1] == '\n') {
-                                newline_length = 2;
-                            }
-
-                            // Remove leading newline
-                            string_builder.erase(0, newline_length);
                         }
                     }
                 }
@@ -712,13 +775,13 @@ private:
         string_builder.reserve(64);
 
         while (true) {
-            // Peek char
+            // Peek rune
             std::optional<std::string> next = peek();
             if (!next) {
                 break;
             }
 
-            // Read escape sequence
+            // Escape sequence
             if (next.value() == "\\") {
                 read();
                 std::expected<void, std::string> escape_sequence_result = read_escape_sequence(string_builder);
@@ -735,7 +798,7 @@ private:
             else if (newline_runes.contains(next.value())) {
                 break;
             }
-            // Append string char
+            // Literal character
             else {
                 read();
                 string_builder += next.value();
@@ -747,18 +810,31 @@ private:
             return std::unexpected("Empty quoteless string");
         }
 
-        // Trim trailing whitespace
-        long trailing_whitespace_index = -1;
-        for (long index = (long)(string_builder.size() - 1); index >= 0; index--) {
-            if (whitespace_runes.contains(string_builder[index])) {
-                trailing_whitespace_index = index;
-            }
-            else {
+        // Find trailing whitespace
+        std::istringstream string_builder_stream(std::string(string_builder.data()));
+        utf8_reader string_builder_reader(string_builder_stream);
+        std::optional<size_t> trailing_whitespace_index = std::nullopt;
+        while (true) {
+            std::optional<std::string> next = string_builder_reader.read();
+            if (!next) {
                 break;
             }
+            size_t index = string_builder_reader.position();
+
+            // Whitespace
+            if (whitespace_runes.contains(next.value())) {
+                if (!trailing_whitespace_index) {
+                    trailing_whitespace_index = index;
+                }
+            }
+            // Non-whitespace
+            else {
+                trailing_whitespace_index = std::nullopt;
+            }
         }
-        if (trailing_whitespace_index >= 0) {
-            string_builder.erase(trailing_whitespace_index);
+        // Trim trailing whitespace
+        if (trailing_whitespace_index) {
+            string_builder.erase(trailing_whitespace_index.value());
         }
 
         // Match named literal
@@ -779,7 +855,7 @@ private:
     }
     bool detect_quoteless_string(std::string& whitespace_builder) {
         while (true) {
-            // Read char
+            // Read rune
             std::optional<std::string> next = peek();
             if (!next) {
                 break;
@@ -887,7 +963,7 @@ private:
         bool is_fraction = false;
 
         while (true) {
-            // Peek char
+            // Peek rune
             std::optional<std::string> next = peek();
             if (!next) {
                 break;
@@ -934,7 +1010,7 @@ private:
         return std::expected<void, std::string>(); // Success
     }
     std::expected<jsonh_token, std::string> read_primitive_element() noexcept {
-        // Peek char
+        // Peek rune
         std::optional<std::string> next = peek();
         if (!next) {
             return std::unexpected("Expected primitive element, got end of input");
@@ -960,7 +1036,7 @@ private:
             // Whitespace
             read_whitespace();
 
-            // Peek char
+            // Peek rune
             std::optional<std::string> next = peek();
 
             // Comment
@@ -1002,7 +1078,7 @@ private:
         comment_builder.reserve(64);
 
         while (true) {
-            // Read char
+            // Read rune
             std::optional<std::string> next = read();
 
             if (block_comment) {
@@ -1028,7 +1104,7 @@ private:
     }
     void read_whitespace() noexcept {
         while (true) {
-            // Peek char
+            // Peek rune
             std::optional<std::string> next = peek();
             if (!next) {
                 return;

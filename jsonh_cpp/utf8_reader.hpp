@@ -32,6 +32,9 @@ public:
     void set_position(size_t value) const noexcept {
         inner_stream->seekg(value);
     }
+    void rewind() const noexcept {
+        set_position(0);
+    }
 
     /*static std::optional<std::string> read(const char* string) noexcept {
         // Read first byte
