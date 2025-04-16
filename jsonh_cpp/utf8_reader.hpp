@@ -46,8 +46,8 @@ public:
     size_t position() const noexcept {
         return inner_stream->tellg();
     }
-    void set_position(size_t value) const noexcept {
-        inner_stream->seekg(value);
+    void set_position(size_t value, int way = std::ios::beg) const noexcept {
+        inner_stream->seekg(value, way);
     }
 
     /*static std::optional<std::string> read(const char* string) noexcept {
@@ -82,24 +82,26 @@ public:
 
     std::optional<std::string> read() const noexcept {
         // Read first byte
-        int first_byte = inner_stream->get();
-        if (first_byte < 0) {
+        int first_byte_as_int = inner_stream->get();
+        if (first_byte_as_int < 0) {
             return std::nullopt;
         }
 
         // Single byte character performance optimisation
-        if (first_byte <= 127) {
-            return std::string({ (char)first_byte });
+        if (first_byte_as_int <= 127) {
+            return std::string({ (char)first_byte_as_int });
         }
 
         // Get number of bytes in UTF8 character
-        int sequence_length = get_utf8_sequence_length((char)first_byte);
+        int sequence_length = get_utf8_sequence_length((char)first_byte_as_int);
 
         // Read remaining bytes (up to 3 more)
-        std::string bytes;
-        bytes.reserve((size_t)(1 + sequence_length));
-        bytes[0] = (char)first_byte;
-        inner_stream->read(bytes.data() + 1, sequence_length);
+        std::string bytes((size_t)(1 + sequence_length), '\0');
+        bytes[0] = (char)first_byte_as_int;
+        inner_stream->read(&bytes[1], sequence_length);
+
+        // Trim excess bytes
+        bytes.resize(1 + inner_stream->gcount());
         return bytes;
     }
     std::optional<std::string> peek() const noexcept {
@@ -129,8 +131,32 @@ public:
         read();
         return next;
     }
-    /*std::optional<std::string> read_reverse() const noexcept {
-        // Read first byte
+
+    std::optional<std::string> read_reverse() const noexcept {
+        // Read up to 4 bytes
+        std::string bytes;
+        bytes.reserve(4);
+        for (size_t index = 0; index < 4; index++) {
+            int next_as_int = inner_stream->get();
+            if (next_as_int < 0) {
+                return std::nullopt;
+            }
+
+            set_position(2, std::ios::left);
+
+            bytes += (char)next_as_int;
+
+            if (!is_utf8_continuation((char)next_as_int)) {
+                return bytes;
+            }
+        }
+
+        // Reverse bytes
+        std::reverse(bytes.begin(), bytes.end());
+
+        return std::nullopt;
+
+        /*// Read first byte
         int first_byte = inner_stream->get();
         if (first_byte < 0) {
             return std::nullopt;
@@ -149,8 +175,14 @@ public:
         bytes.reserve((size_t)(1 + sequence_length));
         bytes[0] = (char)first_byte;
         inner_stream->read(bytes.data() + 1, sequence_length);
-        return bytes;
-    }*/
+        return bytes;*/
+    }
+    std::optional<std::string> peek_reverse() const noexcept {
+        size_t original_position = position();
+        std::optional<std::string> next = read_reverse();
+        set_position(original_position);
+        return next;
+    }
 
 private:
     /// <summary>
