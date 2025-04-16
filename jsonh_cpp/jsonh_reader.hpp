@@ -370,6 +370,7 @@ private:
                 // End of object
                 read();
                 tokens.push_back(jsonh_token(json_token_type::end_object));
+                return tokens;
             }
             // Property
             else {
@@ -548,6 +549,7 @@ private:
                 // End of array
                 read();
                 tokens.push_back(jsonh_token(json_token_type::end_array));
+                return tokens;
             }
             // Item
             else {
