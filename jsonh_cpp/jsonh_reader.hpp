@@ -301,7 +301,7 @@ public:
             }
             // Primitive value
             else {
-                tokens.push_back(token);
+                tokens.push_back(token.value());
             }
         }
 
@@ -881,7 +881,7 @@ private:
         std::string number_builder;
         number_builder.reserve(64);
         std::expected<jsonh_token, std::string> number = read_number(number_builder);
-        if (read_number(number_builder)) {
+        if (number) {
             // Try read quoteless string starting with number
             std::string whitespace_chars;
             whitespace_chars.reserve(64);
