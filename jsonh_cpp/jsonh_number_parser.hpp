@@ -49,15 +49,15 @@ private:
     /// </summary>
     static std::expected<long double, std::string> parse_fractional_number_with_exponent(std::string_view digits, std::string_view base_digits) noexcept {
         // Find exponent
-        size_t dot_index = digits.find_first_of("eE");
+        size_t exponent_index = digits.find_first_of("eE");
         // If no exponent then normalize real
-        if (dot_index < 0) {
+        if (exponent_index == std::string::npos) {
             return parse_fractional_number(digits, base_digits);
         }
 
         // Get mantissa and exponent
-        std::string_view mantissa_part = digits.substr(0, dot_index);
-        std::string_view exponent_part = digits.substr(dot_index + 1);
+        std::string_view mantissa_part = digits.substr(0, exponent_index);
+        std::string_view exponent_part = digits.substr(exponent_index + 1);
 
         // Parse mantissa and exponent
         std::expected<long double, std::string> mantissa = parse_fractional_number(mantissa_part, base_digits);
@@ -84,7 +84,7 @@ private:
         // Find dot
         size_t dot_index = digits.find('.');
         // If no dot then normalize integer
-        if (dot_index < 0) {
+        if (dot_index == std::string::npos) {
             std::expected<long long, std::string> integer = parse_whole_number(digits, base_digits);
             if (!integer) {
                 return std::unexpected(integer.error());
@@ -137,7 +137,7 @@ private:
             size_t digit_int = base_digits.find(digit_char);
 
             // Ensure digit is valid
-            if (digit_int < 0) {
+            if (digit_int == std::string::npos) {
                 return std::unexpected("Invalid digit");
             }
 
