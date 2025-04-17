@@ -227,6 +227,57 @@ public:
         // End of input
         return std::unexpected("Expected token, got end of input");
     }
+    /// <summary>
+    /// Tries to find the given property name in the reader.<br/>
+    /// For example, to find <c>c</c>:
+    /// <code>
+    /// // Original position
+    /// {
+    ///   "a": "1",
+    ///   "b": {
+    ///     "c": "2"
+    ///   },
+    ///   "c":/* Final position */ "3"
+    /// }
+    /// </code>
+    /// </summary>
+    bool find_property_value(const std::string& property_name) noexcept {
+        long current_depth = 0;
+
+        for (const std::expected<jsonh_token, std::string>& token_result : read_element()) {
+            // Check error
+            if (!token_result) {
+                return false;
+            }
+
+            switch (token_result.value().json_type) {
+                // Start structure
+                case json_token_type::start_object: case json_token_type::start_array: {
+                    current_depth++;
+                    break;
+                }
+                // End structure
+                case json_token_type::end_object: case json_token_type::end_array: {
+                    current_depth--;
+                    break;
+                }
+                // Property name
+                case json_token_type::property_name: {
+                    if (current_depth == 1 && token_result.value().value == property_name) {
+                        // Path found
+                        return true;
+                    }
+                    break;
+                }
+            }
+        }
+
+        // Path not found
+        return false;
+    }
+    /// <summary>
+    /// Reads a single element from the reader.
+    /// </summary>
     std::vector<std::expected<jsonh_token, std::string>> read_element() noexcept {
         std::vector<std::expected<jsonh_token, std::string>> tokens = {};
 
