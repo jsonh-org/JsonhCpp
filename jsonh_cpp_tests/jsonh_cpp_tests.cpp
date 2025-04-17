@@ -54,8 +54,8 @@ TEST_CASE("QuotelessEscapeSequenceTest") {
 TEST_CASE("MultiQuotedStringTest") {
     std::string jsonh = R"(
 """"
-Hello!Here's a quote: ". Now a double quote: "". And a triple quote! """. Escape: \\\U0001F47D.
-""""
+  Hello! Here's a quote: ". Now a double quote: "". And a triple quote! """. Escape: \\\U0001F47D.
+ """"
 )";
     std::string element = jsonh_reader::parse_element<std::string>(jsonh).value();
 

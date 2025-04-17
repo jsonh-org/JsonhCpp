@@ -630,10 +630,11 @@ private:
             }
             // Escape sequence
             else if (next == "\\") {
-                std::expected<void, std::string> escape_sequence_result = read_escape_sequence(string_builder);
+                std::expected<std::string, std::string> escape_sequence_result = read_hex_escape_sequence(string_builder);
                 if (!escape_sequence_result) {
                     return std::unexpected(escape_sequence_result.error());
                 }
+                string_builder += escape_sequence_result.value();
             }
             // Literal character
             else {
@@ -653,11 +654,11 @@ private:
             bool has_leading_whitespace_newline = false;
             size_t leading_whitespace_newline_counter = 0;
             while (true) {
+                size_t index = string_builder_reader1.position();
                 std::optional<std::string> next = string_builder_reader1.read();
                 if (!next) {
                     break;
                 }
-                size_t index = string_builder_reader1.position();
 
                 // Newline
                 if (newline_runes.contains(next.value())) {
@@ -685,11 +686,11 @@ private:
                 size_t last_newline_index = 0;
                 int trailing_whitespace_counter = 0;
                 while (true) {
+                    size_t index = string_builder_reader2.position();
                     std::optional<std::string> next = string_builder_reader2.read();
                     if (!next) {
                         break;
                     }
-                    size_t index = string_builder_reader2.position();
 
                     // Newline
                     if (newline_runes.contains(next.value())) {
@@ -716,10 +717,10 @@ private:
 
                 // Condition: skip remaining steps if pass 2 failed
                 if (has_trailing_newline_whitespace) {
-                    // Pass 3: strip last newline -> whitespace
+                    // Pass 3: strip trailing newline -> whitespace
                     string_builder.erase(last_newline_index, string_builder.size() - last_newline_index);
 
-                    // Pass 4: strip first whitespace -> newline
+                    // Pass 4: strip leading whitespace -> newline
                     string_builder.erase(0, leading_whitespace_newline_counter);
 
                     // Condition: skip remaining steps if no trailing whitespace
@@ -729,11 +730,11 @@ private:
                         bool is_line_leading_whitespace = true;
                         int line_leading_whitespace_counter = 0;
                         while (true) {
+                            size_t index = string_builder_reader3.position();
                             std::optional<std::string> next = string_builder_reader3.read();
                             if (!next) {
                                 break;
                             }
-                            size_t index = string_builder_reader3.position();
 
                             // Newline
                             if (newline_runes.contains(next.value())) {
@@ -792,10 +793,11 @@ private:
             // Escape sequence
             if (next.value() == "\\") {
                 read();
-                std::expected<void, std::string> escape_sequence_result = read_escape_sequence(string_builder);
+                std::expected<std::string, std::string> escape_sequence_result = read_hex_escape_sequence(string_builder);
                 if (!escape_sequence_result) {
                     return std::unexpected(escape_sequence_result.error());
                 }
+                string_builder += escape_sequence_result.value();
                 is_named_literal_possible = false;
             }
             // End on reserved character
@@ -1115,7 +1117,7 @@ private:
             }
         }
     }
-    std::expected<unsigned int, std::string> read_hex_sequence(int length) noexcept {
+    std::expected<unsigned int, std::string> read_hex_sequence(size_t length) noexcept {
         std::string hex_chars(length, '\0');
 
         for (int index = 0; index < length; index++) {
@@ -1135,7 +1137,7 @@ private:
         // Parse unicode character from hex digits
         return (unsigned int)std::stoul(hex_chars, nullptr, 16);
     }
-    std::expected<void, std::string> read_escape_sequence(std::string& string_builder) noexcept {
+    std::expected<std::string, std::string> read_hex_escape_sequence(const std::string& string_builder) noexcept {
         std::optional<std::string> escape_char = read();
         if (!escape_char) {
             return std::unexpected("Expected escape sequence, got end of input");
@@ -1143,79 +1145,55 @@ private:
 
         // Reverse solidus
         if (escape_char.value() == "\\") {
-            string_builder += '\\';
+            return "\\";
         }
         // Backspace
         else if (escape_char.value() == "b") {
-            string_builder += '\b';
+            return "\b";
         }
         // Form feed
         else if (escape_char.value() == "f") {
-            string_builder += '\f';
+            return "\f";
         }
         // Newline
         else if (escape_char.value() == "n") {
-            string_builder += '\n';
+            return "\n";
         }
         // Carriage return
         else if (escape_char.value() == "r") {
-            string_builder += '\r';
+            return "\r";
         }
         // Tab
         else if (escape_char.value() == "t") {
-            string_builder += '\t';
+            return "\t";
         }
         // Vertical tab
         else if (escape_char.value() == "v") {
-            string_builder += '\v';
+            return "\v";
         }
         // Null
         else if (escape_char.value() == "0") {
-            string_builder += '\0';
+            return "\0";
         }
         // Alert
         else if (escape_char.value() == "a") {
-            string_builder += '\a';
+            return "\a";
         }
         // Escape
         else if (escape_char.value() == "e") {
-            string_builder += '\u001b';
+            return "\u001b";
         }
         // Unicode hex sequence
         else if (escape_char.value() == "u") {
-            std::expected<unsigned int, std::string> hex_code = read_hex_sequence(4);
-            if (!hex_code) {
-                return std::unexpected(hex_code.error());
-            }
-            std::expected<std::string, std::string> hex_rune = codepoint_to_utf8(hex_code.value());
-            if (!hex_rune) {
-                return std::unexpected(hex_rune.error());
-            }
-            string_builder += hex_rune.value();
+            return read_hex_escape_sequence(string_builder, 4);
         }
         // Short unicode hex sequence
         else if (escape_char.value() == "x") {
-            std::expected<unsigned int, std::string> hex_code = read_hex_sequence(2);
-            if (!hex_code) {
-                return std::unexpected(hex_code.error());
-            }
-            std::expected<std::string, std::string> hex_rune = codepoint_to_utf8(hex_code.value());
-            if (!hex_rune) {
-                return std::unexpected(hex_rune.error());
-            }
-            string_builder += hex_rune.value();
+            return read_hex_escape_sequence(string_builder, 2);
         }
         // Long unicode hex sequence
         else if (escape_char.value() == "U") {
-            std::expected<unsigned int, std::string> hex_code = read_hex_sequence(8);
-            if (!hex_code) {
-                return std::unexpected(hex_code.error());
-            }
-            std::expected<std::string, std::string> hex_rune = codepoint_to_utf8(hex_code.value());
-            if (!hex_rune) {
-                return std::unexpected(hex_rune.error());
-            }
-            string_builder += hex_rune.value();
+            return read_hex_escape_sequence(string_builder, 8);
         }
         // Escaped newline
         else if (newline_runes.contains(escape_char.value())) {
@@ -1223,17 +1201,75 @@ private:
             if (escape_char == "\r") {
                 read_one("\n");
             }
+            return "";
         }
         // Other
         else {
-            string_builder += escape_char.value();
+            return escape_char.value();
         }
-        return std::expected<void, std::string>(); // Success
     }
-    static std::expected<std::string, std::string> codepoint_to_utf8(unsigned int code_point) {
+    std::expected<std::string, std::string> read_hex_escape_sequence(const std::string& string_builder, size_t length) noexcept {
+        // Read hex digits & convert to uint
+        std::expected<unsigned int, std::string> code_point = read_hex_sequence(length);
+        if (!code_point) {
+            return std::unexpected(code_point.error());
+        }
+
+        // High surrogate
+        if (is_utf16_high_surrogate(code_point.value())) {
+            size_t original_position = position();
+            bool low_surrogate_success = false;
+            // Escape sequence
+            if (read_one("\\")) {
+                // Low unicode hex sequence
+                if (read_one("u")) {
+                    std::expected<unsigned int, std::string> low_code_point = read_hex_sequence(4);
+                    if (!low_code_point) {
+                        return std::unexpected(low_code_point.error());
+                    }
+                    code_point = utf16_surrogates_to_code_point(code_point.value(), low_code_point.value());
+                    low_surrogate_success = true;
+                }
+                // Low short unicode hex sequence
+                else if (read_one("x")) {
+                    std::expected<unsigned int, std::string> low_code_point = read_hex_sequence(2);
+                    if (!low_code_point) {
+                        return std::unexpected(low_code_point.error());
+                    }
+                    code_point = utf16_surrogates_to_code_point(code_point.value(), low_code_point.value());
+                    low_surrogate_success = true;
+                }
+                // Low long unicode hex sequence
+                else if (read_one("U")) {
+                    std::expected<unsigned int, std::string> low_code_point = read_hex_sequence(8);
+                    if (!low_code_point) {
+                        return std::unexpected(low_code_point.error());
+                    }
+                    code_point = utf16_surrogates_to_code_point(code_point.value(), low_code_point.value());
+                    low_surrogate_success = true;
+                }
+            }
+            // Missing low surrogate
+            if (!low_surrogate_success) {
+                seek(original_position);
+            }
+        }
+
+        // Rune
+        std::expected<std::string, std::string> rune = code_point_to_utf8(code_point.value());
+        if (!rune) {
+            return std::unexpected(rune.error());
+        }
+        return rune.value();
+    }
+    static std::expected<std::string, std::string> code_point_to_utf8(unsigned int code_point) noexcept {
         std::string result;
+        // Invalid surrogate
+        if (code_point >= 0xD800 && code_point <= 0xDFFF) {
+            return std::unexpected("Invalid code point (surrogate half)");
+        }
         // 1-byte UTF-8
-        if (code_point <= 0x7F) {
+        else if (code_point <= 0x7F) {
             result += (char)code_point;
         }
         // 2-byte UTF-8
@@ -1256,9 +1292,15 @@ private:
         }
         // Invalid UTF-8
         else {
-            return std::unexpected("Invalid Unicode code point");
+            return std::unexpected("Invalid code point (out of range)");
         }
         return result;
+    }
+    static unsigned int utf16_surrogates_to_code_point(unsigned int high_surrogate, unsigned int low_surrogate) noexcept {
+        return 0x10000 + (((high_surrogate - 0xD800) << 10) | (low_surrogate - 0xDC00));
+    }
+    static bool is_utf16_high_surrogate(unsigned int code_point) noexcept {
+        return code_point >= 0xD800 && code_point <= 0xDBFF;
     }
 };
 
