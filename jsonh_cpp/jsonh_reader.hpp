@@ -28,14 +28,14 @@ public:
     jsonh_reader_options options;
 
     /// <summary>
-    /// Constructs a reader that reads JSONH from a UTF-8 stream.
+    /// Constructs a reader that reads JSONH from a UTF-8 input stream.
     /// </summary>
     jsonh_reader(std::unique_ptr<std::istream> stream, jsonh_reader_options options = jsonh_reader_options()) noexcept
         : utf8_reader(std::move(stream)) {
         this->options = options;
     }
     /// <summary>
-    /// Constructs a reader that reads JSONH from a UTF-8 stream.
+    /// Constructs a reader that reads JSONH from a UTF-8 input stream.
     /// </summary>
     jsonh_reader(std::istream& stream, jsonh_reader_options options = jsonh_reader_options()) noexcept
         : jsonh_reader(std::unique_ptr<std::istream>(&stream)) {
@@ -66,14 +66,27 @@ public:
     }
 
     /// <summary>
-    /// Parses a single element from a UTF-8 stream and deserializes it as <c>t</c>.
+    /// Parses a single element from a UTF-8 input stream and deserializes it as <c>t</c>.
+    /// </summary>
+    template <typename t>
+    static std::expected<t, std::string> parse_element(std::unique_ptr<std::istream> stream) noexcept {
+        return jsonh_reader(std::move(stream)).parse_element<t>();
+    }
+    /// <summary>
+    /// Parses a single element from a UTF-8 input stream.
+    /// </summary>
+    static std::expected<json, std::string> parse_element(std::unique_ptr<std::istream> stream) noexcept {
+        return jsonh_reader(std::move(stream)).parse_element();
+    }
+    /// <summary>
+    /// Parses a single element from a UTF-8 input stream and deserializes it as <c>t</c>.
     /// </summary>
     template <typename t>
     static std::expected<t, std::string> parse_element(std::istream& stream) noexcept {
         return jsonh_reader(stream).parse_element<t>();
     }
     /// <summary>
-    /// Parses a single element from a UTF-8 stream.
+    /// Parses a single element from a UTF-8 input stream.
     /// </summary>
     static std::expected<json, std::string> parse_element(std::istream& stream) noexcept {
         return jsonh_reader(stream).parse_element();
@@ -360,13 +373,22 @@ public:
     }
 
 private:
+    /// <summary>
+    /// Runes that cannot be used unescaped in quoteless strings.
+    /// </summary>
     const std::set<std::string> reserved_runes = { "\\", ",", ":", "[", "]", "{", "}", "/", "#", "\"", "'" };
+    /// <summary>
+    /// Runes that are considered newlines.
+    /// </summary>
     const std::set<std::string> newline_runes = { "\n", "\r", "\u2028", "\u2029" };
+    /// <summary>
+    /// Runes that are considered whitespace.
+    /// </summary>
     const std::set<std::string> whitespace_runes = {
         "\u0020", "\u00A0", "\u1680", "\u2000", "\u2001", "\u2002", "\u2003", "\u2004", "\u2005",
         "\u2006", "\u2007", "\u2008", "\u2009", "\u200A", "\u202F", "\u205F", "\u3000", "\u2028",
         "\u2029", "\u0009", "\u000A", "\u000B", "\u000C", "\u000D", "\u0085",
-    }; // https://learn.microsoft.com/en-us/dotnet/api/system.char.iswhitespace#remarks
+    };
 
     std::vector<std::expected<jsonh_token, std::string>> read_object() noexcept {
         std::vector<std::expected<jsonh_token, std::string>> tokens = {};
