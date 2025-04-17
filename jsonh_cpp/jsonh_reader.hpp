@@ -255,7 +255,7 @@ public:
     /// </code>
     /// </summary>
     bool find_property_value(const std::string& property_name) noexcept {
-        long current_depth = 0;
+        long long current_depth = 0;
 
         for (const std::expected<jsonh_token, std::string>& token_result : read_element()) {
             // Check error

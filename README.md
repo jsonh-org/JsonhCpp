@@ -55,6 +55,27 @@ std::string element = jsonh::jsonh_reader::parse_element<std::string>(jsonh).val
 
 ## Dependencies
 
-- [nlohmann/json](https://github.com/nlohmann/json) (up-to-date 2025/04/14)
-- [catchorg/Catch2](https://github.com/catchorg/Catch2) ([help](https://stackoverflow.com/a/78804393)) (up-to-date 2025/04/14)
+- [nlohmann/json](https://github.com/nlohmann/json) (up-to-date 2025/04/17)
+- [catchorg/Catch2](https://github.com/catchorg/Catch2) ([help](https://stackoverflow.com/a/78804393)) (up-to-date 2025/04/17)
 - C++23
+
+## Limitations
+
+In comparison to [JsonhCs](https://github.com/jsonh-org/Jsonhcs), this C++ implementation has some limitations.
+
+### UTF-8 only
+
+The input stream must be in UTF-8 encoding.
+
+If using a different encoding, consider converting to UTF-8 using [utfcpp](https://github.com/nemtrif/utfcpp).
+
+### Fixed-size numbers
+
+Numbers are parsed as `long long` and `long double`, which correspond to 64-bit numbers.
+- The maximum size of `long long` is generally 9,223,372,036,854,775,807.
+- The precision of `long double` is generally 15 decimal places.
+
+### No token streaming
+
+While tokens can be read one by one from a stream, the tokens are aggregated in a `std::vector`
+before returning due to a lack of `yield` in C++.
