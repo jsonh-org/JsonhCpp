@@ -4,7 +4,7 @@
 #include <expected> // for std::expected
 #include <cmath> // for pow
 
-namespace jsonh {
+namespace jsonh_cpp {
 
 /// <summary>
 /// Methods for parsing JSONH numbers (long long / long double).

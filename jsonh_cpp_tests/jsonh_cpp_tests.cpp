@@ -5,7 +5,7 @@
 #include <iostream> // for std::cout
 #include "../jsonh_cpp/jsonh_cpp.hpp" // for jsonh
 
-using namespace jsonh;
+using namespace jsonh_cpp;
 
 /*
     Read Tests

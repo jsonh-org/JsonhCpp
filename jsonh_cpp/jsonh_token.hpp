@@ -3,7 +3,7 @@
 #include <string> // for std::string
 #include "jsonh_token_type.hpp" // for jsonh::jsonh_token_type
 
-namespace jsonh {
+namespace jsonh_cpp {
 
 /// <summary>
 /// A single JSONH token with a <see cref="json_token_type"/>.

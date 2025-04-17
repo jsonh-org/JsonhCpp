@@ -1,6 +1,6 @@
 #pragma once
 
-namespace jsonh {
+namespace jsonh_cpp {
 
 /// <summary>
 /// Options for a jsonh_reader.

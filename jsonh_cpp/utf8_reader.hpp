@@ -5,7 +5,7 @@
 #include <optional> // for std::optional
 #include <set> // for std::set
 
-namespace jsonh {
+namespace jsonh_cpp {
 
 /// <summary>
 /// A reader that reads UTF-8 runes from a UTF-8 input stream.

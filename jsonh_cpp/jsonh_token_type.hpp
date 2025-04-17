@@ -1,6 +1,6 @@
 #pragma once
 
-namespace jsonh {
+namespace jsonh_cpp {
 
 enum struct json_token_type {
     none = 0,

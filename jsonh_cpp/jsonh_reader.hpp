@@ -15,7 +15,7 @@
 
 using namespace nlohmann;
 
-namespace jsonh {
+namespace jsonh_cpp {
 
 /// <summary>
 /// A reader that reads tokens from a UTF-8 input stream.
