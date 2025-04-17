@@ -81,3 +81,7 @@ Numbers are parsed as `long long` and `long double`, which correspond to 64-bit 
 
 While tokens can be read one by one from a stream, the tokens are aggregated in a `std::vector`
 before returning due to a lack of `yield` in C++.
+
+### C++23 or higher
+
+Since the library makes use of `std::expected`, you must build it with a C++23-compatible compiler.
