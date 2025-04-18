@@ -47,12 +47,6 @@ public:
     utf8_reader(const char* string) noexcept
         : utf8_reader(std::string(string)) {
     }
-    /// <summary>
-    /// Constructs a reader that reads UTF-8 runes from a UTF-8 string converted to a string.
-    /// </summary>
-    utf8_reader(const std::u8string& string) noexcept
-        : utf8_reader((const char*)string.data()) {
-    }
 
     /// <summary>
     /// Returns the current byte position in <see cref="inner_stream"/>.

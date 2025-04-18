@@ -57,9 +57,10 @@ std::string element = jsonh_cpp::jsonh_reader::parse_element<std::string>(jsonh)
 
 ## Dependencies
 
+- C++20
 - [nlohmann/json](https://github.com/nlohmann/json) (up-to-date 2025/04/17)
 - [catchorg/Catch2](https://github.com/catchorg/Catch2) ([help](https://stackoverflow.com/a/78804393)) (up-to-date 2025/04/17)
-- C++23
+- [zeus-cpp/expected](https://github.com/zeus-cpp/expected) (backport) (up-to-date 2025/04/18)
 
 ## Limitations
 
@@ -81,7 +82,3 @@ Numbers are parsed as `long long` and `long double`, which correspond to 64-bit 
 
 While tokens can be read one by one from a stream, the tokens are aggregated in a `std::vector`
 before returning due to a lack of `yield` in C++.
-
-### C++23 or higher
-
-Since the library makes use of `std::expected`, you must build it with a C++23-compatible compiler.
