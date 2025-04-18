@@ -1,7 +1,6 @@
 #pragma once
 
 #include <string> // for std::string
-#include <expected> // for std::expected
 #include <cmath> // for pow
 #include "backports.hpp" // for backport macros
 
