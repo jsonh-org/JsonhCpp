@@ -276,6 +276,10 @@ public:
                     }
                     break;
                 }
+                // Other
+                default: {
+                    break;
+                }
             }
         }
 
