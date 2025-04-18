@@ -150,9 +150,9 @@
     <ClInclude Include="jsonh_reader_options.hpp" />
     <ClInclude Include="jsonh_token.hpp" />
     <ClInclude Include="jsonh_token_type.hpp" />
+    <ClInclude Include="martinmoene\expected.hpp" />
     <ClInclude Include="nlohmann\json.hpp" />
     <ClInclude Include="utf8_reader.hpp" />
-    <ClInclude Include="zeus\expected.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
