@@ -106,7 +106,7 @@ public:
     nonstd::expected<t, std::string> parse_element() noexcept {
         nonstd::expected<json, std::string> node = parse_element();
         if (!node) {
-            return nonstd::unexpected(node.error());
+            return nonstd::unexpected<std::string>(node.error());
         }
         return node.value().template get<t>();
     }
@@ -142,7 +142,7 @@ public:
         for (const nonstd::expected<jsonh_token, std::string>& token_result : read_element()) {
             // Check error
             if (!token_result) {
-                return nonstd::unexpected(token_result.error());
+                return nonstd::unexpected<std::string>(token_result.error());
             }
             jsonh_token token = token_result.value();
 
@@ -183,7 +183,7 @@ public:
                 case json_token_type::number: {
                     nonstd::expected<long double, std::string> result = jsonh_number_parser::parse(token.value);
                     if (!result) {
-                        return nonstd::unexpected(result.error());
+                        return nonstd::unexpected<std::string>(result.error());
                     }
                     json node = json(result.value());
                     if (submit_node(node)) {
@@ -226,13 +226,13 @@ public:
                 }
                 // Not implemented
                 default: {
-                    return nonstd::unexpected("Token type not implemented");
+                    return nonstd::unexpected<std::string>("Token type not implemented");
                 }
             }
         }
 
         // End of input
-        return nonstd::unexpected("Expected token, got end of input");
+        return nonstd::unexpected<std::string>("Expected token, got end of input");
     }
     /// <summary>
     /// Tries to find the given property name in the reader.<br/>
@@ -300,7 +300,7 @@ public:
         // Peek rune
         std::optional<std::string> next = peek();
         if (!next) {
-            tokens.push_back(nonstd::unexpected("Expected token, got end of input"));
+            tokens.push_back(nonstd::unexpected<std::string>("Expected token, got end of input"));
             return tokens;
         }
 
@@ -328,7 +328,7 @@ public:
         else {
             nonstd::expected<jsonh_token, std::string> token = read_primitive_element();
             if (!token) {
-                tokens.push_back(nonstd::unexpected(token.error()));
+                tokens.push_back(nonstd::unexpected<std::string>(token.error()));
                 return tokens;
             }
 
@@ -422,7 +422,7 @@ private:
                     return tokens;
                 }
                 // Missing closing brace
-                tokens.push_back(nonstd::unexpected("Expected `}` to end object, got end of input"));
+                tokens.push_back(nonstd::unexpected<std::string>("Expected `}` to end object, got end of input"));
                 return tokens;
             }
 
@@ -563,7 +563,7 @@ private:
 
         // Colon
         if (!read_one(":")) {
-            tokens.push_back(nonstd::unexpected("Expected `:` after property name in object"));
+            tokens.push_back(nonstd::unexpected<std::string>("Expected `:` after property name in object"));
             return tokens;
         }
 
@@ -577,7 +577,7 @@ private:
 
         // Opening bracket
         if (!read_one("[")) {
-            tokens.push_back(nonstd::unexpected("Expected `[` to start array"));
+            tokens.push_back(nonstd::unexpected<std::string>("Expected `[` to start array"));
             return tokens;
         }
         // Start of array
@@ -601,7 +601,7 @@ private:
                     return tokens;
                 }
                 // Missing closing bracket
-                tokens.push_back(nonstd::unexpected("Expected `]` to end array, got end of input"));
+                tokens.push_back(nonstd::unexpected<std::string>("Expected `]` to end array, got end of input"));
                 return tokens;
             }
 
@@ -681,7 +681,7 @@ private:
         while (true) {
             std::optional<std::string> next = read();
             if (!next) {
-                return nonstd::unexpected("Expected end of string, got end of input");
+                return nonstd::unexpected<std::string>("Expected end of string, got end of input");
             }
 
             // Partial end quote was actually part of string
@@ -701,7 +701,7 @@ private:
             else if (next == "\\") {
                 nonstd::expected<std::string, std::string> escape_sequence_result = read_hex_escape_sequence(string_builder);
                 if (!escape_sequence_result) {
-                    return nonstd::unexpected(escape_sequence_result.error());
+                    return nonstd::unexpected<std::string>(escape_sequence_result.error());
                 }
                 string_builder += escape_sequence_result.value();
             }
@@ -864,7 +864,7 @@ private:
                 read();
                 nonstd::expected<std::string, std::string> escape_sequence_result = read_hex_escape_sequence(string_builder);
                 if (!escape_sequence_result) {
-                    return nonstd::unexpected(escape_sequence_result.error());
+                    return nonstd::unexpected<std::string>(escape_sequence_result.error());
                 }
                 string_builder += escape_sequence_result.value();
                 is_named_literal_possible = false;
@@ -886,7 +886,7 @@ private:
 
         // Ensure not empty
         if (string_builder.empty()) {
-            return nonstd::unexpected("Empty quoteless string");
+            return nonstd::unexpected<std::string>("Empty quoteless string");
         }
 
         // Trim trailing whitespace
@@ -999,7 +999,7 @@ private:
         // Read main number
         nonstd::expected<void, std::string> main_result = read_number_no_exponent(number_builder, base_digits);
         if (!main_result) {
-            return nonstd::unexpected(main_result.error());
+            return nonstd::unexpected<std::string>(main_result.error());
         }
 
         // Exponent
@@ -1010,7 +1010,7 @@ private:
             // Read exponent number
             nonstd::expected<void, std::string> exponent_result = read_number_no_exponent(number_builder, base_digits);
             if (!exponent_result) {
-                return nonstd::unexpected(exponent_result.error());
+                return nonstd::unexpected<std::string>(exponent_result.error());
             }
         }
 
@@ -1023,7 +1023,7 @@ private:
 
         // Leading underscore
         if (read_one("_")) {
-            return nonstd::unexpected("Leading `_` in number");
+            return nonstd::unexpected<std::string>("Leading `_` in number");
         }
 
         bool is_fraction = false;
@@ -1047,7 +1047,7 @@ private:
 
                 // Duplicate decimal point
                 if (is_fraction) {
-                    return nonstd::unexpected("Duplicate `.` in number");
+                    return nonstd::unexpected<std::string>("Duplicate `.` in number");
                 }
                 is_fraction = true;
             }
@@ -1064,12 +1064,12 @@ private:
 
         // Ensure not empty
         if (number_builder.empty()) {
-            return nonstd::unexpected("Empty number");
+            return nonstd::unexpected<std::string>("Empty number");
         }
 
         // Trailing underscore
         if (number_builder.ends_with('_')) {
-            return nonstd::unexpected("Trailing `_` in number");
+            return nonstd::unexpected<std::string>("Trailing `_` in number");
         }
 
         // End of number
@@ -1079,7 +1079,7 @@ private:
         // Peek rune
         std::optional<std::string> next = peek();
         if (!next) {
-            return nonstd::unexpected("Expected primitive element, got end of input");
+            return nonstd::unexpected<std::string>("Expected primitive element, got end of input");
         }
 
         // Number
@@ -1132,11 +1132,11 @@ private:
                 block_comment = true;
             }
             else {
-                return nonstd::unexpected("Unexpected '/'");
+                return nonstd::unexpected<std::string>("Unexpected '/'");
             }
         }
         else {
-            return nonstd::unexpected("Unexpected character");
+            return nonstd::unexpected<std::string>("Unexpected character");
         }
 
         // Read comment
@@ -1150,7 +1150,7 @@ private:
             if (block_comment) {
                 // Error
                 if (!next) {
-                    return nonstd::unexpected("Expected end of block comment, got end of input");
+                    return nonstd::unexpected<std::string>("Expected end of block comment, got end of input");
                 }
                 // End of block comment
                 if (next == "*" && read_one("/")) {
@@ -1199,7 +1199,7 @@ private:
             }
             // Unexpected char
             else {
-                return nonstd::unexpected("Incorrect number of hexadecimal digits in unicode escape sequence");
+                return nonstd::unexpected<std::string>("Incorrect number of hexadecimal digits in unicode escape sequence");
             }
         }
 
@@ -1209,7 +1209,7 @@ private:
     nonstd::expected<std::string, std::string> read_hex_escape_sequence(const std::string& string_builder) noexcept {
         std::optional<std::string> escape_char = read();
         if (!escape_char) {
-            return nonstd::unexpected("Expected escape sequence, got end of input");
+            return nonstd::unexpected<std::string>("Expected escape sequence, got end of input");
         }
 
         // Reverse solidus
@@ -1281,7 +1281,7 @@ private:
         // Read hex digits & convert to uint
         nonstd::expected<unsigned int, std::string> code_point = read_hex_sequence(length);
         if (!code_point) {
-            return nonstd::unexpected(code_point.error());
+            return nonstd::unexpected<std::string>(code_point.error());
         }
 
         // High surrogate
@@ -1294,7 +1294,7 @@ private:
                 if (read_one("u")) {
                     nonstd::expected<unsigned int, std::string> low_code_point = read_hex_sequence(4);
                     if (!low_code_point) {
-                        return nonstd::unexpected(low_code_point.error());
+                        return nonstd::unexpected<std::string>(low_code_point.error());
                     }
                     code_point = utf16_surrogates_to_code_point(code_point.value(), low_code_point.value());
                     low_surrogate_success = true;
@@ -1303,7 +1303,7 @@ private:
                 else if (read_one("x")) {
                     nonstd::expected<unsigned int, std::string> low_code_point = read_hex_sequence(2);
                     if (!low_code_point) {
-                        return nonstd::unexpected(low_code_point.error());
+                        return nonstd::unexpected<std::string>(low_code_point.error());
                     }
                     code_point = utf16_surrogates_to_code_point(code_point.value(), low_code_point.value());
                     low_surrogate_success = true;
@@ -1312,7 +1312,7 @@ private:
                 else if (read_one("U")) {
                     nonstd::expected<unsigned int, std::string> low_code_point = read_hex_sequence(8);
                     if (!low_code_point) {
-                        return nonstd::unexpected(low_code_point.error());
+                        return nonstd::unexpected<std::string>(low_code_point.error());
                     }
                     code_point = utf16_surrogates_to_code_point(code_point.value(), low_code_point.value());
                     low_surrogate_success = true;
@@ -1327,7 +1327,7 @@ private:
         // Rune
         nonstd::expected<std::string, std::string> rune = code_point_to_utf8(code_point.value());
         if (!rune) {
-            return nonstd::unexpected(rune.error());
+            return nonstd::unexpected<std::string>(rune.error());
         }
         return rune.value();
     }
@@ -1335,7 +1335,7 @@ private:
         std::string result;
         // Invalid surrogate
         if (code_point >= 0xD800 && code_point <= 0xDFFF) {
-            return nonstd::unexpected("Invalid code point (surrogate half)");
+            return nonstd::unexpected<std::string>("Invalid code point (surrogate half)");
         }
         // 1-byte UTF-8
         else if (code_point <= 0x7F) {
@@ -1361,7 +1361,7 @@ private:
         }
         // Invalid UTF-8
         else {
-            return nonstd::unexpected("Invalid code point (out of range)");
+            return nonstd::unexpected<std::string>("Invalid code point (out of range)");
         }
         return result;
     }

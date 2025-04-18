@@ -62,11 +62,11 @@ private:
         // Parse mantissa and exponent
         nonstd::expected<long double, std::string> mantissa = parse_fractional_number(mantissa_part, base_digits);
         if (!mantissa) {
-            return nonstd::unexpected(mantissa.error());
+            return nonstd::unexpected<std::string>(mantissa.error());
         }
         nonstd::expected<long double, std::string> exponent = parse_fractional_number(exponent_part, base_digits);
         if (!exponent) {
-            return nonstd::unexpected(exponent.error());
+            return nonstd::unexpected<std::string>(exponent.error());
         }
 
         // Multiply mantissa by 10 ^ exponent
@@ -87,7 +87,7 @@ private:
         if (dot_index == std::string::npos) {
             nonstd::expected<long long, std::string> integer = parse_whole_number(digits, base_digits);
             if (!integer) {
-                return nonstd::unexpected(integer.error());
+                return nonstd::unexpected<std::string>(integer.error());
             }
             return (long double)integer.value();
         }
@@ -99,11 +99,11 @@ private:
         // Parse parts of number
         nonstd::expected<long long, std::string> whole = parse_whole_number(whole_part, base_digits);
         if (!whole) {
-            return nonstd::unexpected(whole.error());
+            return nonstd::unexpected<std::string>(whole.error());
         }
         nonstd::expected<long long, std::string> fraction = parse_whole_number(fraction_part, base_digits);
         if (!fraction) {
-            return nonstd::unexpected(fraction.error());
+            return nonstd::unexpected<std::string>(fraction.error());
         }
 
         // Combine whole and fraction
@@ -138,7 +138,7 @@ private:
 
             // Ensure digit is valid
             if (digit_int == std::string::npos) {
-                return nonstd::unexpected("Invalid digit");
+                return nonstd::unexpected<std::string>("Invalid digit");
             }
 
             // Get magnitude of current digit column
