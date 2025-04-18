@@ -6,7 +6,6 @@
 #include <set> // for std::set
 #include <stack> // for std::stack
 #include <optional> // for std::optional
-#include <expected> // for std::expected
 #include "nlohmann/json.hpp" // for nlohmann::json
 #include "jsonh_token.hpp" // for jsonh::jsonh_token
 #include "jsonh_reader_options.hpp" // for jsonh::jsonh_reader_options
