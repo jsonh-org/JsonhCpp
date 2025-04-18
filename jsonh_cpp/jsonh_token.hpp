@@ -16,7 +16,7 @@ struct jsonh_token {
     /// <summary>
     /// The value of the token, or an empty string.
     /// </summary>
-    std::string value = value;
+    std::string value;
 
     /// <summary>
     /// Constructs a single JSONH token.
