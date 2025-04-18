@@ -18,9 +18,9 @@ TEST_CASE("BasicObjectTest") {
 }
 )";
     jsonh_reader reader(jsonh);
-    std::vector<JSONH_CPP_EXPECTED<jsonh_token, std::string>> tokens = reader.read_element();
+    std::vector<nonstd::expected<jsonh_token, std::string>> tokens = reader.read_element();
 
-    for (const JSONH_CPP_EXPECTED<jsonh_token, std::string>& token : tokens) {
+    for (const nonstd::expected<jsonh_token, std::string>& token : tokens) {
         REQUIRE(token);
     }
     REQUIRE(tokens[0].value().json_type == json_token_type::start_object);

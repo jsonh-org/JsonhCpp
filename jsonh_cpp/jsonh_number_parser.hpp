@@ -2,7 +2,7 @@
 
 #include <string> // for std::string
 #include <cmath> // for pow
-#include "backports.hpp" // for backport macros
+#include "martinmoene/expected.hpp" // for nonstd::expected (std::expected backport)
 
 namespace jsonh_cpp {
 
@@ -17,7 +17,7 @@ public:
     /// Input: <c>+5.2e3.0</c><br/>
     /// Output: <c>5200</c>
     /// </summary>
-    static JSONH_CPP_EXPECTED<long double, std::string> parse(std::string jsonh_number) noexcept {
+    static nonstd::expected<long double, std::string> parse(std::string jsonh_number) noexcept {
         // Decimal
         std::string base_digits = "0123456789";
         // Hexadecimal
@@ -47,7 +47,7 @@ private:
     /// <summary>
     /// Converts a fractional number with an exponent (e.g. <c>12.3e4.5</c>) from the given base (e.g. <c>01234567</c>) to a base-10 real.
     /// </summary>
-    static JSONH_CPP_EXPECTED<long double, std::string> parse_fractional_number_with_exponent(std::string_view digits, std::string_view base_digits) noexcept {
+    static nonstd::expected<long double, std::string> parse_fractional_number_with_exponent(std::string_view digits, std::string_view base_digits) noexcept {
         // Find exponent
         size_t exponent_index = digits.find_first_of("eE");
         // If no exponent then normalize real
@@ -60,13 +60,13 @@ private:
         std::string_view exponent_part = digits.substr(exponent_index + 1);
 
         // Parse mantissa and exponent
-        JSONH_CPP_EXPECTED<long double, std::string> mantissa = parse_fractional_number(mantissa_part, base_digits);
+        nonstd::expected<long double, std::string> mantissa = parse_fractional_number(mantissa_part, base_digits);
         if (!mantissa) {
-            return JSONH_CPP_UNEXPECTED(mantissa.error());
+            return nonstd::unexpected(mantissa.error());
         }
-        JSONH_CPP_EXPECTED<long double, std::string> exponent = parse_fractional_number(exponent_part, base_digits);
+        nonstd::expected<long double, std::string> exponent = parse_fractional_number(exponent_part, base_digits);
         if (!exponent) {
-            return JSONH_CPP_UNEXPECTED(exponent.error());
+            return nonstd::unexpected(exponent.error());
         }
 
         // Multiply mantissa by 10 ^ exponent
@@ -75,7 +75,7 @@ private:
     /// <summary>
     /// Converts a fractional number (e.g. <c>123.45</c>) from the given base (e.g. <c>01234567</c>) to a base-10 real.
     /// </summary>
-    static JSONH_CPP_EXPECTED<long double, std::string> parse_fractional_number(std::string_view digits, std::string_view base_digits) noexcept {
+    static nonstd::expected<long double, std::string> parse_fractional_number(std::string_view digits, std::string_view base_digits) noexcept {
         // Optimization for base-10 digits
         if (base_digits == "0123456789") {
             return std::stold(std::string(digits));
@@ -85,9 +85,9 @@ private:
         size_t dot_index = digits.find('.');
         // If no dot then normalize integer
         if (dot_index == std::string::npos) {
-            JSONH_CPP_EXPECTED<long long, std::string> integer = parse_whole_number(digits, base_digits);
+            nonstd::expected<long long, std::string> integer = parse_whole_number(digits, base_digits);
             if (!integer) {
-                return JSONH_CPP_UNEXPECTED(integer.error());
+                return nonstd::unexpected(integer.error());
             }
             return (long double)integer.value();
         }
@@ -97,13 +97,13 @@ private:
         std::string_view fraction_part = digits.substr(dot_index + 1);
 
         // Parse parts of number
-        JSONH_CPP_EXPECTED<long long, std::string> whole = parse_whole_number(whole_part, base_digits);
+        nonstd::expected<long long, std::string> whole = parse_whole_number(whole_part, base_digits);
         if (!whole) {
-            return JSONH_CPP_UNEXPECTED(whole.error());
+            return nonstd::unexpected(whole.error());
         }
-        JSONH_CPP_EXPECTED<long long, std::string> fraction = parse_whole_number(fraction_part, base_digits);
+        nonstd::expected<long long, std::string> fraction = parse_whole_number(fraction_part, base_digits);
         if (!fraction) {
-            return JSONH_CPP_UNEXPECTED(fraction.error());
+            return nonstd::unexpected(fraction.error());
         }
 
         // Combine whole and fraction
@@ -112,7 +112,7 @@ private:
     /// <summary>
     /// Converts a whole number (e.g. <c>12345</c>) from the given base (e.g. <c>01234567</c>) to a base-10 integer.
     /// </summary>
-    static JSONH_CPP_EXPECTED<long long, std::string> parse_whole_number(std::string_view digits, std::string_view base_digits) noexcept {
+    static nonstd::expected<long long, std::string> parse_whole_number(std::string_view digits, std::string_view base_digits) noexcept {
         // Optimization for base-10 digits
         if (base_digits == "0123456789") {
             return std::stoll(digits.data());
@@ -138,7 +138,7 @@ private:
 
             // Ensure digit is valid
             if (digit_int == std::string::npos) {
-                return JSONH_CPP_UNEXPECTED("Invalid digit");
+                return nonstd::unexpected("Invalid digit");
             }
 
             // Get magnitude of current digit column

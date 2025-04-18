@@ -6,12 +6,12 @@
 #include <set> // for std::set
 #include <stack> // for std::stack
 #include <optional> // for std::optional
+#include "martinmoene/expected.hpp" // for nonstd::expected (std::expected backport)
 #include "nlohmann/json.hpp" // for nlohmann::json
 #include "jsonh_token.hpp" // for jsonh::jsonh_token
 #include "jsonh_reader_options.hpp" // for jsonh::jsonh_reader_options
 #include "jsonh_number_parser.hpp" // for jsonh::jsonh_number_parser
 #include "utf8_reader.hpp" // for jsonh::utf8_reader
-#include "backports.hpp" // for backport macros
 
 using namespace nlohmann;
 
@@ -63,39 +63,39 @@ public:
     /// Parses a single element from a UTF-8 input stream and deserializes it as <c>t</c>.
     /// </summary>
     template <typename t>
-    static JSONH_CPP_EXPECTED<t, std::string> parse_element(std::unique_ptr<std::istream> stream) noexcept {
+    static nonstd::expected<t, std::string> parse_element(std::unique_ptr<std::istream> stream) noexcept {
         return jsonh_reader(std::move(stream)).parse_element<t>();
     }
     /// <summary>
     /// Parses a single element from a UTF-8 input stream.
     /// </summary>
-    static JSONH_CPP_EXPECTED<json, std::string> parse_element(std::unique_ptr<std::istream> stream) noexcept {
+    static nonstd::expected<json, std::string> parse_element(std::unique_ptr<std::istream> stream) noexcept {
         return jsonh_reader(std::move(stream)).parse_element();
     }
     /// <summary>
     /// Parses a single element from a UTF-8 input stream and deserializes it as <c>t</c>.
     /// </summary>
     template <typename t>
-    static JSONH_CPP_EXPECTED<t, std::string> parse_element(std::istream& stream) noexcept {
+    static nonstd::expected<t, std::string> parse_element(std::istream& stream) noexcept {
         return jsonh_reader(stream).parse_element<t>();
     }
     /// <summary>
     /// Parses a single element from a UTF-8 input stream.
     /// </summary>
-    static JSONH_CPP_EXPECTED<json, std::string> parse_element(std::istream& stream) noexcept {
+    static nonstd::expected<json, std::string> parse_element(std::istream& stream) noexcept {
         return jsonh_reader(stream).parse_element();
     }
     /// <summary>
     /// Parses a single element from a UTF-8 string and deserializes it as <c>t</c>.
     /// </summary>
     template <typename t>
-    static JSONH_CPP_EXPECTED<t, std::string> parse_element(const std::string& string) noexcept {
+    static nonstd::expected<t, std::string> parse_element(const std::string& string) noexcept {
         return jsonh_reader(string).parse_element<t>();
     }
     /// <summary>
     /// Parses a single element from a UTF-8 string.
     /// </summary>
-    static JSONH_CPP_EXPECTED<json, std::string> parse_element(const std::string& string) noexcept {
+    static nonstd::expected<json, std::string> parse_element(const std::string& string) noexcept {
         return jsonh_reader(string).parse_element();
     }
 
@@ -103,17 +103,17 @@ public:
     /// Parses a single element from the reader and deserializes it as <c>t</c>.
     /// </summary>
     template <typename t>
-    JSONH_CPP_EXPECTED<t, std::string> parse_element() noexcept {
-        JSONH_CPP_EXPECTED<json, std::string> node = parse_element();
+    nonstd::expected<t, std::string> parse_element() noexcept {
+        nonstd::expected<json, std::string> node = parse_element();
         if (!node) {
-            return JSONH_CPP_UNEXPECTED(node.error());
+            return nonstd::unexpected(node.error());
         }
         return node.value().template get<t>();
     }
     /// <summary>
     /// Parses a single element from the reader.
     /// </summary>
-    JSONH_CPP_EXPECTED<json, std::string> parse_element() noexcept {
+    nonstd::expected<json, std::string> parse_element() noexcept {
         std::stack<json> current_nodes;
         std::optional<std::string> current_property_name;
 
@@ -139,10 +139,10 @@ public:
             current_nodes.push(node);
         };
 
-        for (const JSONH_CPP_EXPECTED<jsonh_token, std::string>& token_result : read_element()) {
+        for (const nonstd::expected<jsonh_token, std::string>& token_result : read_element()) {
             // Check error
             if (!token_result) {
-                return JSONH_CPP_UNEXPECTED(token_result.error());
+                return nonstd::unexpected(token_result.error());
             }
             jsonh_token token = token_result.value();
 
@@ -181,9 +181,9 @@ public:
                 }
                 // Number
                 case json_token_type::number: {
-                    JSONH_CPP_EXPECTED<long double, std::string> result = jsonh_number_parser::parse(token.value);
+                    nonstd::expected<long double, std::string> result = jsonh_number_parser::parse(token.value);
                     if (!result) {
-                        return JSONH_CPP_UNEXPECTED(result.error());
+                        return nonstd::unexpected(result.error());
                     }
                     json node = json(result.value());
                     if (submit_node(node)) {
@@ -226,13 +226,13 @@ public:
                 }
                 // Not implemented
                 default: {
-                    return JSONH_CPP_UNEXPECTED("Token type not implemented");
+                    return nonstd::unexpected("Token type not implemented");
                 }
             }
         }
 
         // End of input
-        return JSONH_CPP_UNEXPECTED("Expected token, got end of input");
+        return nonstd::unexpected("Expected token, got end of input");
     }
     /// <summary>
     /// Tries to find the given property name in the reader.<br/>
@@ -251,7 +251,7 @@ public:
     bool find_property_value(const std::string& property_name) noexcept {
         long long current_depth = 0;
 
-        for (const JSONH_CPP_EXPECTED<jsonh_token, std::string>& token_result : read_element()) {
+        for (const nonstd::expected<jsonh_token, std::string>& token_result : read_element()) {
             // Check error
             if (!token_result) {
                 return false;
@@ -285,11 +285,11 @@ public:
     /// <summary>
     /// Reads a single element from the reader.
     /// </summary>
-    std::vector<JSONH_CPP_EXPECTED<jsonh_token, std::string>> read_element() noexcept {
-        std::vector<JSONH_CPP_EXPECTED<jsonh_token, std::string>> tokens = {};
+    std::vector<nonstd::expected<jsonh_token, std::string>> read_element() noexcept {
+        std::vector<nonstd::expected<jsonh_token, std::string>> tokens = {};
 
         // Comments & whitespace
-        for (const JSONH_CPP_EXPECTED<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
+        for (const nonstd::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
             if (!token) {
                 tokens.push_back(token);
                 return tokens;
@@ -300,13 +300,13 @@ public:
         // Peek rune
         std::optional<std::string> next = peek();
         if (!next) {
-            tokens.push_back(JSONH_CPP_UNEXPECTED("Expected token, got end of input"));
+            tokens.push_back(nonstd::unexpected("Expected token, got end of input"));
             return tokens;
         }
 
         // Object
         if (next.value() == "{") {
-            for (const JSONH_CPP_EXPECTED<jsonh_token, std::string>& token : read_object()) {
+            for (const nonstd::expected<jsonh_token, std::string>& token : read_object()) {
                 if (!token) {
                     tokens.push_back(token);
                     return tokens;
@@ -316,7 +316,7 @@ public:
         }
         // Array
         else if (next.value() == "[") {
-            for (const JSONH_CPP_EXPECTED<jsonh_token, std::string>& token : read_array()) {
+            for (const nonstd::expected<jsonh_token, std::string>& token : read_array()) {
                 if (!token) {
                     tokens.push_back(token);
                     return tokens;
@@ -326,9 +326,9 @@ public:
         }
         // Primitive value (null, true, false, string, number)
         else {
-            JSONH_CPP_EXPECTED<jsonh_token, std::string> token = read_primitive_element();
+            nonstd::expected<jsonh_token, std::string> token = read_primitive_element();
             if (!token) {
-                tokens.push_back(JSONH_CPP_UNEXPECTED(token.error()));
+                tokens.push_back(nonstd::unexpected(token.error()));
                 return tokens;
             }
 
@@ -336,7 +336,7 @@ public:
             if (token.value().json_type == json_token_type::string) {
                 // Try read property name
                 std::vector<jsonh_token> property_name_tokens = {};
-                for (const JSONH_CPP_EXPECTED<jsonh_token, std::string>& property_name_token : read_property_name(token.value().value)) {
+                for (const nonstd::expected<jsonh_token, std::string>& property_name_token : read_property_name(token.value().value)) {
                     // Possible braceless object
                     if (property_name_token) {
                         property_name_tokens.push_back(property_name_token.value());
@@ -351,7 +351,7 @@ public:
                     }
                 }
                 // Braceless object
-                for (const JSONH_CPP_EXPECTED<jsonh_token, std::string> object_token : read_braceless_object(property_name_tokens)) {
+                for (const nonstd::expected<jsonh_token, std::string> object_token : read_braceless_object(property_name_tokens)) {
                     if (!object_token) {
                         tokens.push_back(object_token);
                         return tokens;
@@ -386,13 +386,13 @@ private:
         "\u2029", "\u0009", "\u000A", "\u000B", "\u000C", "\u000D", "\u0085",
     };
 
-    std::vector<JSONH_CPP_EXPECTED<jsonh_token, std::string>> read_object() noexcept {
-        std::vector<JSONH_CPP_EXPECTED<jsonh_token, std::string>> tokens = {};
+    std::vector<nonstd::expected<jsonh_token, std::string>> read_object() noexcept {
+        std::vector<nonstd::expected<jsonh_token, std::string>> tokens = {};
 
         // Opening brace
         if (!read_one("{")) {
             // Braceless object
-            for (const JSONH_CPP_EXPECTED<jsonh_token, std::string>& token : read_braceless_object()) {
+            for (const nonstd::expected<jsonh_token, std::string>& token : read_braceless_object()) {
                 if (!token) {
                     tokens.push_back(token);
                     return tokens;
@@ -406,7 +406,7 @@ private:
 
         while (true) {
             // Comments & whitespace
-            for (const JSONH_CPP_EXPECTED<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
+            for (const nonstd::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
                 if (!token) {
                     tokens.push_back(token);
                     return tokens;
@@ -422,7 +422,7 @@ private:
                     return tokens;
                 }
                 // Missing closing brace
-                tokens.push_back(JSONH_CPP_UNEXPECTED("Expected `}` to end object, got end of input"));
+                tokens.push_back(nonstd::unexpected("Expected `}` to end object, got end of input"));
                 return tokens;
             }
 
@@ -435,7 +435,7 @@ private:
             }
             // Property
             else {
-                for (const JSONH_CPP_EXPECTED<jsonh_token, std::string>& token : read_property()) {
+                for (const nonstd::expected<jsonh_token, std::string>& token : read_property()) {
                     if (!token) {
                         tokens.push_back(token);
                         return tokens;
@@ -445,15 +445,15 @@ private:
             }
         }
     }
-    std::vector<JSONH_CPP_EXPECTED<jsonh_token, std::string>> read_braceless_object(std::optional<std::vector<jsonh_token>> property_name_tokens = std::nullopt) noexcept {
-        std::vector<JSONH_CPP_EXPECTED<jsonh_token, std::string>> tokens = {};
+    std::vector<nonstd::expected<jsonh_token, std::string>> read_braceless_object(std::optional<std::vector<jsonh_token>> property_name_tokens = std::nullopt) noexcept {
+        std::vector<nonstd::expected<jsonh_token, std::string>> tokens = {};
 
         // Start of object
         tokens.push_back(jsonh_token(json_token_type::start_object));
 
         // Initial tokens
         if (property_name_tokens) {
-            for (const JSONH_CPP_EXPECTED<jsonh_token, std::string>& token : read_property(property_name_tokens)) {
+            for (const nonstd::expected<jsonh_token, std::string>& token : read_property(property_name_tokens)) {
                 if (!token) {
                     tokens.push_back(token);
                     return tokens;
@@ -464,7 +464,7 @@ private:
 
         while (true) {
             // Comments & whitespace
-            for (const JSONH_CPP_EXPECTED<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
+            for (const nonstd::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
                 if (!token) {
                     tokens.push_back(token);
                     return tokens;
@@ -479,7 +479,7 @@ private:
             }
 
             // Property
-            for (const JSONH_CPP_EXPECTED<jsonh_token, std::string>& token : read_property()) {
+            for (const nonstd::expected<jsonh_token, std::string>& token : read_property()) {
                 if (!token) {
                     tokens.push_back(token);
                     return tokens;
@@ -488,8 +488,8 @@ private:
             }
         }
     }
-    std::vector<JSONH_CPP_EXPECTED<jsonh_token, std::string>> read_property(std::optional<std::vector<jsonh_token>> property_name_tokens = std::nullopt) noexcept {
-        std::vector<JSONH_CPP_EXPECTED<jsonh_token, std::string>> tokens = {};
+    std::vector<nonstd::expected<jsonh_token, std::string>> read_property(std::optional<std::vector<jsonh_token>> property_name_tokens = std::nullopt) noexcept {
+        std::vector<nonstd::expected<jsonh_token, std::string>> tokens = {};
 
         // Property name
         if (property_name_tokens) {
@@ -498,7 +498,7 @@ private:
             }
         }
         else {
-            for (const JSONH_CPP_EXPECTED<jsonh_token, std::string>& token : read_property_name()) {
+            for (const nonstd::expected<jsonh_token, std::string>& token : read_property_name()) {
                 if (!token) {
                     tokens.push_back(token);
                     return tokens;
@@ -508,7 +508,7 @@ private:
         }
 
         // Comments & whitespace
-        for (const JSONH_CPP_EXPECTED<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
+        for (const nonstd::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
             if (!token) {
                 tokens.push_back(token);
                 return tokens;
@@ -517,7 +517,7 @@ private:
         }
 
         // Property value
-        for (const JSONH_CPP_EXPECTED<jsonh_token, std::string>& token : read_element()) {
+        for (const nonstd::expected<jsonh_token, std::string>& token : read_element()) {
             if (!token) {
                 tokens.push_back(token);
                 return tokens;
@@ -526,7 +526,7 @@ private:
         }
 
         // Comments & whitespace
-        for (const JSONH_CPP_EXPECTED<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
+        for (const nonstd::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
             if (!token) {
                 tokens.push_back(token);
                 return tokens;
@@ -539,12 +539,12 @@ private:
 
         return tokens;
     }
-    std::vector<JSONH_CPP_EXPECTED<jsonh_token, std::string>> read_property_name(std::optional<std::string> string = std::nullopt) noexcept {
-        std::vector<JSONH_CPP_EXPECTED<jsonh_token, std::string>> tokens = {};
+    std::vector<nonstd::expected<jsonh_token, std::string>> read_property_name(std::optional<std::string> string = std::nullopt) noexcept {
+        std::vector<nonstd::expected<jsonh_token, std::string>> tokens = {};
 
         // String
         if (!string) {
-            JSONH_CPP_EXPECTED<jsonh_token, std::string> string_token = read_string();
+            nonstd::expected<jsonh_token, std::string> string_token = read_string();
             if (!string_token) {
                 tokens.push_back(string_token);
                 return tokens;
@@ -553,7 +553,7 @@ private:
         }
 
         // Comments & whitespace
-        for (const JSONH_CPP_EXPECTED<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
+        for (const nonstd::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
             if (!token) {
                 tokens.push_back(token);
                 return tokens;
@@ -563,7 +563,7 @@ private:
 
         // Colon
         if (!read_one(":")) {
-            tokens.push_back(JSONH_CPP_UNEXPECTED("Expected `:` after property name in object"));
+            tokens.push_back(nonstd::unexpected("Expected `:` after property name in object"));
             return tokens;
         }
 
@@ -572,12 +572,12 @@ private:
 
         return tokens;
     }
-    std::vector<JSONH_CPP_EXPECTED<jsonh_token, std::string>> read_array() noexcept {
-        std::vector<JSONH_CPP_EXPECTED<jsonh_token, std::string>> tokens = {};
+    std::vector<nonstd::expected<jsonh_token, std::string>> read_array() noexcept {
+        std::vector<nonstd::expected<jsonh_token, std::string>> tokens = {};
 
         // Opening bracket
         if (!read_one("[")) {
-            tokens.push_back(JSONH_CPP_UNEXPECTED("Expected `[` to start array"));
+            tokens.push_back(nonstd::unexpected("Expected `[` to start array"));
             return tokens;
         }
         // Start of array
@@ -585,7 +585,7 @@ private:
 
         while (true) {
             // Comments & whitespace
-            for (const JSONH_CPP_EXPECTED<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
+            for (const nonstd::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
                 if (!token) {
                     tokens.push_back(token);
                     return tokens;
@@ -601,7 +601,7 @@ private:
                     return tokens;
                 }
                 // Missing closing bracket
-                tokens.push_back(JSONH_CPP_UNEXPECTED("Expected `]` to end array, got end of input"));
+                tokens.push_back(nonstd::unexpected("Expected `]` to end array, got end of input"));
                 return tokens;
             }
 
@@ -614,7 +614,7 @@ private:
             }
             // Item
             else {
-                for (const JSONH_CPP_EXPECTED<jsonh_token, std::string>& token : read_item()) {
+                for (const nonstd::expected<jsonh_token, std::string>& token : read_item()) {
                     if (!token) {
                         tokens.push_back(token);
                         return tokens;
@@ -624,11 +624,11 @@ private:
             }
         }
     }
-    std::vector<JSONH_CPP_EXPECTED<jsonh_token, std::string>> read_item() noexcept {
-        std::vector<JSONH_CPP_EXPECTED<jsonh_token, std::string>> tokens = {};
+    std::vector<nonstd::expected<jsonh_token, std::string>> read_item() noexcept {
+        std::vector<nonstd::expected<jsonh_token, std::string>> tokens = {};
 
         // Element
-        for (const JSONH_CPP_EXPECTED<jsonh_token, std::string>& token : read_element()) {
+        for (const nonstd::expected<jsonh_token, std::string>& token : read_element()) {
             if (!token) {
                 tokens.push_back(token);
                 return tokens;
@@ -637,7 +637,7 @@ private:
         }
 
         // Comments & whitespace
-        for (const JSONH_CPP_EXPECTED<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
+        for (const nonstd::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
             if (!token) {
                 tokens.push_back(token);
                 return tokens;
@@ -650,7 +650,7 @@ private:
 
         return tokens;
     }
-    JSONH_CPP_EXPECTED<jsonh_token, std::string> read_string() noexcept {
+    nonstd::expected<jsonh_token, std::string> read_string() noexcept {
         // Start quote
         std::optional<std::string> start_quote = read_any({ "\"", "'" });
         if (!start_quote) {
@@ -681,7 +681,7 @@ private:
         while (true) {
             std::optional<std::string> next = read();
             if (!next) {
-                return JSONH_CPP_UNEXPECTED("Expected end of string, got end of input");
+                return nonstd::unexpected("Expected end of string, got end of input");
             }
 
             // Partial end quote was actually part of string
@@ -699,9 +699,9 @@ private:
             }
             // Escape sequence
             else if (next == "\\") {
-                JSONH_CPP_EXPECTED<std::string, std::string> escape_sequence_result = read_hex_escape_sequence(string_builder);
+                nonstd::expected<std::string, std::string> escape_sequence_result = read_hex_escape_sequence(string_builder);
                 if (!escape_sequence_result) {
-                    return JSONH_CPP_UNEXPECTED(escape_sequence_result.error());
+                    return nonstd::unexpected(escape_sequence_result.error());
                 }
                 string_builder += escape_sequence_result.value();
             }
@@ -845,7 +845,7 @@ private:
         // End of string
         return jsonh_token(json_token_type::string, string_builder);
     }
-    JSONH_CPP_EXPECTED<jsonh_token, std::string> read_quoteless_string(std::string initial_chars = "") noexcept {
+    nonstd::expected<jsonh_token, std::string> read_quoteless_string(std::string initial_chars = "") noexcept {
         bool is_named_literal_possible = true;
 
         // Read quoteless string
@@ -862,9 +862,9 @@ private:
             // Escape sequence
             if (next.value() == "\\") {
                 read();
-                JSONH_CPP_EXPECTED<std::string, std::string> escape_sequence_result = read_hex_escape_sequence(string_builder);
+                nonstd::expected<std::string, std::string> escape_sequence_result = read_hex_escape_sequence(string_builder);
                 if (!escape_sequence_result) {
-                    return JSONH_CPP_UNEXPECTED(escape_sequence_result.error());
+                    return nonstd::unexpected(escape_sequence_result.error());
                 }
                 string_builder += escape_sequence_result.value();
                 is_named_literal_possible = false;
@@ -886,7 +886,7 @@ private:
 
         // Ensure not empty
         if (string_builder.empty()) {
-            return JSONH_CPP_UNEXPECTED("Empty quoteless string");
+            return nonstd::unexpected("Empty quoteless string");
         }
 
         // Trim trailing whitespace
@@ -947,11 +947,11 @@ private:
         std::optional<std::string> next_char = peek();
         return next_char && (next_char.value() == "\\" || !reserved_runes.contains(next_char.value()));
     }
-    JSONH_CPP_EXPECTED<jsonh_token, std::string> read_number_or_quoteless_string() noexcept {
+    nonstd::expected<jsonh_token, std::string> read_number_or_quoteless_string() noexcept {
         // Read number
         std::string number_builder;
         number_builder.reserve(64);
-        JSONH_CPP_EXPECTED<jsonh_token, std::string> number = read_number(number_builder);
+        nonstd::expected<jsonh_token, std::string> number = read_number(number_builder);
         if (number) {
             // Try read quoteless string starting with number
             std::string whitespace_chars;
@@ -969,7 +969,7 @@ private:
             return read_quoteless_string(number_builder);
         }
     }
-    JSONH_CPP_EXPECTED<jsonh_token, std::string> read_number(std::string& number_builder) noexcept {
+    nonstd::expected<jsonh_token, std::string> read_number(std::string& number_builder) noexcept {
         // Read base
         std::string base_digits = "0123456789";
         if (read_one("0")) {
@@ -997,9 +997,9 @@ private:
         }
 
         // Read main number
-        JSONH_CPP_EXPECTED<void, std::string> main_result = read_number_no_exponent(number_builder, base_digits);
+        nonstd::expected<void, std::string> main_result = read_number_no_exponent(number_builder, base_digits);
         if (!main_result) {
-            return JSONH_CPP_UNEXPECTED(main_result.error());
+            return nonstd::unexpected(main_result.error());
         }
 
         // Exponent
@@ -1008,22 +1008,22 @@ private:
             number_builder += exponent_char.value();
 
             // Read exponent number
-            JSONH_CPP_EXPECTED<void, std::string> exponent_result = read_number_no_exponent(number_builder, base_digits);
+            nonstd::expected<void, std::string> exponent_result = read_number_no_exponent(number_builder, base_digits);
             if (!exponent_result) {
-                return JSONH_CPP_UNEXPECTED(exponent_result.error());
+                return nonstd::unexpected(exponent_result.error());
             }
         }
 
         // End of number
         return jsonh_token(json_token_type::number, number_builder);
     }
-    JSONH_CPP_EXPECTED<void, std::string> read_number_no_exponent(std::string& number_builder, std::string_view base_digits) noexcept {
+    nonstd::expected<void, std::string> read_number_no_exponent(std::string& number_builder, std::string_view base_digits) noexcept {
         // Read sign
         read_any({ "-", "+" });
 
         // Leading underscore
         if (read_one("_")) {
-            return JSONH_CPP_UNEXPECTED("Leading `_` in number");
+            return nonstd::unexpected("Leading `_` in number");
         }
 
         bool is_fraction = false;
@@ -1047,7 +1047,7 @@ private:
 
                 // Duplicate decimal point
                 if (is_fraction) {
-                    return JSONH_CPP_UNEXPECTED("Duplicate `.` in number");
+                    return nonstd::unexpected("Duplicate `.` in number");
                 }
                 is_fraction = true;
             }
@@ -1064,22 +1064,22 @@ private:
 
         // Ensure not empty
         if (number_builder.empty()) {
-            return JSONH_CPP_UNEXPECTED("Empty number");
+            return nonstd::unexpected("Empty number");
         }
 
         // Trailing underscore
         if (number_builder.ends_with('_')) {
-            return JSONH_CPP_UNEXPECTED("Trailing `_` in number");
+            return nonstd::unexpected("Trailing `_` in number");
         }
 
         // End of number
-        return JSONH_CPP_EXPECTED<void, std::string>(); // Success
+        return nonstd::expected<void, std::string>(); // Success
     }
-    JSONH_CPP_EXPECTED<jsonh_token, std::string> read_primitive_element() noexcept {
+    nonstd::expected<jsonh_token, std::string> read_primitive_element() noexcept {
         // Peek rune
         std::optional<std::string> next = peek();
         if (!next) {
-            return JSONH_CPP_UNEXPECTED("Expected primitive element, got end of input");
+            return nonstd::unexpected("Expected primitive element, got end of input");
         }
 
         // Number
@@ -1095,8 +1095,8 @@ private:
             return read_quoteless_string();
         }
     }
-    std::vector<JSONH_CPP_EXPECTED<jsonh_token, std::string>> read_comments_and_whitespace() noexcept {
-        std::vector<JSONH_CPP_EXPECTED<jsonh_token, std::string>> tokens = {};
+    std::vector<nonstd::expected<jsonh_token, std::string>> read_comments_and_whitespace() noexcept {
+        std::vector<nonstd::expected<jsonh_token, std::string>> tokens = {};
 
         while (true) {
             // Whitespace
@@ -1117,7 +1117,7 @@ private:
 
         return tokens;
     }
-    JSONH_CPP_EXPECTED<jsonh_token, std::string> read_comment() noexcept {
+    nonstd::expected<jsonh_token, std::string> read_comment() noexcept {
         bool block_comment = false;
 
         // Hash-styled comment
@@ -1132,11 +1132,11 @@ private:
                 block_comment = true;
             }
             else {
-                return JSONH_CPP_UNEXPECTED("Unexpected '/'");
+                return nonstd::unexpected("Unexpected '/'");
             }
         }
         else {
-            return JSONH_CPP_UNEXPECTED("Unexpected character");
+            return nonstd::unexpected("Unexpected character");
         }
 
         // Read comment
@@ -1150,7 +1150,7 @@ private:
             if (block_comment) {
                 // Error
                 if (!next) {
-                    return JSONH_CPP_UNEXPECTED("Expected end of block comment, got end of input");
+                    return nonstd::unexpected("Expected end of block comment, got end of input");
                 }
                 // End of block comment
                 if (next == "*" && read_one("/")) {
@@ -1186,7 +1186,7 @@ private:
             }
         }
     }
-    JSONH_CPP_EXPECTED<unsigned int, std::string> read_hex_sequence(size_t length) noexcept {
+    nonstd::expected<unsigned int, std::string> read_hex_sequence(size_t length) noexcept {
         std::string hex_chars(length, '\0');
 
         for (int index = 0; index < length; index++) {
@@ -1199,17 +1199,17 @@ private:
             }
             // Unexpected char
             else {
-                return JSONH_CPP_UNEXPECTED("Incorrect number of hexadecimal digits in unicode escape sequence");
+                return nonstd::unexpected("Incorrect number of hexadecimal digits in unicode escape sequence");
             }
         }
 
         // Parse unicode character from hex digits
         return (unsigned int)std::stoul(hex_chars, nullptr, 16);
     }
-    JSONH_CPP_EXPECTED<std::string, std::string> read_hex_escape_sequence(const std::string& string_builder) noexcept {
+    nonstd::expected<std::string, std::string> read_hex_escape_sequence(const std::string& string_builder) noexcept {
         std::optional<std::string> escape_char = read();
         if (!escape_char) {
-            return JSONH_CPP_UNEXPECTED("Expected escape sequence, got end of input");
+            return nonstd::unexpected("Expected escape sequence, got end of input");
         }
 
         // Reverse solidus
@@ -1277,11 +1277,11 @@ private:
             return escape_char.value();
         }
     }
-    JSONH_CPP_EXPECTED<std::string, std::string> read_hex_escape_sequence(const std::string& string_builder, size_t length) noexcept {
+    nonstd::expected<std::string, std::string> read_hex_escape_sequence(const std::string& string_builder, size_t length) noexcept {
         // Read hex digits & convert to uint
-        JSONH_CPP_EXPECTED<unsigned int, std::string> code_point = read_hex_sequence(length);
+        nonstd::expected<unsigned int, std::string> code_point = read_hex_sequence(length);
         if (!code_point) {
-            return JSONH_CPP_UNEXPECTED(code_point.error());
+            return nonstd::unexpected(code_point.error());
         }
 
         // High surrogate
@@ -1292,27 +1292,27 @@ private:
             if (read_one("\\")) {
                 // Low unicode hex sequence
                 if (read_one("u")) {
-                    JSONH_CPP_EXPECTED<unsigned int, std::string> low_code_point = read_hex_sequence(4);
+                    nonstd::expected<unsigned int, std::string> low_code_point = read_hex_sequence(4);
                     if (!low_code_point) {
-                        return JSONH_CPP_UNEXPECTED(low_code_point.error());
+                        return nonstd::unexpected(low_code_point.error());
                     }
                     code_point = utf16_surrogates_to_code_point(code_point.value(), low_code_point.value());
                     low_surrogate_success = true;
                 }
                 // Low short unicode hex sequence
                 else if (read_one("x")) {
-                    JSONH_CPP_EXPECTED<unsigned int, std::string> low_code_point = read_hex_sequence(2);
+                    nonstd::expected<unsigned int, std::string> low_code_point = read_hex_sequence(2);
                     if (!low_code_point) {
-                        return JSONH_CPP_UNEXPECTED(low_code_point.error());
+                        return nonstd::unexpected(low_code_point.error());
                     }
                     code_point = utf16_surrogates_to_code_point(code_point.value(), low_code_point.value());
                     low_surrogate_success = true;
                 }
                 // Low long unicode hex sequence
                 else if (read_one("U")) {
-                    JSONH_CPP_EXPECTED<unsigned int, std::string> low_code_point = read_hex_sequence(8);
+                    nonstd::expected<unsigned int, std::string> low_code_point = read_hex_sequence(8);
                     if (!low_code_point) {
-                        return JSONH_CPP_UNEXPECTED(low_code_point.error());
+                        return nonstd::unexpected(low_code_point.error());
                     }
                     code_point = utf16_surrogates_to_code_point(code_point.value(), low_code_point.value());
                     low_surrogate_success = true;
@@ -1325,17 +1325,17 @@ private:
         }
 
         // Rune
-        JSONH_CPP_EXPECTED<std::string, std::string> rune = code_point_to_utf8(code_point.value());
+        nonstd::expected<std::string, std::string> rune = code_point_to_utf8(code_point.value());
         if (!rune) {
-            return JSONH_CPP_UNEXPECTED(rune.error());
+            return nonstd::unexpected(rune.error());
         }
         return rune.value();
     }
-    static JSONH_CPP_EXPECTED<std::string, std::string> code_point_to_utf8(unsigned int code_point) noexcept {
+    static nonstd::expected<std::string, std::string> code_point_to_utf8(unsigned int code_point) noexcept {
         std::string result;
         // Invalid surrogate
         if (code_point >= 0xD800 && code_point <= 0xDFFF) {
-            return JSONH_CPP_UNEXPECTED("Invalid code point (surrogate half)");
+            return nonstd::unexpected("Invalid code point (surrogate half)");
         }
         // 1-byte UTF-8
         else if (code_point <= 0x7F) {
@@ -1361,7 +1361,7 @@ private:
         }
         // Invalid UTF-8
         else {
-            return JSONH_CPP_UNEXPECTED("Invalid code point (out of range)");
+            return nonstd::unexpected("Invalid code point (out of range)");
         }
         return result;
     }
