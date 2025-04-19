@@ -8,10 +8,10 @@
 #include <optional> // for std::optional
 #include "martinmoene/expected.hpp" // for nonstd::expected (std::expected backport)
 #include "nlohmann/json.hpp" // for nlohmann::json
-#include "jsonh_token.hpp" // for jsonh::jsonh_token
-#include "jsonh_reader_options.hpp" // for jsonh::jsonh_reader_options
-#include "jsonh_number_parser.hpp" // for jsonh::jsonh_number_parser
-#include "utf8_reader.hpp" // for jsonh::utf8_reader
+#include "jsonh_token.hpp" // for jsonh_cpp::jsonh_token
+#include "jsonh_reader_options.hpp" // for jsonh_cpp::jsonh_reader_options
+#include "jsonh_number_parser.hpp" // for jsonh_cpp::jsonh_number_parser
+#include "utf8_reader.hpp" // for jsonh_cpp::utf8_reader
 
 using namespace nlohmann;
 
