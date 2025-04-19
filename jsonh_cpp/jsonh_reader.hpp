@@ -54,11 +54,11 @@ public:
     }
 
     /// <summary>
-    /// Parses a single element from a UTF-8 input stream and deserializes it as <c>t</c>.
+    /// Parses a single element from a UTF-8 input stream and deserializes it as <typeparamref name="T"/>.
     /// </summary>
-    template <typename t>
-    static nonstd::expected<t, std::string> parse_element(std::unique_ptr<std::istream> stream) noexcept {
-        return jsonh_reader(std::move(stream)).parse_element<t>();
+    template <typename T>
+    static nonstd::expected<T, std::string> parse_element(std::unique_ptr<std::istream> stream) noexcept {
+        return jsonh_reader(std::move(stream)).parse_element<T>();
     }
     /// <summary>
     /// Parses a single element from a UTF-8 input stream.
@@ -67,11 +67,11 @@ public:
         return jsonh_reader(std::move(stream)).parse_element();
     }
     /// <summary>
-    /// Parses a single element from a UTF-8 input stream and deserializes it as <c>t</c>.
+    /// Parses a single element from a UTF-8 input stream and deserializes it as <typeparamref name="T"/>.
     /// </summary>
-    template <typename t>
-    static nonstd::expected<t, std::string> parse_element(std::istream& stream) noexcept {
-        return jsonh_reader(stream).parse_element<t>();
+    template <typename T>
+    static nonstd::expected<T, std::string> parse_element(std::istream& stream) noexcept {
+        return jsonh_reader(stream).parse_element<T>();
     }
     /// <summary>
     /// Parses a single element from a UTF-8 input stream.
@@ -80,11 +80,11 @@ public:
         return jsonh_reader(stream).parse_element();
     }
     /// <summary>
-    /// Parses a single element from a UTF-8 string and deserializes it as <c>t</c>.
+    /// Parses a single element from a UTF-8 string and deserializes it as <typeparamref name="T"/>.
     /// </summary>
-    template <typename t>
-    static nonstd::expected<t, std::string> parse_element(const std::string& string) noexcept {
-        return jsonh_reader(string).parse_element<t>();
+    template <typename T>
+    static nonstd::expected<T, std::string> parse_element(const std::string& string) noexcept {
+        return jsonh_reader(string).parse_element<T>();
     }
     /// <summary>
     /// Parses a single element from a UTF-8 string.
@@ -94,15 +94,15 @@ public:
     }
 
     /// <summary>
-    /// Parses a single element from the reader and deserializes it as <c>t</c>.
+    /// Parses a single element from the reader and deserializes it as <typeparamref name="T"/>.
     /// </summary>
-    template <typename t>
-    nonstd::expected<t, std::string> parse_element() noexcept {
+    template <typename T>
+    nonstd::expected<T, std::string> parse_element() noexcept {
         nonstd::expected<json, std::string> node = parse_element();
         if (!node) {
             return nonstd::unexpected<std::string>(node.error());
         }
-        return node.value().template get<t>();
+        return node.value().template get<T>();
     }
     /// <summary>
     /// Parses a single element from the reader.
