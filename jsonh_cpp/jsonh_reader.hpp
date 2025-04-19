@@ -419,7 +419,7 @@ private:
             }
 
             // Closing brace
-            if (next == "}") {
+            if (next.value() == "}") {
                 // End of object
                 read();
                 tokens.push_back(jsonh_token(json_token_type::end_object));
@@ -598,7 +598,7 @@ private:
             }
 
             // Closing bracket
-            if (next == "]") {
+            if (next.value() == "]") {
                 // End of array
                 read();
                 tokens.push_back(jsonh_token(json_token_type::end_array));
@@ -683,14 +683,14 @@ private:
             }
 
             // End quote
-            if (next == start_quote) {
+            if (next.value() == start_quote) {
                 end_quote_counter++;
                 if (end_quote_counter == start_quote_counter) {
                     break;
                 }
             }
             // Escape sequence
-            else if (next == "\\") {
+            else if (next.value() == "\\") {
                 nonstd::expected<std::string, std::string> escape_sequence_result = read_hex_escape_sequence(string_builder);
                 if (!escape_sequence_result) {
                     return nonstd::unexpected<std::string>(escape_sequence_result.error());
@@ -1075,11 +1075,11 @@ private:
         }
 
         // Number
-        if ((next >= "0" && next <= "9") || (next == "-" || next == "+") || next == ".") {
+        if ((next.value() >= "0" && next.value() <= "9") || (next.value() == "-" || next.value() == "+") || next.value() == ".") {
             return read_number_or_quoteless_string();
         }
         // String
-        else if (next == "\"" || next == "'") {
+        else if (next.value() == "\"" || next.value() == "'") {
             return read_string();
         }
         // Quoteless string (or named literal)
@@ -1096,9 +1096,12 @@ private:
 
             // Peek rune
             std::optional<std::string> next = peek();
+            if (!next) {
+                break;
+            }
 
             // Comment
-            if (next == "#" || next == "/") {
+            if (next.value() == "#" || next.value() == "/") {
                 tokens.push_back(read_comment());
             }
             // End of comments
@@ -1145,7 +1148,7 @@ private:
                     return nonstd::unexpected<std::string>("Expected end of block comment, got end of input");
                 }
                 // End of block comment
-                if (next == "*" && read_one("/")) {
+                if (next.value() == "*" && read_one("/")) {
                     return jsonh_token(json_token_type::comment, comment_builder);
                 }
             }
