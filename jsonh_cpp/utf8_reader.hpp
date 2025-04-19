@@ -36,12 +36,6 @@ public:
         : utf8_reader(std::make_unique<std::istringstream>(string)) {
     }
     /// <summary>
-    /// Constructs a reader that reads UTF-8 runes from a UTF-8 string_view converted to a string.
-    /// </summary>
-    utf8_reader(const std::string_view& string_view) noexcept
-        : utf8_reader(std::string(string_view)) {
-    }
-    /// <summary>
     /// Constructs a reader that reads UTF-8 runes from a UTF-8 char pointer converted to a string.
     /// </summary>
     utf8_reader(const char* string) noexcept

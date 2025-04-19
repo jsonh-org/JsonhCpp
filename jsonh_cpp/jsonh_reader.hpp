@@ -47,12 +47,6 @@ public:
         : jsonh_reader(std::make_unique<std::istringstream>(string), options) {
     }
     /// <summary>
-    /// Constructs a reader that reads JSONH from a UTF-8 string_view converted to a string.
-    /// </summary>
-    jsonh_reader(const std::string_view& string_view, jsonh_reader_options options = jsonh_reader_options()) noexcept
-        : jsonh_reader(std::string(string_view), options) {
-    }
-    /// <summary>
     /// Constructs a reader that reads JSONH from a UTF-8 char pointer converted to a string.
     /// </summary>
     jsonh_reader(const char* string, jsonh_reader_options options = jsonh_reader_options()) noexcept
