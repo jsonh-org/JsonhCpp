@@ -5,7 +5,7 @@ namespace jsonh_cpp {
 /// <summary>
 /// Options for a jsonh_reader.
 /// </summary>
-struct jsonh_reader_options final {
+struct jsonh_reader_options {
     /// <summary>
     /// Enables/disables parsing unclosed inputs.
     /// <code>
