@@ -1184,7 +1184,7 @@ private:
     nonstd::expected<unsigned int, std::string> read_hex_sequence(size_t length) noexcept {
         std::string hex_chars(length, '\0');
 
-        for (int index = 0; index < length; index++) {
+        for (size_t index = 0; index < length; index++) {
             std::optional<std::string> next = read();
 
             // Hex digit
