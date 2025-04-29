@@ -1320,38 +1320,44 @@ private:
         return rune.value();
     }
     static nonstd::expected<std::string, std::string> code_point_to_utf8(unsigned int code_point) noexcept {
-        std::string result;
         // Invalid surrogate
         if (code_point >= 0xD800 && code_point <= 0xDFFF) {
             return nonstd::unexpected<std::string>("Invalid code point (surrogate half)");
         }
         // 1-byte UTF-8
         else if (code_point <= 0x7F) {
-            result += (char)code_point;
+            return std::string({
+                (char)code_point,
+            });
         }
         // 2-byte UTF-8
         else if (code_point <= 0x7FF) {
-            result += (char)(0xC0 | (code_point >> 6));
-            result += (char)(0x80 | (code_point & 0x3F));
+            return std::string({
+                (char)(0xC0 | (code_point >> 6)),
+                (char)(0x80 | (code_point & 0x3F)),
+            });
         }
         // 3-byte UTF-8
         else if (code_point <= 0xFFFF) {
-            result += (char)(0xE0 | (code_point >> 12));
-            result += (char)(0x80 | ((code_point >> 6) & 0x3F));
-            result += (char)(0x80 | (code_point & 0x3F));
+            return std::string({
+                (char)(0xE0 | (code_point >> 12)),
+                (char)(0x80 | ((code_point >> 6) & 0x3F)),
+                (char)(0x80 | (code_point & 0x3F)),
+            });
         }
         // 4-byte UTF-8
         else if (code_point <= 0x10FFFF) {
-            result += (char)(0xF0 | (code_point >> 18));
-            result += (char)(0x80 | ((code_point >> 12) & 0x3F));
-            result += (char)(0x80 | ((code_point >> 6) & 0x3F));
-            result += (char)(0x80 | (code_point & 0x3F));
+            return std::string({
+                (char)(0xF0 | (code_point >> 18)),
+                (char)(0x80 | ((code_point >> 12) & 0x3F)),
+                (char)(0x80 | ((code_point >> 6) & 0x3F)),
+                (char)(0x80 | (code_point & 0x3F)),
+            });
         }
         // Invalid UTF-8
         else {
             return nonstd::unexpected<std::string>("Invalid code point (out of range)");
         }
-        return result;
     }
     static unsigned int utf16_surrogates_to_code_point(unsigned int high_surrogate, unsigned int low_surrogate) noexcept {
         return 0x10000 + (((high_surrogate - 0xD800) << 10) | (low_surrogate - 0xDC00));
