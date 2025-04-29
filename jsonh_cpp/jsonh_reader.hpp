@@ -1282,40 +1282,33 @@ private:
         // High surrogate
         if (is_utf16_high_surrogate(code_point.value())) {
             size_t original_position = position();
-            bool low_surrogate_success = false;
             // Escape sequence
             if (read_one("\\")) {
-                // Low unicode hex sequence
-                if (read_one("u")) {
-                    nonstd::expected<unsigned int, std::string> low_code_point = read_hex_sequence(4);
+                std::optional<std::string> next = read_any({ "u", "x", "U" });
+                // Low surrogate escape sequence
+                if (next) {
+                    // Read hex sequence
+                    nonstd::expected<unsigned int, std::string> low_code_point;
+                    if (next == "u") {
+                        low_code_point = read_hex_sequence(4);
+                    }
+                    else if (next == "x") {
+                        low_code_point = read_hex_sequence(2);
+                    }
+                    else if (next == "U") {
+                        low_code_point = read_hex_sequence(8);
+                    }
+                    // Ensure hex sequence read successfully
                     if (!low_code_point) {
                         return nonstd::unexpected<std::string>(low_code_point.error());
                     }
+                    // Combine high and low surrogates
                     code_point = utf16_surrogates_to_code_point(code_point.value(), low_code_point.value());
-                    low_surrogate_success = true;
                 }
-                // Low short unicode hex sequence
-                else if (read_one("x")) {
-                    nonstd::expected<unsigned int, std::string> low_code_point = read_hex_sequence(2);
-                    if (!low_code_point) {
-                        return nonstd::unexpected<std::string>(low_code_point.error());
-                    }
-                    code_point = utf16_surrogates_to_code_point(code_point.value(), low_code_point.value());
-                    low_surrogate_success = true;
+                // Other escape sequence
+                else {
+                    seek(original_position);
                 }
-                // Low long unicode hex sequence
-                else if (read_one("U")) {
-                    nonstd::expected<unsigned int, std::string> low_code_point = read_hex_sequence(8);
-                    if (!low_code_point) {
-                        return nonstd::unexpected<std::string>(low_code_point.error());
-                    }
-                    code_point = utf16_surrogates_to_code_point(code_point.value(), low_code_point.value());
-                    low_surrogate_success = true;
-                }
-            }
-            // Missing low surrogate
-            if (!low_surrogate_success) {
-                seek(original_position);
             }
         }
 
