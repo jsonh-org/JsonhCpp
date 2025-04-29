@@ -663,8 +663,6 @@ private:
 
         // Count multiple end quotes
         size_t end_quote_counter = 0;
-        // Find last newline
-        size_t last_newline_index = -1;
 
         // Read string
         std::string string_builder;
@@ -699,11 +697,6 @@ private:
             }
             // Literal character
             else {
-                // Newline
-                if (newline_runes.contains(next.value())) {
-                    last_newline_index = string_builder.size();
-                }
-
                 string_builder += next.value();
             }
         }
