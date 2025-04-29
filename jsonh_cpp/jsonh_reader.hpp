@@ -691,7 +691,7 @@ private:
             }
             // Escape sequence
             else if (next.value() == "\\") {
-                nonstd::expected<std::string, std::string> escape_sequence_result = read_hex_escape_sequence(string_builder);
+                nonstd::expected<std::string, std::string> escape_sequence_result = read_escape_sequence(string_builder);
                 if (!escape_sequence_result) {
                     return nonstd::unexpected<std::string>(escape_sequence_result.error());
                 }
@@ -854,7 +854,7 @@ private:
             // Escape sequence
             if (next.value() == "\\") {
                 read();
-                nonstd::expected<std::string, std::string> escape_sequence_result = read_hex_escape_sequence(string_builder);
+                nonstd::expected<std::string, std::string> escape_sequence_result = read_escape_sequence(string_builder);
                 if (!escape_sequence_result) {
                     return nonstd::unexpected<std::string>(escape_sequence_result.error());
                 }
@@ -1201,7 +1201,7 @@ private:
         // Parse unicode character from hex digits
         return (unsigned int)std::stoul(hex_chars, nullptr, 16);
     }
-    nonstd::expected<std::string, std::string> read_hex_escape_sequence(const std::string& string_builder) noexcept {
+    nonstd::expected<std::string, std::string> read_escape_sequence(const std::string& string_builder) noexcept {
         std::optional<std::string> escape_char = read();
         if (!escape_char) {
             return nonstd::unexpected<std::string>("Expected escape sequence, got end of input");
