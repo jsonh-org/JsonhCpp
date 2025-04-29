@@ -1127,7 +1127,7 @@ private:
                 block_comment = true;
             }
             else {
-                return nonstd::unexpected<std::string>("Unexpected '/'");
+                return nonstd::unexpected<std::string>("Unexpected `/`");
             }
         }
         else {
