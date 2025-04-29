@@ -148,9 +148,36 @@ public:
     /// </summary>
     std::optional<std::string> peek_reverse() const noexcept {
         size_t original_position = position();
-        std::optional<std::string> next = read_reverse();
+        std::optional<std::string> last = read_reverse();
         seek(original_position);
-        return next;
+        return last;
+    }
+    /// <summary>
+    /// If the last UTF-8 rune is the given option, moves backward by its number of bytes.
+    /// </summary>
+    bool read_one_reverse(std::string option) const noexcept {
+        if (peek_reverse() == option) {
+            read_reverse();
+            return true;
+        }
+        return false;
+    }
+    /// <summary>
+    /// If the last UTF-8 rune is one of the given options, moves backward by its number of bytes and returns the option.
+    /// </summary>
+    std::optional<std::string> read_any_reverse(const std::set<std::string>& options) const noexcept {
+        // Peek char
+        std::optional<std::string> last = peek_reverse();
+        if (!last) {
+            return std::nullopt;
+        }
+        // Match option
+        if (!options.contains(last.value())) {
+            return std::nullopt;
+        }
+        // Option matched
+        read_reverse();
+        return last;
     }
 
     /// <summary>
