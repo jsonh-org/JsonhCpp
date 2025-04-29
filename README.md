@@ -58,9 +58,9 @@ std::string element = jsonh_cpp::jsonh_reader::parse_element<std::string>(jsonh)
 ## Dependencies
 
 - C++20
-- [nlohmann/json](https://github.com/nlohmann/json) (up-to-date 2025/04/17)
-- [catchorg/Catch2](https://github.com/catchorg/Catch2) (up-to-date 2025/04/17) - [help](https://stackoverflow.com/a/78804393)
-- [martinmoene/expected-lite](https://github.com/martinmoene/expected-lite) (up-to-date 2025/04/18) - backport
+- [nlohmann/json](https://github.com/nlohmann/json) (v3.12.0)
+- [catchorg/Catch2](https://github.com/catchorg/Catch2) (v3.8.1) - [help](https://stackoverflow.com/a/78804393)
+- [martinmoene/expected-lite](https://github.com/martinmoene/expected-lite) (v0.8.0) - backport
 
 ## Limitations
 
