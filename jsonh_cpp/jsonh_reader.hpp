@@ -1189,8 +1189,7 @@ private:
 
             // Hex digit
             if ((next >= "0" && next <= "9") || (next >= "A" && next <= "F") || (next >= "a" && next <= "f")) {
-                char next_char = next.value()[0];
-                hex_chars[index] = next_char;
+                hex_chars[index] = next.value()[0];
             }
             // Unexpected char
             else {
