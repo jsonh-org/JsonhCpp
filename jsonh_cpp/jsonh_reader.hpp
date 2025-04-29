@@ -874,15 +874,27 @@ private:
             return nonstd::unexpected<std::string>("Empty quoteless string");
         }
 
-        // Trim trailing whitespace
+        // Trim leading whitespace
         utf8_reader string_builder_reader(string_builder);
-        string_builder_reader.seek(0, std::ios_base::end);
         while (true) {
             size_t original_position = string_builder_reader.position();
-            std::optional<std::string> next = string_builder_reader.read_reverse();
+            std::optional<std::string> next = string_builder_reader.read();
 
             // Non-whitespace
             if (!next || !whitespace_runes.contains(next.value())) {
+                string_builder.erase(0, original_position);
+                break;
+            }
+        }
+        // Trim trailing whitespace
+        utf8_reader string_builder_reader2(string_builder);
+        string_builder_reader2.seek(0, std::ios_base::end);
+        while (true) {
+            size_t original_position = string_builder_reader2.position();
+            std::optional<std::string> last = string_builder_reader2.read_reverse();
+
+            // Non-whitespace
+            if (!last || !whitespace_runes.contains(last.value())) {
                 string_builder.erase(original_position);
                 break;
             }

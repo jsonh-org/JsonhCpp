@@ -192,3 +192,10 @@ TEST_CASE("MultiQuotedStringsNoFirstWhitespaceNewlineTest") {
 
     REQUIRE(jsonh_reader::parse_element<std::string>(jsonh).value() == "  hello world\n  ");
 }
+TEST_CASE("QuotelessStringsEscapedLeadingTrailingWhitespaceTest") {
+    std::string jsonh = R"(
+\nZ\ \r
+)";
+
+    REQUIRE(jsonh_reader::parse_element<std::string>(jsonh).value() == "Z");
+}
