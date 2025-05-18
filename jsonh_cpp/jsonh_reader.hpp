@@ -688,7 +688,7 @@ private:
             }
             // Escape sequence
             else if (next.value() == "\\") {
-                nonstd::expected<std::string, std::string> escape_sequence_result = read_escape_sequence(string_builder);
+                nonstd::expected<std::string, std::string> escape_sequence_result = read_escape_sequence();
                 if (!escape_sequence_result) {
                     return nonstd::unexpected<std::string>(escape_sequence_result.error());
                 }
@@ -845,7 +845,7 @@ private:
             // Escape sequence
             if (next.value() == "\\") {
                 read();
-                nonstd::expected<std::string, std::string> escape_sequence_result = read_escape_sequence(string_builder);
+                nonstd::expected<std::string, std::string> escape_sequence_result = read_escape_sequence();
                 if (!escape_sequence_result) {
                     return nonstd::unexpected<std::string>(escape_sequence_result.error());
                 }
@@ -1200,7 +1200,7 @@ private:
         // Parse unicode character from hex digits
         return (unsigned int)std::stoul(hex_chars, nullptr, 16);
     }
-    nonstd::expected<std::string, std::string> read_escape_sequence(const std::string& string_builder) noexcept {
+    nonstd::expected<std::string, std::string> read_escape_sequence() noexcept {
         std::optional<std::string> escape_char = read();
         if (!escape_char) {
             return nonstd::unexpected<std::string>("Expected escape sequence, got end of input");
@@ -1248,15 +1248,15 @@ private:
         }
         // Unicode hex sequence
         else if (escape_char.value() == "u") {
-            return read_hex_escape_sequence(string_builder, 4);
+            return read_hex_escape_sequence(4);
         }
         // Short unicode hex sequence
         else if (escape_char.value() == "x") {
-            return read_hex_escape_sequence(string_builder, 2);
+            return read_hex_escape_sequence(2);
         }
         // Long unicode hex sequence
         else if (escape_char.value() == "U") {
-            return read_hex_escape_sequence(string_builder, 8);
+            return read_hex_escape_sequence(8);
         }
         // Escaped newline
         else if (newline_runes.contains(escape_char.value())) {
@@ -1271,7 +1271,7 @@ private:
             return escape_char.value();
         }
     }
-    nonstd::expected<std::string, std::string> read_hex_escape_sequence(const std::string& string_builder, size_t length) noexcept {
+    nonstd::expected<std::string, std::string> read_hex_escape_sequence(size_t length) noexcept {
         // Read hex digits & convert to uint
         nonstd::expected<unsigned int, std::string> code_point = read_hex_sequence(length);
         if (!code_point) {
