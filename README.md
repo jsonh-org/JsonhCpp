@@ -74,9 +74,8 @@ If using a different encoding, consider converting to UTF-8 using [utfcpp](https
 
 ### Fixed-size numbers
 
-Numbers are parsed as `long long` and `long double`, which correspond to 64-bit numbers.
-- The maximum size of `long long` is generally 9,223,372,036,854,775,807.
-- The precision of `long double` is generally 15 decimal places.
+Numbers are parsed as `long long` and `long double`.
+In general, these are 64-bit and have a range of about 9 quintillion and a precision of about 15 decimal places.
 
 ### No token streaming
 
