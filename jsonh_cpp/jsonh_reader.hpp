@@ -666,7 +666,6 @@ private:
 
         // Read string
         std::string string_builder;
-        string_builder.reserve(64);
 
         while (true) {
             std::optional<std::string> next = read();
@@ -835,7 +834,6 @@ private:
 
         // Read quoteless string
         std::string string_builder = initial_chars;
-        string_builder.reserve(64);
 
         while (true) {
             // Peek rune
@@ -947,12 +945,10 @@ private:
     nonstd::expected<jsonh_token, std::string> read_number_or_quoteless_string() noexcept {
         // Read number
         std::string number_builder;
-        number_builder.reserve(64);
         nonstd::expected<jsonh_token, std::string> number = read_number(number_builder);
         if (number) {
             // Try read quoteless string starting with number
             std::string whitespace_chars;
-            whitespace_chars.reserve(64);
             if (detect_quoteless_string(whitespace_chars)) {
                 return read_quoteless_string(number.value().value + whitespace_chars);
             }
@@ -1141,7 +1137,6 @@ private:
 
         // Read comment
         std::string comment_builder;
-        comment_builder.reserve(64);
 
         while (true) {
             // Read rune
