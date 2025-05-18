@@ -830,7 +830,7 @@ private:
         // End of string
         return jsonh_token(json_token_type::string, string_builder);
     }
-    nonstd::expected<jsonh_token, std::string> read_quoteless_string(std::string initial_chars = "") noexcept {
+    nonstd::expected<jsonh_token, std::string> read_quoteless_string(const std::string& initial_chars = "") noexcept {
         bool is_named_literal_possible = true;
 
         // Read quoteless string
