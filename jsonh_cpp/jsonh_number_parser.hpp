@@ -119,7 +119,7 @@ private:
         }
 
         // Get sign
-        size_t sign = 1;
+        int sign = 1;
         if (digits.starts_with('-')) {
             sign = -1;
             digits = digits.substr(1);
