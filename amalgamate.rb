@@ -3,7 +3,7 @@ INPUT_PATH = "jsonh_cpp/jsonh_cpp.hpp"
 OUTPUT_PATH = "single_include/jsonh_cpp_amalgamated.hpp"
 
 HEADER = "// JsonhCpp (JSON for Humans)
-// Version: 4.2
+// Version: 4.3
 // Link: https://github.com/jsonh-org/JsonhCpp
 // License: MIT"
 
