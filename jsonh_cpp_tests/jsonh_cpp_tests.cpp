@@ -199,3 +199,10 @@ TEST_CASE("QuotelessStringsEscapedLeadingTrailingWhitespaceTest") {
 
     REQUIRE(jsonh_reader::parse_element<std::string>(jsonh).value() == "Z");
 }
+TEST_CASE("HexNumberWithETest") {
+    std::string jsonh = R"(
+0x5e3
+)";
+
+    REQUIRE(jsonh_reader::parse_element<int>(jsonh).value() == 0x5e3);
+}

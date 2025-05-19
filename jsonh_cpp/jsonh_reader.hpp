@@ -971,7 +971,7 @@ private:
             std::optional<std::string> hex_base_char = read_any({ "x", "X" });
             if (hex_base_char) {
                 number_builder += hex_base_char.value();
-                base_digits = "0123456789ABCDEFabcdef";
+                base_digits = "0123456789abcdef";
             }
             else {
                 std::optional<std::string> binary_base_char = read_any({ "b", "B" });
@@ -1029,7 +1029,7 @@ private:
             }
 
             // Digit
-            if (base_digits.find(next.value()) != std::string::npos) {
+            if (base_digits.find(to_lower(next.value().data())) != std::string::npos) {
                 read();
                 number_builder += next.value();
             }
@@ -1363,6 +1363,13 @@ private:
     }
     static bool is_utf16_high_surrogate(unsigned int code_point) noexcept {
         return code_point >= 0xD800 && code_point <= 0xDBFF;
+    }
+    static std::string to_lower(const char* string) noexcept {
+        std::string result(string);
+        for (char& next : result) {
+            next = std::tolower(next);
+        }
+        return result;
     }
 };
 
