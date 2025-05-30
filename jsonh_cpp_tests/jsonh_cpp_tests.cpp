@@ -206,3 +206,10 @@ TEST_CASE("HexNumberWithETest") {
 
     REQUIRE(jsonh_reader::parse_element<int>(jsonh).value() == 0x5e3);
 }
+TEST_CASE("NumberWithRepeatedUnderscoresTest") {
+    std::string jsonh = R"(
+100__000
+)";
+
+    REQUIRE(jsonh_reader::parse_element<int>(jsonh).value() == 100'000);
+}
