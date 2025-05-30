@@ -996,14 +996,16 @@ private:
         }
 
         // Exponent
-        std::optional<std::string> exponent_char = read_any({ "e", "E" });
-        if (exponent_char) {
-            number_builder += exponent_char.value();
+        if (base_digits.find('e') == std::string::npos) {
+            std::optional<std::string> exponent_char = read_any({ "e", "E" });
+            if (exponent_char) {
+                number_builder += exponent_char.value();
 
-            // Read exponent number
-            nonstd::expected<void, std::string> exponent_result = read_number_no_exponent(number_builder, base_digits);
-            if (!exponent_result) {
-                return nonstd::unexpected<std::string>(exponent_result.error());
+                // Read exponent number
+                nonstd::expected<void, std::string> exponent_result = read_number_no_exponent(number_builder, base_digits);
+                if (!exponent_result) {
+                    return nonstd::unexpected<std::string>(exponent_result.error());
+                }
             }
         }
 
