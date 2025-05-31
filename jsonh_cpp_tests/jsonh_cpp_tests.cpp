@@ -210,7 +210,7 @@ TEST_CASE("HexNumberWithETest") {
 0x5e+3
 )";
 
-    REQUIRE(jsonh_reader::parse_element(jsonh2).value().type() == nlohmann::json::value_t::string);
+    REQUIRE(jsonh_reader::parse_element<int>(jsonh2).value() == 5000);
 }
 TEST_CASE("NumberWithRepeatedUnderscoresTest") {
     std::string jsonh = R"(

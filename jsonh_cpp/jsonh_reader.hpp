@@ -995,8 +995,21 @@ private:
             return nonstd::unexpected<std::string>(main_result.error());
         }
 
+        // Hexadecimal exponent
+        if (number_builder.back() == 'e' || number_builder.back() == 'E') {
+            std::optional<std::string> exponent_sign = read_any({ "+", "-" });
+            if (exponent_sign) {
+                number_builder += exponent_sign.value();
+
+                // Read exponent number
+                nonstd::expected<void, std::string> exponent_result = read_number_no_exponent(number_builder, base_digits);
+                if (!exponent_result) {
+                    return nonstd::unexpected<std::string>(exponent_result.error());
+                }
+            }
+        }
         // Exponent
-        if (base_digits.find('e') == std::string::npos) {
+        else {
             std::optional<std::string> exponent_char = read_any({ "e", "E" });
             if (exponent_char) {
                 number_builder += exponent_char.value();

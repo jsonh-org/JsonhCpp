@@ -48,9 +48,23 @@ private:
     /// Converts a fractional number with an exponent (e.g. <c>12.3e4.5</c>) from the given base (e.g. <c>01234567</c>) to a base-10 real.
     /// </summary>
     static nonstd::expected<long double, std::string> parse_fractional_number_with_exponent(std::string_view digits, std::string_view base_digits) noexcept {
-        // Find exponent (unless hexadecimal)
+        // Find exponent
         size_t exponent_index = std::string::npos;
-        if (base_digits.find("e") == std::string::npos) {
+        // Hexadecimal exponent
+        if (base_digits.find('e') != std::string::npos) {
+            for (size_t index = 0; index < digits.size(); index++) {
+                if (digits[index] != 'e' && digits[index] != 'E') {
+                    continue;
+                }
+                if (index + 1 >= digits.size() || (digits[index + 1] != '+' && digits[index + 1] != '-')) {
+                    continue;
+                }
+                exponent_index = index;
+                break;
+            }
+        }
+        // Exponent
+        else {
             exponent_index = digits.find_first_of("eE");
         }
         // If no exponent then normalize real
