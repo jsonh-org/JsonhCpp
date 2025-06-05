@@ -963,6 +963,12 @@ private:
         }
     }
     nonstd::expected<jsonh_token, std::string> read_number(std::string& number_builder) noexcept {
+        // Read sign
+        std::optional<std::string> sign = read_any({ "-", "+" });
+        if (sign) {
+            number_builder += sign.value();
+        }
+
         // Read base
         std::string base_digits = "0123456789";
         bool has_base_specifier = false;
@@ -1001,6 +1007,7 @@ private:
 
         // Hexadecimal exponent
         if (number_builder.back() == 'e' || number_builder.back() == 'E') {
+            // Read sign
             std::optional<std::string> exponent_sign = read_any({ "+", "-" });
             if (exponent_sign) {
                 number_builder += exponent_sign.value();
@@ -1018,6 +1025,12 @@ private:
             if (exponent_char) {
                 number_builder += exponent_char.value();
 
+                // Read sign
+                std::optional<std::string> exponent_sign = read_any({ "-", "+" });
+                if (exponent_sign) {
+                    number_builder += exponent_sign.value();
+                }
+
                 // Read exponent number
                 nonstd::expected<void, std::string> exponent_result = read_number_no_exponent(number_builder, base_digits, has_base_specifier);
                 if (!exponent_result) {
@@ -1030,9 +1043,6 @@ private:
         return jsonh_token(json_token_type::number, number_builder);
     }
     nonstd::expected<void, std::string> read_number_no_exponent(std::string& number_builder, std::string_view base_digits, bool has_base_specifier) noexcept {
-        // Read sign
-        read_any({ "-", "+" });
-
         // Leading underscore
         if (!has_base_specifier && peek() == "_") {
             return nonstd::unexpected<std::string>("Leading `_` in number");

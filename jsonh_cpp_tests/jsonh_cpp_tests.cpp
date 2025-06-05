@@ -226,3 +226,10 @@ TEST_CASE("NumberWithUnderscoreAfterBaseSpecifierTest") {
 
     REQUIRE(jsonh_reader::parse_element<int>(jsonh).value() == 0b100);
 }
+TEST_CASE("NegativeNumberWithBaseSpecifierTest") {
+    std::string jsonh = R"(
+-0x5
+)";
+
+    REQUIRE(jsonh_reader::parse_element<int>(jsonh).value() == -0x5);
+}

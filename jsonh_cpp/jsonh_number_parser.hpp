@@ -18,29 +18,50 @@ public:
     /// Output: <c>5200</c>
     /// </summary>
     static nonstd::expected<long double, std::string> parse(std::string jsonh_number) noexcept {
+        // Remove underscores
+        std::erase(jsonh_number, '_');
+        std::string_view digits = jsonh_number;
+
+        // Get sign
+        int sign = 1;
+        if (digits.starts_with('-')) {
+            sign = -1;
+            digits = digits.substr(1);
+        }
+        else if (digits.starts_with('+')) {
+            sign = 1;
+            digits = digits.substr(1);
+        }
+
         // Decimal
         std::string base_digits = "0123456789";
         // Hexadecimal
-        if (jsonh_number.starts_with("0x") || jsonh_number.starts_with("0X")) {
+        if (digits.starts_with("0x") || digits.starts_with("0X")) {
             base_digits = "0123456789abcdef";
-            jsonh_number.erase(0, 2);
+            digits = digits.substr(2);
         }
         // Binary
-        else if (jsonh_number.starts_with("0b") || jsonh_number.starts_with("0B")) {
+        else if (digits.starts_with("0b") || digits.starts_with("0B")) {
             base_digits = "01";
-            jsonh_number.erase(0, 2);
+            digits = digits.substr(2);
         }
         // Octal
-        else if (jsonh_number.starts_with("0o") || jsonh_number.starts_with("0O")) {
+        else if (digits.starts_with("0o") || digits.starts_with("0O")) {
             base_digits = "01234567";
-            jsonh_number.erase(0, 2);
+            digits = digits.substr(2);
         }
 
-        // Remove underscores
-        std::erase(jsonh_number, '_');
-
         // Parse number with base digits
-        return parse_fractional_number_with_exponent(jsonh_number, base_digits);
+        nonstd::expected<long double, std::string> number = parse_fractional_number_with_exponent(digits, base_digits);
+        if (!number) {
+            return nonstd::unexpected<std::string>(number.error());
+        }
+
+        // Apply sign
+        if (sign != 1) {
+            number.value() *= sign;
+        }
+        return number;
     }
 
 private:
