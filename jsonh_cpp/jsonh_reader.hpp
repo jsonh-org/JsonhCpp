@@ -975,7 +975,7 @@ private:
             }
             else {
                 std::optional<std::string> binary_base_char = read_any({ "b", "B" });
-                if (hex_base_char) {
+                if (binary_base_char) {
                     number_builder += binary_base_char.value();
                     base_digits = "01";
                 }
