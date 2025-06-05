@@ -1062,12 +1062,12 @@ private:
                 read();
                 number_builder += next.value();
             }
-            // Decimal point
+            // Dot
             else if (next.value() == ".") {
                 read();
                 number_builder += next.value();
 
-                // Duplicate decimal point
+                // Duplicate dot
                 if (is_fraction) {
                     return nonstd::unexpected<std::string>("Duplicate `.` in number");
                 }
@@ -1087,6 +1087,11 @@ private:
         // Ensure not empty
         if (number_builder.empty()) {
             return nonstd::unexpected<std::string>("Empty number");
+        }
+
+        // Ensure at least one digit
+        if (number_builder.find_first_not_of(".-+_") == std::string::npos) {
+            return nonstd::unexpected<std::string>("Number must have at least one digit");
         }
 
         // Trailing underscore

@@ -233,3 +233,18 @@ TEST_CASE("NegativeNumberWithBaseSpecifierTest") {
 
     REQUIRE(jsonh_reader::parse_element<int>(jsonh).value() == -0x5);
 }
+TEST_CASE("NumberDot") {
+    std::string jsonh = R"(
+.
+)";
+
+    REQUIRE(jsonh_reader::parse_element(jsonh).value().type() == json::value_t::string);
+    REQUIRE(jsonh_reader::parse_element<std::string>(jsonh).value() == ".");
+
+    std::string jsonh2 = R"(
+-.
+)";
+
+    REQUIRE(jsonh_reader::parse_element(jsonh2).value().type() == json::value_t::string);
+    REQUIRE(jsonh_reader::parse_element<std::string>(jsonh2).value() == "-.");
+}
