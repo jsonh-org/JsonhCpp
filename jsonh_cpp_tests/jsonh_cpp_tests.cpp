@@ -219,3 +219,10 @@ TEST_CASE("NumberWithRepeatedUnderscoresTest") {
 
     REQUIRE(jsonh_reader::parse_element<int>(jsonh).value() == 100'000);
 }
+TEST_CASE("NumberWithUnderscoreAfterBaseSpecifierTest") {
+    std::string jsonh = R"(
+0b_100
+)";
+
+    REQUIRE(jsonh_reader::parse_element<int>(jsonh).value() == 0b100);
+}
