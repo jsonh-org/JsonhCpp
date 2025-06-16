@@ -1,11 +1,17 @@
 #pragma once
 
+#include "jsonh_version.hpp"
+
 namespace jsonh_cpp {
 
 /// <summary>
-/// Options for a jsonh_reader.
+/// Options for a <see cref="jsonh_reader"/>.
 /// </summary>
 struct jsonh_reader_options {
+    /// <summary>
+    /// Specifies the major version of the JSONH specification to use.
+    /// </summary>
+    jsonh_version version = jsonh_version::latest;
     /// <summary>
     /// Enables/disables parsing unclosed inputs.
     /// <code>

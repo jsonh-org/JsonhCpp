@@ -150,6 +150,7 @@
     <ClInclude Include="jsonh_reader_options.hpp" />
     <ClInclude Include="jsonh_token.hpp" />
     <ClInclude Include="jsonh_token_type.hpp" />
+    <ClInclude Include="jsonh_version.hpp" />
     <ClInclude Include="martinmoene\expected.hpp" />
     <ClInclude Include="nlohmann\json.hpp" />
     <ClInclude Include="utf8_reader.hpp" />

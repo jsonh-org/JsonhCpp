@@ -44,5 +44,8 @@
     <ClInclude Include="martinmoene\expected.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="jsonh_version.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
