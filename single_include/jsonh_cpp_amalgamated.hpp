@@ -1,5 +1,5 @@
 // JsonhCpp (JSON for Humans)
-// Version: 4.5
+// Version: 4.6
 // Link: https://github.com/jsonh-org/JsonhCpp
 // License: MIT
 
@@ -29090,18 +29090,68 @@ inline void swap(nlohmann::NLOHMANN_BASIC_JSON_TPL& j1, nlohmann::NLOHMANN_BASIC
 
 namespace jsonh_cpp {
 
-enum struct json_token_type {
+/// <summary>
+/// The types of tokens that make up a JSON document.
+/// </summary>
+enum struct json_token_type : char {
+    /// <summary>
+    /// Indicates that there is no value (not to be confused with <see cref="null"/>).
+    /// </summary>
     none = 0,
+    /// <summary>
+    /// The start of an object.<br/>
+    /// Example: <c>{</c>
+    /// </summary>
     start_object = 1,
+    /// <summary>
+    /// The end of an object.<br/>
+    /// Example: <c>}</c>
+    /// </summary>
     end_object = 2,
+    /// <summary>
+    /// The start of an array.<br/>
+    /// Example: <c>&#x005B;</c>
+    /// </summary>
     start_array = 3,
+    /// <summary>
+    /// The end of an array.<br/>
+    /// Example: <c>&#x005D;</c>
+    /// </summary>
     end_array = 4,
+    /// <summary>
+    /// A property name in an object.<br/>
+    /// Example: <c>"key":</c>
+    /// </summary>
     property_name = 5,
+    /// <summary>
+    /// A comment.<br/>
+    /// Example: <c>// comment</c>
+    /// </summary>
     comment = 6,
+    /// <summary>
+    /// A string.<br/>
+    /// Example: <c>"value"</c>
+    /// </summary>
     string = 7,
+    /// <summary>
+    /// A number.<br/>
+    /// Example: <c>10</c>
+    /// </summary>
     number = 8,
+    /// <summary>
+    /// A true boolean.<br/>
+    /// Example: <c>true</c>
+    /// </summary>
     true_bool = 9,
+    /// <summary>
+    /// A false boolean.<br/>
+    /// Example: <c>false</c>
+    /// </summary>
     false_bool = 10,
+    /// <summary>
+    /// A null value.<br/>
+    /// Example: <c>null</c>
+    /// </summary>
     null = 11,
 };
 
@@ -29140,12 +29190,39 @@ struct jsonh_token {
 /*** Start of inlined file: jsonh_reader_options.hpp ***/
 #pragma once
 
+
+/*** Start of inlined file: jsonh_version.hpp ***/
+#pragma once
+
 namespace jsonh_cpp {
 
 /// <summary>
-/// Options for a jsonh_reader.
+/// The major versions of the JSONH specification.
+/// </summary>
+enum struct jsonh_version {
+    /// <summary>
+    /// Indicates that the latest version should be used (currently <see cref="v1"/>).
+    /// </summary>
+    latest = 0,
+    /// <summary>
+    /// Version 1 of the specification, released 2025/03/19.
+    /// </summary>
+    v1 = 1,
+};
+
+}
+/*** End of inlined file: jsonh_version.hpp ***/
+
+namespace jsonh_cpp {
+
+/// <summary>
+/// Options for a <see cref="jsonh_reader"/>.
 /// </summary>
 struct jsonh_reader_options {
+    /// <summary>
+    /// Specifies the major version of the JSONH specification to use.
+    /// </summary>
+    jsonh_version version = jsonh_version::latest;
     /// <summary>
     /// Enables/disables parsing unclosed inputs.
     /// <code>
