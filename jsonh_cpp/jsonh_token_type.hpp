@@ -7,7 +7,7 @@ namespace jsonh_cpp {
 /// </summary>
 enum struct json_token_type : char {
     /// <summary>
-    /// Indicates that there is no value (not to be confused with <see cref="null"/>).
+    /// Indicates that there is no value (not to be confused with null).
     /// </summary>
     none = 0,
     /// <summary>
