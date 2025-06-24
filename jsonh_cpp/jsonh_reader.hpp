@@ -105,7 +105,7 @@ public:
         std::stack<json> current_nodes;
         std::optional<std::string> current_property_name;
 
-        auto submit_node = [&](json node) {
+        auto submit_node = [&](const json& node) {
             // Root value
             if (current_nodes.empty()) {
                 return true;
@@ -122,7 +122,7 @@ public:
                 return false;
             }
         };
-        auto start_node = [&](json node) {
+        auto start_node = [&](const json& node) {
             submit_node(node);
             current_nodes.push(node);
         };
