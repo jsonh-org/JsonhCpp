@@ -7,7 +7,8 @@
 namespace jsonh_cpp {
 
 /// <summary>
-/// Methods for parsing JSONH numbers (long long / long double).
+/// Methods for parsing JSONH numbers (long long / long double).<br/>
+/// Unlike jsonh_reader.read_element, minimal validation is done here. Ensure the input is valid.
 /// </summary>
 class jsonh_number_parser final {
 public:
