@@ -1,5 +1,5 @@
 // JsonhCpp (JSON for Humans)
-// Version: 4.7
+// Version: 4.8
 // Link: https://github.com/jsonh-org/JsonhCpp
 // License: MIT
 
@@ -10090,6 +10090,7 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <iterator> // begin, end, iterator_traits, random_access_iterator_tag, distance, next
 #include <memory> // shared_ptr, make_shared, addressof
 #include <numeric> // accumulate
+#include <streambuf> // streambuf
 #include <string> // string, char_traits
 #include <type_traits> // enable_if, is_base_of, is_pointer, is_integral, remove_pointer
 #include <utility> // pair, declval
@@ -29329,7 +29330,8 @@ struct jsonh_reader_options {
 namespace jsonh_cpp {
 
 /// <summary>
-/// Methods for parsing JSONH numbers (long long / long double).
+/// Methods for parsing JSONH numbers (long long / long double).<br/>
+/// Unlike jsonh_reader.read_element, minimal validation is done here. Ensure the input is valid.
 /// </summary>
 class jsonh_number_parser final {
 public:
