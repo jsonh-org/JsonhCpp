@@ -233,7 +233,7 @@ TEST_CASE("NegativeNumberWithBaseSpecifierTest") {
 
     REQUIRE(jsonh_reader::parse_element<int>(jsonh).value() == -0x5);
 }
-TEST_CASE("NumberDot") {
+TEST_CASE("NumberDotTest") {
     std::string jsonh = R"(
 .
 )";
@@ -247,4 +247,18 @@ TEST_CASE("NumberDot") {
 
     REQUIRE(jsonh_reader::parse_element(jsonh2).value().type() == json::value_t::string);
     REQUIRE(jsonh_reader::parse_element<std::string>(jsonh2).value() == "-.");
+}
+TEST_CASE("DuplicatePropertyNameTest") {
+    std::string jsonh = R"(
+{
+  a: 1,
+  c: 2,
+  a: 3,
+}
+)";
+
+    REQUIRE(jsonh_reader::parse_element<std::map<std::string, int>>(jsonh).value() == std::map<std::string, int>({
+        { "a", 3 },
+        { "c", 2 },
+    }));
 }
