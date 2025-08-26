@@ -139,8 +139,7 @@ public:
             }
         }
 
-        // Reverse bytes
-        std::reverse(bytes.begin(), bytes.end());
+        // Never reached first byte
         return std::nullopt;
     }
     /// <summary>
