@@ -1150,14 +1150,14 @@ private:
     nonstd::expected<jsonh_token, std::string> read_comment() noexcept {
         bool block_comment = false;
 
-        // Hash-styled comment
+        // Hash-style comment
         if (read_one("#")) {
         }
         else if (read_one("/")) {
-            // Line-styled comment
+            // Line-style comment
             if (read_one("/")) {
             }
-            // Block-styled comment
+            // Block-style comment
             else if (read_one("*")) {
                 block_comment = true;
             }
