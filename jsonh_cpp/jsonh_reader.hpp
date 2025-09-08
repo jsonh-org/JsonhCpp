@@ -1114,7 +1114,7 @@ private:
         }
 
         // Number
-        if ((next.value() >= "0" && next.value() <= "9") || (next.value() == "-" || next.value() == "+") || next.value() == ".") {
+        if (next && ((next.value() >= "0" && next.value() <= "9") || (next.value() == "-" || next.value() == "+") || next.value() == ".")) {
             return read_number_or_quoteless_string();
         }
         // String
