@@ -1029,6 +1029,7 @@ private:
         }
 
         bool is_fraction = false;
+        bool is_empty = true;
 
         while (true) {
             // Peek rune
@@ -1041,11 +1042,13 @@ private:
             if (base_digits.find(to_ascii_lower(next.value().data())) != std::string::npos) {
                 read();
                 number_builder += next.value();
+                is_empty = false;
             }
             // Dot
             else if (next.value() == ".") {
                 read();
                 number_builder += next.value();
+                is_empty = false;
 
                 // Duplicate dot
                 if (is_fraction) {
@@ -1057,6 +1060,7 @@ private:
             else if (next.value() == "_") {
                 read();
                 number_builder += next.value();
+                is_empty = false;
             }
             // Other
             else {
@@ -1065,7 +1069,7 @@ private:
         }
 
         // Ensure not empty
-        if (number_builder.empty()) {
+        if (is_empty) {
             return nonstd::unexpected<std::string>("Empty number");
         }
 

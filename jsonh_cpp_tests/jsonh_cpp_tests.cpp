@@ -262,3 +262,11 @@ TEST_CASE("DuplicatePropertyNameTest") {
         { "c", 2 },
     }));
 }
+TEST_CASE("EmptyNumberTest") {
+    std::string jsonh = R"(
+0e
+)";
+
+    REQUIRE(jsonh_reader::parse_element(jsonh).value().type() == json::value_t::string);
+    REQUIRE(jsonh_reader::parse_element<std::string>(jsonh).value() == "0e");
+}
