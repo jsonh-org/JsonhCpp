@@ -942,26 +942,6 @@ private:
         std::optional<std::string> next_char = peek();
         return next_char && (next_char.value() == "\\" || !reserved_runes.contains(next_char.value()));
     }
-    nonstd::expected<jsonh_token, std::string> read_number_or_quoteless_string() noexcept {
-        // Read number
-        std::string number_builder;
-        nonstd::expected<jsonh_token, std::string> number = read_number(number_builder);
-        if (number) {
-            // Try read quoteless string starting with number
-            std::string whitespace_chars;
-            if (detect_quoteless_string(whitespace_chars)) {
-                return read_quoteless_string(number.value().value + whitespace_chars);
-            }
-            // Otherwise, accept number
-            else {
-                return number;
-            }
-        }
-        // Read quoteless string starting with malformed number
-        else {
-            return read_quoteless_string(number_builder);
-        }
-    }
     nonstd::expected<jsonh_token, std::string> read_number(std::string& number_builder) noexcept {
         // Read sign
         std::optional<std::string> sign = read_any({ "-", "+" });
@@ -1101,6 +1081,26 @@ private:
 
         // End of number
         return nonstd::expected<void, std::string>(); // Success
+    }
+    nonstd::expected<jsonh_token, std::string> read_number_or_quoteless_string() noexcept {
+        // Read number
+        std::string number_builder;
+        nonstd::expected<jsonh_token, std::string> number = read_number(number_builder);
+        if (number) {
+            // Try read quoteless string starting with number
+            std::string whitespace_chars;
+            if (detect_quoteless_string(whitespace_chars)) {
+                return read_quoteless_string(number.value().value + whitespace_chars);
+            }
+            // Otherwise, accept number
+            else {
+                return number;
+            }
+        }
+        // Read quoteless string starting with malformed number
+        else {
+            return read_quoteless_string(number_builder);
+        }
     }
     nonstd::expected<jsonh_token, std::string> read_primitive_element() noexcept {
         // Peek rune
