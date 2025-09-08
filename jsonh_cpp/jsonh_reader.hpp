@@ -1310,6 +1310,8 @@ private:
         }
     }
     nonstd::expected<std::string, std::string> read_hex_escape_sequence(size_t length) noexcept {
+        // This method is used to combine escaped UTF-16 surrogate pairs (e.g. "\uD83D\uDC7D" -> "👽")
+
         // Read hex digits & convert to uint
         nonstd::expected<unsigned int, std::string> code_point = read_hex_sequence(length);
         if (!code_point) {
