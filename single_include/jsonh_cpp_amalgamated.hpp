@@ -1,5 +1,5 @@
 // JsonhCpp (JSON for Humans)
-// Version: 4.8
+// Version: 4.10
 // Link: https://github.com/jsonh-org/JsonhCpp
 // License: MIT
 
@@ -29460,7 +29460,7 @@ private:
         else {
             exponent_index = digits.find_first_of("eE");
         }
-        // If no exponent then normalize real
+        // If no exponent then parse real
         if (exponent_index == std::string::npos) {
             return parse_fractional_number(digits, base_digits);
         }
@@ -29493,7 +29493,7 @@ private:
 
         // Find dot
         size_t dot_index = digits.find('.');
-        // If no dot then normalize integer
+        // If no dot then parse integer
         if (dot_index == std::string::npos) {
             nonstd::expected<long long, std::string> integer = parse_whole_number(digits, base_digits);
             if (!integer) {
@@ -30677,7 +30677,7 @@ private:
     }
     bool detect_quoteless_string(std::string& whitespace_builder) {
         while (true) {
-            // Read rune
+            // Peek rune
             std::optional<std::string> next = peek();
             if (!next) {
                 break;
@@ -30702,26 +30702,6 @@ private:
         // Found quoteless string if found backslash or non-reserved char
         std::optional<std::string> next_char = peek();
         return next_char && (next_char.value() == "\\" || !reserved_runes.contains(next_char.value()));
-    }
-    nonstd::expected<jsonh_token, std::string> read_number_or_quoteless_string() noexcept {
-        // Read number
-        std::string number_builder;
-        nonstd::expected<jsonh_token, std::string> number = read_number(number_builder);
-        if (number) {
-            // Try read quoteless string starting with number
-            std::string whitespace_chars;
-            if (detect_quoteless_string(whitespace_chars)) {
-                return read_quoteless_string(number.value().value + whitespace_chars);
-            }
-            // Otherwise, accept number
-            else {
-                return number;
-            }
-        }
-        // Read quoteless string starting with malformed number
-        else {
-            return read_quoteless_string(number_builder);
-        }
     }
     nonstd::expected<jsonh_token, std::string> read_number(std::string& number_builder) noexcept {
         // Read sign
@@ -30810,6 +30790,7 @@ private:
         }
 
         bool is_fraction = false;
+        bool is_empty = true;
 
         while (true) {
             // Peek rune
@@ -30822,11 +30803,13 @@ private:
             if (base_digits.find(to_ascii_lower(next.value().data())) != std::string::npos) {
                 read();
                 number_builder += next.value();
+                is_empty = false;
             }
             // Dot
             else if (next.value() == ".") {
                 read();
                 number_builder += next.value();
+                is_empty = false;
 
                 // Duplicate dot
                 if (is_fraction) {
@@ -30838,6 +30821,7 @@ private:
             else if (next.value() == "_") {
                 read();
                 number_builder += next.value();
+                is_empty = false;
             }
             // Other
             else {
@@ -30846,7 +30830,7 @@ private:
         }
 
         // Ensure not empty
-        if (number_builder.empty()) {
+        if (is_empty) {
             return nonstd::unexpected<std::string>("Empty number");
         }
 
@@ -30863,6 +30847,26 @@ private:
         // End of number
         return nonstd::expected<void, std::string>(); // Success
     }
+    nonstd::expected<jsonh_token, std::string> read_number_or_quoteless_string() noexcept {
+        // Read number
+        std::string number_builder;
+        nonstd::expected<jsonh_token, std::string> number = read_number(number_builder);
+        if (number) {
+            // Try read quoteless string starting with number
+            std::string whitespace_chars;
+            if (detect_quoteless_string(whitespace_chars)) {
+                return read_quoteless_string(number.value().value + whitespace_chars);
+            }
+            // Otherwise, accept number
+            else {
+                return number;
+            }
+        }
+        // Read quoteless string starting with malformed number
+        else {
+            return read_quoteless_string(number_builder);
+        }
+    }
     nonstd::expected<jsonh_token, std::string> read_primitive_element() noexcept {
         // Peek rune
         std::optional<std::string> next = peek();
@@ -30871,7 +30875,7 @@ private:
         }
 
         // Number
-        if ((next.value() >= "0" && next.value() <= "9") || (next.value() == "-" || next.value() == "+") || next.value() == ".") {
+        if (next && ((next.value() >= "0" && next.value() <= "9") || (next.value() == "-" || next.value() == "+") || next.value() == ".")) {
             return read_number_or_quoteless_string();
         }
         // String
@@ -31067,6 +31071,8 @@ private:
         }
     }
     nonstd::expected<std::string, std::string> read_hex_escape_sequence(size_t length) noexcept {
+        // This method is used to combine escaped UTF-16 surrogate pairs (e.g. "\uD83D\uDC7D" -> "👽")
+
         // Read hex digits & convert to uint
         nonstd::expected<unsigned int, std::string> code_point = read_hex_sequence(length);
         if (!code_point) {
