@@ -916,7 +916,7 @@ private:
     }
     bool detect_quoteless_string(std::string& whitespace_builder) {
         while (true) {
-            // Read rune
+            // Peek rune
             std::optional<std::string> next = peek();
             if (!next) {
                 break;
