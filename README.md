@@ -66,7 +66,7 @@ std::string element = jsonh_cpp::jsonh_reader::parse_element<std::string>(jsonh)
 
 ## Limitations
 
-In comparison to [JsonhCs](https://github.com/jsonh-org/Jsonhcs), this C++ implementation has some limitations.
+In comparison to [JsonhCs](https://github.com/jsonh-org/JsonhCs), this C++ implementation has some limitations.
 
 ### UTF-8 only
 
