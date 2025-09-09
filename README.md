@@ -1,6 +1,6 @@
 <img src="https://github.com/jsonh-org/Jsonh/blob/main/IconUpscaled.png?raw=true" width=180>
 
-[![C++](https://img.shields.io/github/release/jsonh-org/JsonhCpp.svg?style=flat-square&label=c%2b%2b)](https://github.com/jsonh-org/JsonhCpp/releases)
+[![C++](https://img.shields.io/github/release/jsonh-org/JsonhCpp.svg?label=c%2b%2b)](https://github.com/jsonh-org/JsonhCpp/releases)
 
 **JSON for Humans.**
 
