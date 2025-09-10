@@ -270,10 +270,25 @@ TEST_CASE("EmptyNumberTest") {
     REQUIRE(jsonh_reader::parse_element(jsonh).value().type() == json::value_t::string);
     REQUIRE(jsonh_reader::parse_element<std::string>(jsonh).value() == "0e");
 }
-TEST_CASE("ZeroExponentTest") {
+TEST_CASE("LeadingZeroWithExponentTest") {
     std::string jsonh = R"(
-0e4
+[0e4, 0xe, 0xEe+2]
 )";
 
-    REQUIRE(jsonh_reader::parse_element<long double>(jsonh).value() == 0e4);
+    REQUIRE(jsonh_reader::parse_element(jsonh).value().type() == json::value_t::array);
+    REQUIRE(jsonh_reader::parse_element<std::vector<long double>>(jsonh).value() == std::vector<long double>({ 0e4, 0xe, 1400 }));
+
+    std::string jsonh2 = R"(
+[e+2, 0xe+2, 0oe+2, 0be+2]
+)";
+
+    REQUIRE(jsonh_reader::parse_element(jsonh2).value().type() == json::value_t::array);
+    REQUIRE(jsonh_reader::parse_element<std::vector<std::string>>(jsonh2).value() == std::vector<std::string>({ "e+2", "0xe+2", "0oe+2", "0be+2" }));
+
+    std::string jsonh3 = R"(
+[0x0e+, 0b0e+_1]
+)";
+
+    REQUIRE(jsonh_reader::parse_element(jsonh3).value().type() == json::value_t::array);
+    REQUIRE(jsonh_reader::parse_element<std::vector<std::string>>(jsonh3).value() == std::vector<std::string>({ "0x0e+", "0b0e+_1" }));
 }
