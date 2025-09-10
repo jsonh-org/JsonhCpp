@@ -1,5 +1,5 @@
 // JsonhCpp (JSON for Humans)
-// Version: 4.10
+// Version: 4.11
 // Link: https://github.com/jsonh-org/JsonhCpp
 // License: MIT
 
@@ -30791,6 +30791,11 @@ private:
 
         bool is_fraction = false;
         bool is_empty = true;
+
+        // Leading zero (not base specifier)
+        if (!has_base_specifier && number_builder.size() >= 1 && number_builder.back() == '0') {
+            is_empty = false;
+        }
 
         while (true) {
             // Peek rune
