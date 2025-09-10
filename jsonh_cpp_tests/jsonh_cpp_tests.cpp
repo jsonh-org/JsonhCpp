@@ -270,3 +270,10 @@ TEST_CASE("EmptyNumberTest") {
     REQUIRE(jsonh_reader::parse_element(jsonh).value().type() == json::value_t::string);
     REQUIRE(jsonh_reader::parse_element<std::string>(jsonh).value() == "0e");
 }
+TEST_CASE("ZeroExponentTest") {
+    std::string jsonh = R"(
+0e4
+)";
+
+    REQUIRE(jsonh_reader::parse_element<long double>(jsonh).value() == 0e4);
+}

@@ -1031,6 +1031,11 @@ private:
         bool is_fraction = false;
         bool is_empty = true;
 
+        // Leading zero (not base specifier)
+        if (!has_base_specifier && number_builder.size() >= 1 && number_builder.back() == '0') {
+            is_empty = false;
+        }
+
         while (true) {
             // Peek rune
             std::optional<std::string> next = peek();
