@@ -47,7 +47,7 @@ JsonhCpp is a parser implementation of [JSONH v1](https://github.com/jsonh-org/J
 Everything you need is contained within `jsonh_reader`:
 
 ```cpp
-#include "jsonh_cpp.hpp" // for jsonh
+#include "jsonh_cpp.hpp" // for jsonh_cpp
 
 std::string jsonh = R"(
 {

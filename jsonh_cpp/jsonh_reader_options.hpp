@@ -1,6 +1,6 @@
 #pragma once
 
-#include "jsonh_version.hpp"
+#include "jsonh_version.hpp" // for jsonh_cpp::jsonh_version
 
 namespace jsonh_cpp {
 
