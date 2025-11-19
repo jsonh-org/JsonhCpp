@@ -1199,6 +1199,7 @@ private:
     }
     nonstd::expected<jsonh_token, std::string> read_comment() noexcept {
         bool block_comment = false;
+        int start_nest_counter = 0;
 
         // Hash-style comment
         if (read_one("#")) {
@@ -1210,6 +1211,16 @@ private:
             // Block-style comment
             else if (read_one("*")) {
                 block_comment = true;
+            }
+            // Nestable block-style comment
+            else if (options.supports_version(jsonh_version::v2) && peek() == "=") {
+                block_comment = true;
+                while (read_one("=")) {
+                    start_nest_counter++;
+                }
+                if (!read_one("*")) {
+                    return nonstd::unexpected<std::string>("Expected `*` after start of nesting block comment");
+                }
             }
             else {
                 return nonstd::unexpected<std::string>("Unexpected `/`");
@@ -1231,9 +1242,30 @@ private:
                 if (!next) {
                     return nonstd::unexpected<std::string>("Expected end of block comment, got end of input");
                 }
+
                 // End of block comment
-                if (next.value() == "*" && read_one("/")) {
-                    return jsonh_token(json_token_type::comment, comment_builder);
+                if (next.value() == "*") {
+                    // End of nestable block comment
+                    if (options.supports_version(jsonh_version::v2)) {
+                        // Count nests
+                        int end_nest_counter = 0;
+                        while (end_nest_counter < start_nest_counter && read_one("=")) {
+                            end_nest_counter++;
+                        }
+                        // Partial end nestable block comment was actually part of comment
+                        if (end_nest_counter < start_nest_counter || peek() != "/") {
+                            comment_builder += "*";
+                            for (; end_nest_counter > 0; end_nest_counter--) {
+                                comment_builder += "=";
+                            }
+                            continue;
+                        }
+                    }
+
+                    // End of block comment
+                    if (read_one("/")) {
+                        return jsonh_token(json_token_type::comment, comment_builder);
+                    }
                 }
             }
             else {
