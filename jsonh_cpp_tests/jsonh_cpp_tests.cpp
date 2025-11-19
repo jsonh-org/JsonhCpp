@@ -174,14 +174,15 @@ TEST_CASE("VerbatimStringTest") {
 
 TEST_CASE("QuotelessStringStartingWithKeywordTest") {
     std::string jsonh = R"(
-[nulla, null b, null]
+[nulla, null b, null, @null]
 )";
     std::vector<json> element = jsonh_reader::parse_element<std::vector<json>>(jsonh).value();
 
-    REQUIRE(element.size() == 3);
+    REQUIRE(element.size() == 4);
     REQUIRE(element[0] == "nulla");
     REQUIRE(element[1] == "null b");
     REQUIRE(element[2] == nullptr);
+    REQUIRE(element[3] == "null");
 }
 TEST_CASE("BracelessObjectWithInvalidValueTest") {
     std::string jsonh = R"(
