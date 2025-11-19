@@ -361,10 +361,19 @@ public:
     }
 
 private:
+
     /// <summary>
     /// Runes that cannot be used unescaped in quoteless strings.
     /// </summary>
-    const std::set<std::string> reserved_runes = { "\\", ",", ":", "[", "]", "{", "}", "/", "#", "\"", "'" };
+    const std::set<std::string> reserved_runes() { return options.supports_version(jsonh_version::v2) ? reserved_runes_v2 : reserved_runes_v1; }
+    /// <summary>
+    /// Runes that cannot be used unescaped in quoteless strings in JSONH V1.
+    /// </summary>
+    const std::set<std::string> reserved_runes_v1 = { "\\", ",", ":", "[", "]", "{", "}", "/", "#", "\"", "'" };
+    /// <summary>
+    /// Runes that cannot be used unescaped in quoteless strings in JSONH V2.
+    /// </summary>
+    const std::set<std::string> reserved_runes_v2 = { "\\", ",", ":", "[", "]", "{", "}", "/", "#", "\"", "'", "@" };
     /// <summary>
     /// Runes that are considered newlines.
     /// </summary>
@@ -643,10 +652,22 @@ private:
         return tokens;
     }
     nonstd::expected<jsonh_token, std::string> read_string() noexcept {
+        // Verbatim
+        bool is_verbatim = false;
+        if (options.supports_version(jsonh_version::v2) && read_one("@")) {
+            is_verbatim = true;
+
+            // Ensure string immediately follows verbatim symbol
+            std::optional<std::string> next = peek();
+            if (!next || next.value() == "#" || next.value() == "/" || whitespace_runes.contains(next.value())) {
+                return nonstd::unexpected<std::string>("Expected string to immediately follow verbatim symbol");
+            }
+        }
+
         // Start quote
         std::optional<std::string> start_quote = read_any({ "\"", "'" });
         if (!start_quote) {
-            return read_quoteless_string();
+            return read_quoteless_string("", is_verbatim);
         }
         char start_quote_char = start_quote.value()[0];
 
@@ -688,11 +709,16 @@ private:
             }
             // Escape sequence
             else if (next.value() == "\\") {
-                nonstd::expected<std::string, std::string> escape_sequence_result = read_escape_sequence();
-                if (!escape_sequence_result) {
-                    return nonstd::unexpected<std::string>(escape_sequence_result.error());
+                if (is_verbatim) {
+                    string_builder += next.value();
                 }
-                string_builder += escape_sequence_result.value();
+                else {
+                    nonstd::expected<std::string, std::string> escape_sequence_result = read_escape_sequence();
+                    if (!escape_sequence_result) {
+                        return nonstd::unexpected<std::string>(escape_sequence_result.error());
+                    }
+                    string_builder += escape_sequence_result.value();
+                }
             }
             // Literal character
             else {
@@ -829,7 +855,7 @@ private:
         // End of string
         return jsonh_token(json_token_type::string, string_builder);
     }
-    nonstd::expected<jsonh_token, std::string> read_quoteless_string(const std::string& initial_chars = "") noexcept {
+    nonstd::expected<jsonh_token, std::string> read_quoteless_string(const std::string& initial_chars = "", bool is_verbatim = false) noexcept {
         bool is_named_literal_possible = true;
 
         // Read quoteless string
@@ -845,15 +871,20 @@ private:
             // Escape sequence
             if (next.value() == "\\") {
                 read();
-                nonstd::expected<std::string, std::string> escape_sequence_result = read_escape_sequence();
-                if (!escape_sequence_result) {
-                    return nonstd::unexpected<std::string>(escape_sequence_result.error());
+                if (is_verbatim) {
+                    string_builder += next.value();
                 }
-                string_builder += escape_sequence_result.value();
+                else {
+                    nonstd::expected<std::string, std::string> escape_sequence_result = read_escape_sequence();
+                    if (!escape_sequence_result) {
+                        return nonstd::unexpected<std::string>(escape_sequence_result.error());
+                    }
+                    string_builder += escape_sequence_result.value();
+                }
                 is_named_literal_possible = false;
             }
             // End on reserved character
-            else if (reserved_runes.contains(next.value())) {
+            else if (reserved_runes().contains(next.value())) {
                 break;
             }
             // End on newline
@@ -940,7 +971,7 @@ private:
 
         // Found quoteless string if found backslash or non-reserved char
         std::optional<std::string> next_char = peek();
-        return next_char && (next_char.value() == "\\" || !reserved_runes.contains(next_char.value()));
+        return next_char && (next_char.value() == "\\" || !reserved_runes().contains(next_char.value()));
     }
     nonstd::expected<jsonh_token, std::string> read_number(std::string& number_builder) noexcept {
         // Read sign
@@ -1133,7 +1164,7 @@ private:
             return read_number_or_quoteless_string();
         }
         // String
-        else if (next.value() == "\"" || next.value() == "'") {
+        else if (next.value() == "\"" || next.value() == "'" || (options.supports_version(jsonh_version::v2) && next.value() == "@")) {
             return read_string();
         }
         // Quoteless string (or named literal)

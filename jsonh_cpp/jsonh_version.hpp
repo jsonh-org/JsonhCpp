@@ -14,6 +14,10 @@ enum struct jsonh_version {
     /// Version 1 of the specification, released 2025/03/19.
     /// </summary>
     v1 = 1,
+    /// <summary>
+    /// Version 2 of the specification, released 2025/11/19.
+    /// </summary>
+    v2 = 2,
 };
 
 }

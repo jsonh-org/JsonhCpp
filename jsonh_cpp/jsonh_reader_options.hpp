@@ -22,6 +22,18 @@ struct jsonh_reader_options {
     /// Only some tokens can be incomplete in this mode, so it should not be relied upon.
     /// </summary>
     bool incomplete_inputs = false;
+
+    /// <summary>
+    /// Returns whether <see cref="version"/> is greater than or equal to <paramref name="minimum_version"/>.
+    /// </summary>
+    bool supports_version(jsonh_version minimum_version) const noexcept {
+        const jsonh_version latest_version = jsonh_version::v2;
+
+        jsonh_version options_version = version == jsonh_version::latest ? latest_version : version;
+        jsonh_version given_version = minimum_version == jsonh_version::latest ? latest_version : minimum_version;
+
+        return options_version >= given_version;
+    }
 };
 
 }

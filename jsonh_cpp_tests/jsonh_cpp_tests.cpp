@@ -108,6 +108,35 @@ TEST_CASE("CommentTest") {
     REQUIRE(element[2] == 3);
     REQUIRE(element[3] == 4);
 }
+TEST_CASE("VerbatimStringTest") {
+    std::string jsonh = R"(
+{
+    a\\: b\\
+    @c\\: @d\\
+    @e\\: f\\
+}
+)";
+    json element = jsonh_reader::parse_element(jsonh).value();
+
+    REQUIRE(element.size() == 3);
+    REQUIRE(element["a\\"] == "b\\");
+    REQUIRE(element["c\\\\"] == "d\\\\");
+    REQUIRE(element["e\\\\"] == "f\\");
+
+    json element2 = jsonh_reader::parse_element(jsonh, jsonh_reader_options({ .version = jsonh_version::v1 })).value();
+    REQUIRE(element2.size() == 3);
+    REQUIRE(element2["a\\"] == "b\\");
+    REQUIRE(element2["@c\\"] == "@d\\");
+    REQUIRE(element2["@e\\"] == "f\\");
+
+    std::string jsonh2 = R"(
+@"a\\": @'''b\\'''
+)";
+    json element3 = jsonh_reader::parse_element(jsonh2).value();
+
+    REQUIRE(element3.size() == 1);
+    REQUIRE(element3["a\\\\"] == "b\\\\");
+}
 
 /*
     Edge Case Tests
