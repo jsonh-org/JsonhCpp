@@ -105,7 +105,7 @@ public:
         std::stack<json> current_elements;
         std::optional<std::string> current_property_name;
 
-        auto submit_element = [&](const json& element) {
+        auto submit_element = [&](const json& element) -> bool {
             // Root value
             if (current_elements.empty()) {
                 return true;
@@ -122,105 +122,116 @@ public:
                 return false;
             }
         };
-        auto start_element = [&](const json& element) {
+        auto start_element = [&](const json& element) -> void {
             submit_element(element);
             current_elements.push(element);
         };
+        auto parse_next_element = [&]() -> nonstd::expected<json, std::string> {
+            for (const nonstd::expected<jsonh_token, std::string>& token_result : read_element()) {
+                // Check error
+                if (!token_result) {
+                    return nonstd::unexpected<std::string>(token_result.error());
+                }
+                jsonh_token token = token_result.value();
 
-        for (const nonstd::expected<jsonh_token, std::string>& token_result : read_element()) {
-            // Check error
-            if (!token_result) {
-                return nonstd::unexpected<std::string>(token_result.error());
+                switch (token.json_type) {
+                    // Null
+                    case json_token_type::null: {
+                        json element = json(nullptr);
+                        if (submit_element(element)) {
+                            return element;
+                        }
+                        break;
+                    }
+                    // True
+                    case json_token_type::true_bool: {
+                        json element = json(true);
+                        if (submit_element(element)) {
+                            return element;
+                        }
+                        break;
+                    }
+                    // False
+                    case json_token_type::false_bool: {
+                        json element = json(false);
+                        if (submit_element(element)) {
+                            return element;
+                        }
+                        break;
+                    }
+                    // String
+                    case json_token_type::string: {
+                        json element = json(token.value);
+                        if (submit_element(element)) {
+                            return element;
+                        }
+                        break;
+                    }
+                    // Number
+                    case json_token_type::number: {
+                        nonstd::expected<long double, std::string> result = jsonh_number_parser::parse(token.value);
+                        if (!result) {
+                            return nonstd::unexpected<std::string>(result.error());
+                        }
+                        json element = json(result.value());
+                        if (submit_element(element)) {
+                            return element;
+                        }
+                        break;
+                    }
+                    // Start Object
+                    case json_token_type::start_object: {
+                        json element = json::object();
+                        start_element(element);
+                        break;
+                    }
+                    // Start Array
+                    case json_token_type::start_array: {
+                        json element = json::array();
+                        start_element(element);
+                        break;
+                    }
+                    // End Object/Array
+                    case json_token_type::end_object: case json_token_type::end_array: {
+                        // Nested element
+                        if (current_elements.size() > 1) {
+                            current_elements.pop();
+                        }
+                        // Root element
+                        else {
+                            return current_elements.top();
+                        }
+                        break;
+                    }
+                    // Property Name
+                    case json_token_type::property_name: {
+                        current_property_name = token.value;
+                        break;
+                    }
+                    // Comment
+                    case json_token_type::comment: {
+                        break;
+                    }
+                    // Not implemented
+                    default: {
+                        return nonstd::unexpected<std::string>("Token type not implemented");
+                    }
+                }
             }
-            jsonh_token token = token_result.value();
 
-            switch (token.json_type) {
-                // Null
-                case json_token_type::null: {
-                    json element = json(nullptr);
-                    if (submit_element(element)) {
-                        return element;
-                    }
-                    break;
-                }
-                // True
-                case json_token_type::true_bool: {
-                    json element = json(true);
-                    if (submit_element(element)) {
-                        return element;
-                    }
-                    break;
-                }
-                // False
-                case json_token_type::false_bool: {
-                    json element = json(false);
-                    if (submit_element(element)) {
-                        return element;
-                    }
-                    break;
-                }
-                // String
-                case json_token_type::string: {
-                    json element = json(token.value);
-                    if (submit_element(element)) {
-                        return element;
-                    }
-                    break;
-                }
-                // Number
-                case json_token_type::number: {
-                    nonstd::expected<long double, std::string> result = jsonh_number_parser::parse(token.value);
-                    if (!result) {
-                        return nonstd::unexpected<std::string>(result.error());
-                    }
-                    json element = json(result.value());
-                    if (submit_element(element)) {
-                        return element;
-                    }
-                    break;
-                }
-                // Start Object
-                case json_token_type::start_object: {
-                    json element = json::object();
-                    start_element(element);
-                    break;
-                }
-                // Start Array
-                case json_token_type::start_array: {
-                    json element = json::array();
-                    start_element(element);
-                    break;
-                }
-                // End Object/Array
-                case json_token_type::end_object: case json_token_type::end_array: {
-                    // Nested element
-                    if (current_elements.size() > 1) {
-                        current_elements.pop();
-                    }
-                    // Root element
-                    else {
-                        return current_elements.top();
-                    }
-                    break;
-                }
-                // Property Name
-                case json_token_type::property_name: {
-                    current_property_name = token.value;
-                    break;
-                }
-                // Comment
-                case json_token_type::comment: {
-                    break;
-                }
-                // Not implemented
-                default: {
-                    return nonstd::unexpected<std::string>("Token type not implemented");
-                }
-            }
+            // End of input
+            return nonstd::unexpected<std::string>("Expected token, got end of input");
+        };
+
+        // Parse next element
+        nonstd::expected<json, std::string> next_element = parse_next_element();
+
+        // Ensure exactly one element
+        if (options.parse_single_element && has_element()) {
+            return nonstd::unexpected<std::string>("Expected single element");
         }
 
-        // End of input
-        return nonstd::unexpected<std::string>("Expected token, got end of input");
+        return next_element;
     }
     /// <summary>
     /// Tries to find the given property name in the reader.<br/>
@@ -273,6 +284,13 @@ public:
 
         // Path not found
         return false;
+    }
+    /// <summary>
+    /// Reads comments and whitespace and returns whether the reader contains another element.
+    /// </summary>
+    bool has_element() {
+        read_comments_and_whitespace();
+        return !!peek();
     }
     /// <summary>
     /// Reads a single element from the reader.

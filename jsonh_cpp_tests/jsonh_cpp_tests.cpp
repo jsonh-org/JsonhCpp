@@ -153,7 +153,9 @@ TEST_CASE("VerbatimStringTest") {
     REQUIRE(element["c\\\\"] == "d\\\\");
     REQUIRE(element["e\\\\"] == "f\\");
 
-    json element2 = jsonh_reader::parse_element(jsonh, jsonh_reader_options({ .version = jsonh_version::v1 })).value();
+    json element2 = jsonh_reader::parse_element(jsonh, jsonh_reader_options({
+        .version = jsonh_version::v1,
+    })).value();
     REQUIRE(element2.size() == 3);
     REQUIRE(element2["a\\"] == "b\\");
     REQUIRE(element2["@c\\"] == "@d\\");
@@ -166,6 +168,19 @@ TEST_CASE("VerbatimStringTest") {
 
     REQUIRE(element3.size() == 1);
     REQUIRE(element3["a\\\\"] == "b\\\\");
+}
+TEST_CASE("ParseSingleElementTest") {
+    std::string jsonh = R"(
+1
+2
+)";
+    int element = jsonh_reader::parse_element<int>(jsonh).value();
+
+    REQUIRE(element == 1);
+
+    REQUIRE(!jsonh_reader::parse_element<int>(jsonh, jsonh_reader_options({
+        .parse_single_element = true,
+    })));
 }
 
 /*
