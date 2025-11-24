@@ -1,5 +1,5 @@
 // JsonhCpp (JSON for Humans)
-// Version: 5.2
+// Version: 5.3
 // Link: https://github.com/jsonh-org/JsonhCpp
 // License: MIT
 
@@ -29807,7 +29807,7 @@ public:
     /// <summary>
     /// Returns whether the byte is the first (or only) byte of a UTF-8 rune as opposed to a continuation byte.
     /// </summary>
-    static bool is_utf8_first_byte(char byte) noexcept {
+    static constexpr bool is_utf8_first_byte(char byte) noexcept {
         return (byte & 0xC0) != 0x80;
     }
     /// <summary>
@@ -29816,7 +29816,7 @@ public:
     /// <returns>
     /// 1 or 2 or 3 or 4.
     /// </returns>
-    static int get_utf8_sequence_length(char first_byte) noexcept {
+    static constexpr int get_utf8_sequence_length(char first_byte) noexcept {
         // https://codegolf.stackexchange.com/a/173577
         return ((first_byte - 160) >> (20 - (first_byte / 16))) + 2;
     }
@@ -30176,7 +30176,7 @@ private:
     /// <summary>
     /// Runes that cannot be used unescaped in quoteless strings.
     /// </summary>
-    const std::set<std::string> reserved_runes() { return options.supports_version(jsonh_version::v2) ? reserved_runes_v2 : reserved_runes_v1; }
+    const std::set<std::string>& reserved_runes() { return options.supports_version(jsonh_version::v2) ? reserved_runes_v2 : reserved_runes_v1; }
     /// <summary>
     /// Runes that cannot be used unescaped in quoteless strings in JSONH V1.
     /// </summary>
@@ -31287,13 +31287,13 @@ private:
             return nonstd::unexpected<std::string>("Invalid code point (out of range)");
         }
     }
-    static unsigned int utf16_surrogates_to_code_point(unsigned int high_surrogate, unsigned int low_surrogate) noexcept {
+    static constexpr unsigned int utf16_surrogates_to_code_point(unsigned int high_surrogate, unsigned int low_surrogate) noexcept {
         return 0x10000 + (((high_surrogate - 0xD800) << 10) | (low_surrogate - 0xDC00));
     }
-    static bool is_utf16_high_surrogate(unsigned int code_point) noexcept {
+    static constexpr bool is_utf16_high_surrogate(unsigned int code_point) noexcept {
         return code_point >= 0xD800 && code_point <= 0xDBFF;
     }
-    static std::string to_ascii_lower(const char* string) noexcept {
+    static constexpr std::string to_ascii_lower(const char* string) noexcept {
         std::string result(string);
         for (char& next : result) {
             if (next <= 'Z' && next >= 'A') {
