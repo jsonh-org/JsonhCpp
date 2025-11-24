@@ -92,39 +92,39 @@ public:
     /// </summary>
     template <typename T>
     nonstd::expected<T, std::string> parse_element() noexcept {
-        nonstd::expected<json, std::string> node = parse_element();
-        if (!node) {
-            return nonstd::unexpected<std::string>(node.error());
+        nonstd::expected<json, std::string> element = parse_element();
+        if (!element) {
+            return nonstd::unexpected<std::string>(element.error());
         }
-        return node.value().template get<T>();
+        return element.value().template get<T>();
     }
     /// <summary>
     /// Parses a single element from the reader.
     /// </summary>
     nonstd::expected<json, std::string> parse_element() noexcept {
-        std::stack<json> current_nodes;
+        std::stack<json> current_elements;
         std::optional<std::string> current_property_name;
 
-        auto submit_node = [&](const json& node) {
+        auto submit_element = [&](const json& element) {
             // Root value
-            if (current_nodes.empty()) {
+            if (current_elements.empty()) {
                 return true;
             }
             // Array item
             if (!current_property_name) {
-                current_nodes.top().push_back(node);
+                current_elements.top().push_back(element);
                 return false;
             }
             // Object property
             else {
-                current_nodes.top()[current_property_name.value()] = node;
+                current_elements.top()[current_property_name.value()] = element;
                 current_property_name.reset();
                 return false;
             }
         };
-        auto start_node = [&](const json& node) {
-            submit_node(node);
-            current_nodes.push(node);
+        auto start_element = [&](const json& element) {
+            submit_element(element);
+            current_elements.push(element);
         };
 
         for (const nonstd::expected<jsonh_token, std::string>& token_result : read_element()) {
@@ -137,33 +137,33 @@ public:
             switch (token.json_type) {
                 // Null
                 case json_token_type::null: {
-                    json node = json(nullptr);
-                    if (submit_node(node)) {
-                        return node;
+                    json element = json(nullptr);
+                    if (submit_element(element)) {
+                        return element;
                     }
                     break;
                 }
                 // True
                 case json_token_type::true_bool: {
-                    json node = json(true);
-                    if (submit_node(node)) {
-                        return node;
+                    json element = json(true);
+                    if (submit_element(element)) {
+                        return element;
                     }
                     break;
                 }
                 // False
                 case json_token_type::false_bool: {
-                    json node = json(false);
-                    if (submit_node(node)) {
-                        return node;
+                    json element = json(false);
+                    if (submit_element(element)) {
+                        return element;
                     }
                     break;
                 }
                 // String
                 case json_token_type::string: {
-                    json node = json(token.value);
-                    if (submit_node(node)) {
-                        return node;
+                    json element = json(token.value);
+                    if (submit_element(element)) {
+                        return element;
                     }
                     break;
                 }
@@ -173,33 +173,33 @@ public:
                     if (!result) {
                         return nonstd::unexpected<std::string>(result.error());
                     }
-                    json node = json(result.value());
-                    if (submit_node(node)) {
-                        return node;
+                    json element = json(result.value());
+                    if (submit_element(element)) {
+                        return element;
                     }
                     break;
                 }
                 // Start Object
                 case json_token_type::start_object: {
-                    json node = json::object();
-                    start_node(node);
+                    json element = json::object();
+                    start_element(element);
                     break;
                 }
                 // Start Array
                 case json_token_type::start_array: {
-                    json node = json::array();
-                    start_node(node);
+                    json element = json::array();
+                    start_element(element);
                     break;
                 }
                 // End Object/Array
                 case json_token_type::end_object: case json_token_type::end_array: {
-                    // Nested node
-                    if (current_nodes.size() > 1) {
-                        current_nodes.pop();
+                    // Nested element
+                    if (current_elements.size() > 1) {
+                        current_elements.pop();
                     }
-                    // Root node
+                    // Root element
                     else {
-                        return current_nodes.top();
+                        return current_elements.top();
                     }
                     break;
                 }
