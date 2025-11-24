@@ -1,5 +1,5 @@
 // JsonhCpp (JSON for Humans)
-// Version: 5.1
+// Version: 5.2
 // Link: https://github.com/jsonh-org/JsonhCpp
 // License: MIT
 
@@ -29645,19 +29645,19 @@ public:
     /// <summary>
     /// Constructs a reader that reads UTF-8 runes from a UTF-8 input stream.
     /// </summary>
-    utf8_reader(std::unique_ptr<std::istream> stream) noexcept {
+    explicit utf8_reader(std::unique_ptr<std::istream> stream) noexcept {
         this->inner_stream = std::move(stream);
     }
     /// <summary>
     /// Constructs a reader that reads UTF-8 runes from a UTF-8 input stream.
     /// </summary>
-    utf8_reader(std::istream& stream) noexcept
+    explicit utf8_reader(std::istream& stream) noexcept
         : utf8_reader(std::unique_ptr<std::istream>(&stream)) {
     }
     /// <summary>
     /// Constructs a reader that reads UTF-8 runes from a UTF-8 string.
     /// </summary>
-    utf8_reader(const std::string& string) noexcept
+    explicit utf8_reader(const std::string& string) noexcept
         : utf8_reader(std::make_unique<std::istringstream>(string)) {
     }
 
@@ -29842,20 +29842,20 @@ public:
     /// <summary>
     /// Constructs a reader that reads JSONH from a UTF-8 input stream.
     /// </summary>
-    jsonh_reader(std::unique_ptr<std::istream> stream, jsonh_reader_options options = jsonh_reader_options()) noexcept
+    explicit jsonh_reader(std::unique_ptr<std::istream> stream, jsonh_reader_options options = jsonh_reader_options()) noexcept
         : utf8_reader(std::move(stream)) {
         this->options = options;
     }
     /// <summary>
     /// Constructs a reader that reads JSONH from a UTF-8 input stream.
     /// </summary>
-    jsonh_reader(std::istream& stream, jsonh_reader_options options = jsonh_reader_options()) noexcept
+    explicit jsonh_reader(std::istream& stream, jsonh_reader_options options = jsonh_reader_options()) noexcept
         : jsonh_reader(std::unique_ptr<std::istream>(&stream)) {
     }
     /// <summary>
     /// Constructs a reader that reads JSONH from a UTF-8 string.
     /// </summary>
-    jsonh_reader(const std::string& string, jsonh_reader_options options = jsonh_reader_options()) noexcept
+    explicit jsonh_reader(const std::string& string, jsonh_reader_options options = jsonh_reader_options()) noexcept
         : jsonh_reader(std::make_unique<std::istringstream>(string), options) {
     }
 
