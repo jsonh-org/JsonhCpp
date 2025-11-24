@@ -30,20 +30,20 @@ public:
     /// <summary>
     /// Constructs a reader that reads JSONH from a UTF-8 input stream.
     /// </summary>
-    jsonh_reader(std::unique_ptr<std::istream> stream, jsonh_reader_options options = jsonh_reader_options()) noexcept
+    explicit jsonh_reader(std::unique_ptr<std::istream> stream, jsonh_reader_options options = jsonh_reader_options()) noexcept
         : utf8_reader(std::move(stream)) {
         this->options = options;
     }
     /// <summary>
     /// Constructs a reader that reads JSONH from a UTF-8 input stream.
     /// </summary>
-    jsonh_reader(std::istream& stream, jsonh_reader_options options = jsonh_reader_options()) noexcept
+    explicit jsonh_reader(std::istream& stream, jsonh_reader_options options = jsonh_reader_options()) noexcept
         : jsonh_reader(std::unique_ptr<std::istream>(&stream)) {
     }
     /// <summary>
     /// Constructs a reader that reads JSONH from a UTF-8 string.
     /// </summary>
-    jsonh_reader(const std::string& string, jsonh_reader_options options = jsonh_reader_options()) noexcept
+    explicit jsonh_reader(const std::string& string, jsonh_reader_options options = jsonh_reader_options()) noexcept
         : jsonh_reader(std::make_unique<std::istringstream>(string), options) {
     }
 

@@ -20,19 +20,19 @@ public:
     /// <summary>
     /// Constructs a reader that reads UTF-8 runes from a UTF-8 input stream.
     /// </summary>
-    utf8_reader(std::unique_ptr<std::istream> stream) noexcept {
+    explicit utf8_reader(std::unique_ptr<std::istream> stream) noexcept {
         this->inner_stream = std::move(stream);
     }
     /// <summary>
     /// Constructs a reader that reads UTF-8 runes from a UTF-8 input stream.
     /// </summary>
-    utf8_reader(std::istream& stream) noexcept
+    explicit utf8_reader(std::istream& stream) noexcept
         : utf8_reader(std::unique_ptr<std::istream>(&stream)) {
     }
     /// <summary>
     /// Constructs a reader that reads UTF-8 runes from a UTF-8 string.
     /// </summary>
-    utf8_reader(const std::string& string) noexcept
+    explicit utf8_reader(const std::string& string) noexcept
         : utf8_reader(std::make_unique<std::istringstream>(string)) {
     }
 
