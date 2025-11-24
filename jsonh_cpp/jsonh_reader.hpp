@@ -364,7 +364,7 @@ private:
     /// <summary>
     /// Runes that cannot be used unescaped in quoteless strings.
     /// </summary>
-    const std::set<std::string> reserved_runes() { return options.supports_version(jsonh_version::v2) ? reserved_runes_v2 : reserved_runes_v1; }
+    const std::set<std::string>& reserved_runes() { return options.supports_version(jsonh_version::v2) ? reserved_runes_v2 : reserved_runes_v1; }
     /// <summary>
     /// Runes that cannot be used unescaped in quoteless strings in JSONH V1.
     /// </summary>
