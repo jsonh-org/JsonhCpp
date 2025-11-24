@@ -1,4 +1,4 @@
-AMALGAMATE_PATH = 'C:/Users/patri/Documents/Programs/amalgamate-v0.99.0-windows-amd64/amalgamate.exe' # https://github.com/rindeal/Amalgamate
+AMALGAMATE_PATH = 'amalgamate-v0.99.0-windows-amd64/amalgamate.exe' # https://github.com/rindeal/Amalgamate
 INPUT_PATH = "jsonh_cpp/jsonh_cpp.hpp"
 OUTPUT_PATH = "single_include/jsonh_cpp_amalgamated.hpp"
 
