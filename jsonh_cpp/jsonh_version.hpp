@@ -7,7 +7,7 @@ namespace jsonh_cpp {
 /// </summary>
 enum struct jsonh_version {
     /// <summary>
-    /// Indicates that the latest version should be used (currently v1).
+    /// Indicates that the latest version should be used (currently v2).
     /// </summary>
     latest = 0,
     /// <summary>
