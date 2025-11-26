@@ -181,6 +181,16 @@ TEST_CASE("ParseSingleElementTest") {
     REQUIRE(!jsonh_reader::parse_element<int>(jsonh, jsonh_reader_options({
         .parse_single_element = true,
     })));
+
+    std::string jsonh2 = R"(
+1
+
+
+)";
+
+    REQUIRE(jsonh_reader::parse_element<int>(jsonh2, jsonh_reader_options({
+        .parse_single_element = true,
+    })));
 }
 
 /*
