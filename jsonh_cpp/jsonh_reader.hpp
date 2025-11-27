@@ -1234,7 +1234,12 @@ private:
 
             // Comment
             if (next.value() == "#" || next.value() == "/") {
-                tokens.push_back(read_comment());
+                nonstd::expected<jsonh_token, std::string> comment = read_comment();
+                if (!comment) {
+                    tokens.push_back(comment);
+                    return tokens;
+                }
+                tokens.push_back(comment);
             }
             // End of comments
             else {
