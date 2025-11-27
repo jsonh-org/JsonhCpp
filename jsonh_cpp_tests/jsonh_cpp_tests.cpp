@@ -377,3 +377,10 @@ TEST_CASE("LeadingZeroWithExponentTest") {
     REQUIRE(jsonh_reader::parse_element(jsonh3).value().type() == json::value_t::array);
     REQUIRE(jsonh_reader::parse_element<std::vector<std::string>>(jsonh3).value() == std::vector<std::string>({ "0x0e+", "0b0e+_1" }));
 }
+TEST_CASE("ErrorInBracelessPropertyNameTest") {
+    std::string jsonh = R"(
+a /
+)";
+
+    REQUIRE(!jsonh_reader::parse_element(jsonh));
+}
