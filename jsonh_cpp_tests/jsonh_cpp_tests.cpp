@@ -384,3 +384,22 @@ a /
 
     REQUIRE(!jsonh_reader::parse_element(jsonh));
 }
+TEST_CASE("FirstPropertyNameInBracelessObjectTest") {
+    std::string jsonh = R"(
+a: b
+)";
+
+    REQUIRE(jsonh_reader::parse_element<std::map<std::string, std::string>>(jsonh).value() == std::map<std::string, std::string>({ { "a", "b" } }));
+
+    std::string jsonh2 = R"(
+0: b
+)";
+
+    REQUIRE(jsonh_reader::parse_element<std::map<std::string, std::string>>(jsonh2).value() == std::map<std::string, std::string>({ { "0", "b" } }));
+
+    std::string jsonh3 = R"(
+true: b
+)";
+
+    REQUIRE(jsonh_reader::parse_element<std::map<std::string, std::string>>(jsonh3).value() == std::map<std::string, std::string>({ { "true", "b" } }));
+}

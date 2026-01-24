@@ -373,18 +373,12 @@ public:
             }
 
             // Detect braceless object from property name
-            if (token.value().json_type == json_token_type::string) {
-                for (const nonstd::expected<jsonh_token, std::string>& token2 : read_braceless_object_or_end_of_string(token.value())) {
-                    if (!token2) {
-                        tokens.push_back(token2);
-                        return tokens;
-                    }
+            for (const nonstd::expected<jsonh_token, std::string>& token2 : read_braceless_object_or_end_of_primitive(token.value())) {
+                if (!token2) {
                     tokens.push_back(token2);
+                    return tokens;
                 }
-            }
-            // Primitive value
-            else {
-                tokens.push_back(token.value());
+                tokens.push_back(token2);
             }
         }
 
@@ -519,33 +513,41 @@ private:
             }
         }
     }
-    std::vector<nonstd::expected<jsonh_token, std::string>> read_braceless_object_or_end_of_string(const jsonh_token& string_token) {
+    std::vector<nonstd::expected<jsonh_token, std::string>> read_braceless_object_or_end_of_primitive(const jsonh_token& primitive_token) {
         std::vector<nonstd::expected<jsonh_token, std::string>> tokens = {};
 
         // Comments & whitespace
-        std::vector<jsonh_token> property_name_tokens = {};
+        std::optional<std::vector<jsonh_token>> property_name_tokens = {};
         for (const nonstd::expected<jsonh_token, std::string>& comment_or_whitespace_token : read_comments_and_whitespace()) {
             if (!comment_or_whitespace_token) {
                 tokens.push_back(comment_or_whitespace_token);
                 return tokens;
             }
-            property_name_tokens.push_back(comment_or_whitespace_token.value());
+            if (!property_name_tokens) {
+                property_name_tokens = std::vector<jsonh_token>();
+            }
+            property_name_tokens.value().push_back(comment_or_whitespace_token.value());
         }
 
-        // String
+        // Primitive
         if (!read_one(":")) {
-            // String
-            tokens.push_back(string_token);
+            // Primitive
+            tokens.push_back(primitive_token);
             // Comments & whitespace
-            for (const jsonh_token& comment_or_whitespace_token : property_name_tokens) {
-                tokens.push_back(comment_or_whitespace_token);
+            if (property_name_tokens) {
+                for (const jsonh_token& comment_or_whitespace_token : property_name_tokens.value()) {
+                    tokens.push_back(comment_or_whitespace_token);
+                }
             }
-            // End of string
+            // End of primitive
             return tokens;
         }
 
         // Property name
-        property_name_tokens.push_back(jsonh_token(json_token_type::property_name, string_token.value));
+        if (!property_name_tokens) {
+            property_name_tokens = std::vector<jsonh_token>();
+        }
+        property_name_tokens.value().push_back(jsonh_token(json_token_type::property_name, primitive_token.value));
 
         // Braceless object
         for (const nonstd::expected<jsonh_token, std::string>& object_token : read_braceless_object(property_name_tokens)) {
@@ -1001,13 +1003,13 @@ private:
         // Match named literal
         if (is_named_literal_possible) {
             if (string_builder == "null") {
-                return jsonh_token(json_token_type::null);
+                return jsonh_token(json_token_type::null, "null");
             }
             else if (string_builder == "true") {
-                return jsonh_token(json_token_type::true_bool);
+                return jsonh_token(json_token_type::true_bool, "true");
             }
             else if (string_builder == "false") {
-                return jsonh_token(json_token_type::false_bool);
+                return jsonh_token(json_token_type::false_bool, "false");
             }
         }
 
