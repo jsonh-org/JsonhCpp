@@ -403,3 +403,10 @@ true: b
 
     REQUIRE(jsonh_reader::parse_element<std::map<std::string, std::string>>(jsonh3).value() == std::map<std::string, std::string>({ { "true", "b" } }));
 }
+TEST_CASE("FractionLeadingZeroesTest") {
+    std::string jsonh = R"(
+0.04
+)";
+
+    REQUIRE(jsonh_reader::parse_element<long double>(jsonh).value() == 0.04);
+}

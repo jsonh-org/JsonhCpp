@@ -145,8 +145,20 @@ private:
             return nonstd::unexpected<std::string>(fraction.error());
         }
 
+        // Get fraction leading zeroes
+        size_t fraction_leading_zeroes_count = 0;
+        for (size_t index = 0; index < fraction_part.size(); index++) {
+            if (fraction_part[index] == '0') {
+                fraction_leading_zeroes_count++;
+            }
+            else {
+                break;
+            }
+        }
+        std::string fraction_leading_zeroes = std::string(fraction_leading_zeroes_count, '0');
+
         // Combine whole and fraction
-        return std::stold(std::to_string(whole.value()) + "." + std::to_string(fraction.value()));
+        return std::stold(std::to_string(whole.value()) + "." + fraction_leading_zeroes + std::to_string(fraction.value()));
     }
     /// <summary>
     /// Converts a whole number (e.g. <c>12345</c>) from the given base (e.g. <c>01234567</c>) to a base-10 integer.
