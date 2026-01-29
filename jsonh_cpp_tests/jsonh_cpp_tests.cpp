@@ -436,3 +436,10 @@ TEST_CASE("UnderscoreAfterLeadingZeroTest") {
 
     REQUIRE(jsonh_reader::parse_element<int>(jsonh).value() == 0'0);
 }
+TEST_CASE("UnderscoreBesideDotTest") {
+    std::string jsonh = R"(
+[0_.0, 0._0]
+)";
+
+    REQUIRE(jsonh_reader::parse_element<std::vector<std::string>>(jsonh).value() == std::vector<std::string>({ "0_.0", "0._0" }));
+}

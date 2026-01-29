@@ -1192,6 +1192,11 @@ private:
             }
             // Dot
             else if (next.value() == ".") {
+                // Disallow dot preceding underscore
+                if (number_builder.size() >= 1 && number_builder.back() == '_') {
+                    return nonstd::unexpected<std::string>("`.` must not follow `_` in number");
+                }
+
                 read();
                 number_builder += next.value();
                 is_empty = false;
@@ -1204,6 +1209,11 @@ private:
             }
             // Underscore
             else if (next.value() == "_") {
+                // Disallow underscore following dot
+                if (number_builder.size() >= 1 && number_builder.back() == '.') {
+                    return nonstd::unexpected<std::string>("`_` must not follow `.` in number");
+                }
+
                 read();
                 number_builder += next.value();
                 is_empty = false;
