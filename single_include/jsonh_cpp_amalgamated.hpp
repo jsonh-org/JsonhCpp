@@ -1,5 +1,5 @@
 // JsonhCpp (JSON for Humans)
-// Version: 6.0
+// Version: 6.1
 // Link: https://github.com/jsonh-org/JsonhCpp
 // License: MIT
 
@@ -29367,68 +29367,79 @@ inline void swap(nlohmann::NLOHMANN_BASIC_JSON_TPL& j1, nlohmann::NLOHMANN_BASIC
 
 namespace jsonh_cpp {
 
-/// <summary>
-/// The types of tokens that make up a JSON document.
-/// </summary>
+/**
+* @brief The types of tokens that make up a JSON document.
+**/
 enum struct json_token_type : char {
-    /// <summary>
-    /// Indicates that there is no value (not to be confused with null).
-    /// </summary>
+    /**
+    * @brief Indicates that there is no value (not to be confused with null).
+    **/
     none = 0,
-    /// <summary>
-    /// The start of an object.<br/>
-    /// Example: <c>{</c>
-    /// </summary>
+    /**
+    * @brief The start of an object.
+    *
+    * Example: @c {
+    **/
     start_object = 1,
-    /// <summary>
-    /// The end of an object.<br/>
-    /// Example: <c>}</c>
-    /// </summary>
+    /**
+    * @brief The end of an object.
+    *
+    * Example: @c }
+    **/
     end_object = 2,
-    /// <summary>
-    /// The start of an array.<br/>
-    /// Example: <c>&#x005B;</c>
-    /// </summary>
+    /**
+    * @brief The start of an array.
+    *
+    * Example: @c [
+    **/
     start_array = 3,
-    /// <summary>
-    /// The end of an array.<br/>
-    /// Example: <c>&#x005D;</c>
-    /// </summary>
+    /**
+    * @brief The end of an array.
+    *
+    * Example: @c ]
+    **/
     end_array = 4,
-    /// <summary>
-    /// A property name in an object.<br/>
-    /// Example: <c>"key":</c>
-    /// </summary>
+    /**
+    * @brief A property name in an object.
+    *
+    * Example: @c "key":
+    **/
     property_name = 5,
-    /// <summary>
-    /// A comment.<br/>
-    /// Example: <c>// comment</c>
-    /// </summary>
+    /**
+    * @brief A comment.
+    *
+    * Example: @c //comment
+    **/
     comment = 6,
-    /// <summary>
-    /// A string.<br/>
-    /// Example: <c>"value"</c>
-    /// </summary>
+    /**
+    * @brief A string.
+    *
+    * Example: @c "value"
+    **/
     string = 7,
-    /// <summary>
-    /// A number.<br/>
-    /// Example: <c>10</c>
-    /// </summary>
+    /**
+    * @brief A number.
+    *
+    * Example: @c 10
+    **/
     number = 8,
-    /// <summary>
-    /// A true boolean.<br/>
-    /// Example: <c>true</c>
-    /// </summary>
+    /**
+    * @brief A true boolean.
+    *
+    * Example: @c true
+    **/
     true_bool = 9,
-    /// <summary>
-    /// A false boolean.<br/>
-    /// Example: <c>false</c>
-    /// </summary>
+    /**
+    * @brief A false boolean.
+    *
+    * Example: @c false
+    **/
     false_bool = 10,
-    /// <summary>
-    /// A null value.<br/>
-    /// Example: <c>null</c>
-    /// </summary>
+    /**
+    * @brief A null value.
+    *
+    * Example: @c null
+    **/
     null = 11,
 };
 
@@ -29438,22 +29449,22 @@ enum struct json_token_type : char {
 
 namespace jsonh_cpp {
 
-/// <summary>
-/// A single JSONH token with a <see cref="json_token_type"/>.
-/// </summary>
+/**
+* @brief A single JSONH token with a @ref json_token_type.
+**/
 struct jsonh_token {
-    /// <summary>
-    /// The type of the token.
-    /// </summary>
+    /**
+    * @brief The type of the token.
+    **/
     json_token_type json_type;
-    /// <summary>
-    /// The value of the token, or an empty string.
-    /// </summary>
+    /**
+    * @brief The value of the token, or an empty string.
+    **/
     std::string value;
 
-    /// <summary>
-    /// Constructs a single JSONH token.
-    /// </summary>
+    /**
+    * @brief Constructs a single JSONH token.
+    **/
     jsonh_token(json_token_type json_type, std::string value = "") noexcept {
         this->json_type = json_type;
         this->value = value;
@@ -29473,21 +29484,21 @@ struct jsonh_token {
 
 namespace jsonh_cpp {
 
-/// <summary>
-/// The major versions of the JSONH specification.
-/// </summary>
+/**
+* @brief The major versions of the JSONH specification.
+**/
 enum struct jsonh_version {
-    /// <summary>
-    /// Indicates that the latest version should be used (currently v2).
-    /// </summary>
+    /**
+    * @brief Indicates that the latest version should be used (currently @ref v2).
+    **/
     latest = 0,
-    /// <summary>
-    /// Version 1 of the specification, released 2025/03/19.
-    /// </summary>
+    /**
+    * @brief Version 1 of the specification, released 2025/03/19.
+    **/
     v1 = 1,
-    /// <summary>
-    /// Version 2 of the specification, released 2025/11/19.
-    /// </summary>
+    /**
+    * @brief Version 2 of the specification, released 2025/11/19.
+    **/
     v2 = 2,
 };
 
@@ -29496,52 +29507,58 @@ enum struct jsonh_version {
 
 namespace jsonh_cpp {
 
-/// <summary>
-/// Options for a jsonh_reader.
-/// </summary>
+/**
+* @brief Options for a jsonh_reader.
+**/
 struct jsonh_reader_options {
-    /// <summary>
-    /// Specifies the major version of the JSONH specification to use.
-    /// </summary>
+    /**
+    * @brief Specifies the major version of the JSONH specification to use.
+    **/
     jsonh_version version = jsonh_version::latest;
-    /// <summary>
-    /// Enables/disables checks for exactly one element when parsing.
-    /// <code>
-    /// "cat"
-    /// "dog" // Error: Expected single element
-    /// </code>
-    /// This option does not apply when reading elements, only when parsing elements.
-    /// </summary>
+    /**
+    * @brief Enables/disables checks for exactly one element when parsing.
+    *
+    * @code{.jsonh}
+    * "cat"
+    * "dog" // Error: Expected single element
+    * @endcode
+    *
+    * This option does not apply when reading elements, only when parsing elements.
+    **/
     bool parse_single_element = false;
-    /// <summary>
-    /// Sets the maximum recursion depth allowed when reading JSONH.
-    /// <code>
-    /// // Max depth: 2
-    /// {
-    ///   a: {
-    ///     b: {
-    ///       // Error: Exceeded max depth
-    ///     }
-    ///   }
-    /// }
-    /// </code>
-    /// The default value is 64 to defend against DOS attacks.
-    /// </summary>
+    /**
+    * @brief Sets the maximum recursion depth allowed when reading JSONH.
+    *
+    * @code{.jsonh}
+    * // Max depth: 2
+    * {
+    *   a: {
+    *     b: {
+    *       // Error: Exceeded max depth
+    *     }
+    *   }
+    * }
+    * @endcode
+    *
+    * The default value is 64 to defend against DOS attacks.
+    **/
     int max_depth = 64;
-    /// <summary>
-    /// Enables/disables parsing unclosed inputs.
-    /// <code>
-    /// {
-    ///   "key": "val
-    /// </code>
-    /// This is potentially useful for large language models that stream responses.<br/>
-    /// Only some tokens can be incomplete in this mode, so it should not be relied upon.
-    /// </summary>
+    /**
+    * @brief Enables/disables parsing unclosed inputs.
+    *
+    * @code{.jsonh}
+    * {
+    *   "key": "val
+    * @endcode
+    *
+    * This is potentially useful for large language models that stream responses.
+    * Only some tokens can be incomplete in this mode, so it should not be relied upon.
+    **/
     bool incomplete_inputs = false;
 
-    /// <summary>
-    /// Returns whether <see cref="version"/> is greater than or equal to <paramref name="minimum_version"/>.
-    /// </summary>
+    /**
+    * @brief Returns whether @ref version is greater than or equal to @ref minimum_version.
+    **/
     bool supports_version(jsonh_version minimum_version) const noexcept {
         const jsonh_version latest_version = jsonh_version::v2;
 
@@ -29564,18 +29581,21 @@ struct jsonh_reader_options {
 
 namespace jsonh_cpp {
 
-/// <summary>
-/// Methods for parsing JSONH numbers (long long / long double).<br/>
-/// Unlike jsonh_reader.read_element, minimal validation is done here. Ensure the input is valid.
-/// </summary>
+/**
+* @brief Methods for parsing JSONH numbers (long long / long double).
+*
+* Unlike jsonh_reader.read_element, minimal validation is done here. Ensure the input is valid.
+**/
 class jsonh_number_parser final {
 public:
-    /// <summary>
-    /// Converts a JSONH number to a base-10 real.
-    /// For example:<br/>
-    /// Input: <c>+5.2e3.0</c><br/>
-    /// Output: <c>5200</c>
-    /// </summary>
+    /**
+    * @brief Converts a JSONH number to a base-10 real.
+    * For example:
+    *
+    * Input: @c +5.2e3.0
+    *
+    * Output: @c 5200
+    **/
     static nonstd::expected<long double, std::string> parse(std::string jsonh_number) noexcept {
         // Remove underscores
         std::erase(jsonh_number, '_');
@@ -29624,9 +29644,9 @@ public:
     }
 
 private:
-    /// <summary>
-    /// Converts a fractional number with an exponent (e.g. <c>12.3e4.5</c>) from the given base (e.g. <c>01234567</c>) to a base-10 real.
-    /// </summary>
+    /**
+    * @brief Converts a fractional number with an exponent (e.g. @c 12.3e4.5) from the given base (e.g. @c 01234567) to a base-10 real.
+    **/
     static nonstd::expected<long double, std::string> parse_fractional_number_with_exponent(std::string_view digits, std::string_view base_digits) noexcept {
         // Find exponent
         size_t exponent_index = std::string::npos;
@@ -29669,9 +29689,9 @@ private:
         // Multiply mantissa by 10 ^ exponent
         return mantissa.value() * pow(10, exponent.value());
     }
-    /// <summary>
-    /// Converts a fractional number (e.g. <c>123.45</c>) from the given base (e.g. <c>01234567</c>) to a base-10 real.
-    /// </summary>
+    /**
+    * @brief Converts a fractional number (e.g. @c 123.45) from the given base (e.g. @c 01234567) to a base-10 real.
+    **/
     static nonstd::expected<long double, std::string> parse_fractional_number(std::string_view digits, std::string_view base_digits) noexcept {
         // Optimization for base-10 digits
         if (base_digits == "0123456789") {
@@ -29718,9 +29738,9 @@ private:
         // Combine whole and fraction
         return std::stold(std::to_string(whole.value()) + "." + fraction_leading_zeroes + std::to_string(fraction.value()));
     }
-    /// <summary>
-    /// Converts a whole number (e.g. <c>12345</c>) from the given base (e.g. <c>01234567</c>) to a base-10 integer.
-    /// </summary>
+    /**
+    * @brief Converts a whole number (e.g. @c 12345) from the given base (e.g. @c 01234567) to a base-10 integer.
+    **/
     static nonstd::expected<long long, std::string> parse_whole_number(std::string_view digits, std::string_view base_digits) noexcept {
         // Optimization for base-10 digits
         if (base_digits == "0123456789") {
@@ -29779,56 +29799,56 @@ private:
 
 namespace jsonh_cpp {
 
-/// <summary>
-/// A reader that reads UTF-8 runes from a UTF-8 input stream.
-/// </summary>
+/**
+* @brief A reader that reads UTF-8 runes from a UTF-8 input stream.
+**/
 class utf8_reader {
 public:
-    /// <summary>
-    /// The byte stream to decode runes from.
-    /// </summary>
+    /**
+    * @brief The byte stream to decode runes from.
+    **/
     std::unique_ptr<std::istream> inner_stream;
-    /// <summary>
-    /// The number of runes read from inner_stream.
-    /// </summary>
+    /**
+    * @brief The number of runes read from inner_stream.
+    **/
     std::int64_t char_counter;
 
-    /// <summary>
-    /// Constructs a reader that reads UTF-8 runes from a UTF-8 input stream.
-    /// </summary>
+    /**
+    * @brief Constructs a reader that reads UTF-8 runes from a UTF-8 input stream.
+    **/
     explicit utf8_reader(std::unique_ptr<std::istream> stream) noexcept {
         this->inner_stream = std::move(stream);
         this->char_counter = 0;
     }
-    /// <summary>
-    /// Constructs a reader that reads UTF-8 runes from a UTF-8 input stream.
-    /// </summary>
+    /**
+    * @brief Constructs a reader that reads UTF-8 runes from a UTF-8 input stream.
+    **/
     explicit utf8_reader(std::istream& stream) noexcept
         : utf8_reader(std::unique_ptr<std::istream>(&stream)) {
     }
-    /// <summary>
-    /// Constructs a reader that reads UTF-8 runes from a UTF-8 string.
-    /// </summary>
+    /**
+    * @brief Constructs a reader that reads UTF-8 runes from a UTF-8 string.
+    **/
     explicit utf8_reader(const std::string& string) noexcept
         : utf8_reader(std::make_unique<std::istringstream>(string)) {
     }
 
-    /// <summary>
-    /// Returns the current byte position in <see cref="inner_stream"/>.
-    /// </summary>
+    /**
+    * @brief Returns the current byte position in @ref inner_stream.
+    **/
     size_t position() const noexcept {
         return inner_stream->tellg();
     }
-    /// <summary>
-    /// Sets the current byte position in <see cref="inner_stream"/> relative to the given anchor.
-    /// </summary>
+    /**
+    * @brief Sets the current byte position in @ref inner_stream relative to the given anchor.
+    **/
     void seek(size_t position, std::ios::seekdir anchor = std::ios::beg) const noexcept {
         inner_stream->seekg(position, anchor);
     }
 
-    /// <summary>
-    /// Reads the next UTF-8 rune from <see cref="inner_stream"/>, moving forward by the number of bytes read.
-    /// </summary>
+    /**
+    * @brief Reads the next UTF-8 rune from @ref inner_stream, moving forward by the number of bytes read.
+    **/
     std::optional<std::string> read() const noexcept {
         // Read first byte
         int first_byte_as_int = inner_stream->get();
@@ -29853,18 +29873,18 @@ public:
         bytes.resize(1 + inner_stream->gcount());
         return bytes;
     }
-    /// <summary>
-    /// Reads the next UTF-8 rune from <see cref="inner_stream"/>, without moving forward.
-    /// </summary>
+    /**
+    * @brief Reads the next UTF-8 rune from @ref inner_stream, without moving forward.
+    **/
     std::optional<std::string> peek() const noexcept {
         size_t original_position = position();
         std::optional<std::string> next = read();
         seek(original_position);
         return next;
     }
-    /// <summary>
-    /// If the next UTF-8 rune is the given option, moves forward by its number of bytes.
-    /// </summary>
+    /**
+    * @brief If the next UTF-8 rune is the given option, moves forward by its number of bytes.
+    **/
     bool read_one(std::string option) const noexcept {
         if (peek() == option) {
             read();
@@ -29872,9 +29892,9 @@ public:
         }
         return false;
     }
-    /// <summary>
-    /// If the next UTF-8 rune is one of the given options, moves forward by its number of bytes and returns the option.
-    /// </summary>
+    /**
+    * @brief If the next UTF-8 rune is one of the given options, moves forward by its number of bytes and returns the option.
+    **/
     std::optional<std::string> read_any(const std::set<std::string>& options) const noexcept {
         // Peek char
         std::optional<std::string> next = peek();
@@ -29890,9 +29910,9 @@ public:
         return next;
     }
 
-    /// <summary>
-    /// Reads the last UTF-8 rune from <see cref="inner_stream"/>, moving backward by the number of bytes read.
-    /// </summary>
+    /**
+    * @brief Reads the last UTF-8 rune from @ref inner_stream, moving backward by the number of bytes read.
+    **/
     std::optional<std::string> read_reverse() const noexcept {
         // Read up to 4 bytes
         std::string bytes;
@@ -29919,18 +29939,18 @@ public:
         // Never reached first byte
         return std::nullopt;
     }
-    /// <summary>
-    /// Reads the last UTF-8 rune from <see cref="inner_stream"/>, without moving backward.
-    /// </summary>
+    /**
+    * @brief Reads the last UTF-8 rune from @ref inner_stream, without moving backward.
+    **/
     std::optional<std::string> peek_reverse() const noexcept {
         size_t original_position = position();
         std::optional<std::string> last = read_reverse();
         seek(original_position);
         return last;
     }
-    /// <summary>
-    /// If the last UTF-8 rune is the given option, moves backward by its number of bytes.
-    /// </summary>
+    /**
+    * @brief If the last UTF-8 rune is the given option, moves backward by its number of bytes.
+    **/
     bool read_one_reverse(std::string option) const noexcept {
         if (peek_reverse() == option) {
             read_reverse();
@@ -29938,9 +29958,9 @@ public:
         }
         return false;
     }
-    /// <summary>
-    /// If the last UTF-8 rune is one of the given options, moves backward by its number of bytes and returns the option.
-    /// </summary>
+    /**
+    * @brief If the last UTF-8 rune is one of the given options, moves backward by its number of bytes and returns the option.
+    **/
     std::optional<std::string> read_any_reverse(const std::set<std::string>& options) const noexcept {
         // Peek char
         std::optional<std::string> last = peek_reverse();
@@ -29956,18 +29976,17 @@ public:
         return last;
     }
 
-    /// <summary>
-    /// Returns whether the byte is the first (or only) byte of a UTF-8 rune as opposed to a continuation byte.
-    /// </summary>
+    /**
+    * @brief Returns whether the byte is the first (or only) byte of a UTF-8 rune as opposed to a continuation byte.
+    **/
     static constexpr bool is_utf8_first_byte(char byte) noexcept {
         return (byte & 0xC0) != 0x80;
     }
-    /// <summary>
-    /// Calculates the byte count of a UTF-8 rune from the bits in its first byte.
-    /// </summary>
-    /// <returns>
-    /// 1 or 2 or 3 or 4.
-    /// </returns>
+    /**
+    * @brief Calculates the byte count of a UTF-8 rune from the bits in its first byte.
+    *
+    * @returns 1 or 2 or 3 or 4.
+    **/
     static constexpr int get_utf8_sequence_length(char first_byte) noexcept {
         // https://codegolf.stackexchange.com/a/173577
         return ((first_byte - 160) >> (20 - (first_byte / 16))) + 2;
@@ -29981,84 +30000,84 @@ using namespace nlohmann;
 
 namespace jsonh_cpp {
 
-/// <summary>
-/// A reader that reads tokens from a UTF-8 input stream.
-/// </summary>
+/**
+* @brief A reader that reads tokens from a UTF-8 input stream.
+**/
 class jsonh_reader : utf8_reader {
 public:
-    /// <summary>
-    /// The options to use when reading JSONH.
-    /// </summary>
+    /**
+    * @brief The options to use when reading JSONH.
+    **/
     jsonh_reader_options options;
-    /// <summary>
-    /// The current recursion depth of the reader.
-    /// </summary>
+    /**
+    * @brief The current recursion depth of the reader.
+    **/
     int depth;
 
-    /// <summary>
-    /// Constructs a reader that reads JSONH from a UTF-8 input stream.
-    /// </summary>
+    /**
+    * @brief Constructs a reader that reads JSONH from a UTF-8 input stream.
+    **/
     explicit jsonh_reader(std::unique_ptr<std::istream> stream, jsonh_reader_options options = jsonh_reader_options()) noexcept
         : utf8_reader(std::move(stream)) {
         this->options = options;
         this->depth = 0;
     }
-    /// <summary>
-    /// Constructs a reader that reads JSONH from a UTF-8 input stream.
-    /// </summary>
+    /**
+    * @brief Constructs a reader that reads JSONH from a UTF-8 input stream.
+    **/
     explicit jsonh_reader(std::istream& stream, jsonh_reader_options options = jsonh_reader_options()) noexcept
         : jsonh_reader(std::unique_ptr<std::istream>(&stream)) {
     }
-    /// <summary>
-    /// Constructs a reader that reads JSONH from a UTF-8 string.
-    /// </summary>
+    /**
+    * @brief Constructs a reader that reads JSONH from a UTF-8 string.
+    **/
     explicit jsonh_reader(const std::string& string, jsonh_reader_options options = jsonh_reader_options()) noexcept
         : jsonh_reader(std::make_unique<std::istringstream>(string), options) {
     }
 
-    /// <summary>
-    /// Parses a single element from a UTF-8 input stream and deserializes it as <typeparamref name="T"/>.
-    /// </summary>
+    /**
+    * @brief Parses a single element from a UTF-8 input stream and deserializes it as @ref T.
+    **/
     template <typename T>
     static nonstd::expected<T, std::string> parse_element(std::unique_ptr<std::istream> stream, jsonh_reader_options options = jsonh_reader_options()) noexcept {
         return jsonh_reader(std::move(stream), options).parse_element<T>();
     }
-    /// <summary>
-    /// Parses a single element from a UTF-8 input stream.
-    /// </summary>
+    /**
+    * @brief Parses a single element from a UTF-8 input stream.
+    **/
     static nonstd::expected<json, std::string> parse_element(std::unique_ptr<std::istream> stream, jsonh_reader_options options = jsonh_reader_options()) noexcept {
         return jsonh_reader(std::move(stream), options).parse_element();
     }
-    /// <summary>
-    /// Parses a single element from a UTF-8 input stream and deserializes it as <typeparamref name="T"/>.
-    /// </summary>
+    /**
+    * @brief Parses a single element from a UTF-8 input stream and deserializes it as @ref T.
+    **/
     template <typename T>
     static nonstd::expected<T, std::string> parse_element(std::istream& stream, jsonh_reader_options options = jsonh_reader_options()) noexcept {
         return jsonh_reader(stream, options).parse_element<T>();
     }
-    /// <summary>
-    /// Parses a single element from a UTF-8 input stream.
-    /// </summary>
+    /**
+    * @brief Parses a single element from a UTF-8 input stream.
+    **/
     static nonstd::expected<json, std::string> parse_element(std::istream& stream, jsonh_reader_options options = jsonh_reader_options()) noexcept {
         return jsonh_reader(stream, options).parse_element();
     }
-    /// <summary>
-    /// Parses a single element from a UTF-8 string and deserializes it as <typeparamref name="T"/>.
-    /// </summary>
+    /**
+    * @brief Parses a single element from a UTF-8 string and deserializes it as @ref T.
+    **/
     template <typename T>
     static nonstd::expected<T, std::string> parse_element(const std::string& string, jsonh_reader_options options = jsonh_reader_options()) noexcept {
         return jsonh_reader(string, options).parse_element<T>();
     }
-    /// <summary>
-    /// Parses a single element from a UTF-8 string.
-    /// </summary>
+    /**
+    * @brief Parses a single element from a UTF-8 string.
+    **/
     static nonstd::expected<json, std::string> parse_element(const std::string& string, jsonh_reader_options options = jsonh_reader_options()) noexcept {
         return jsonh_reader(string, options).parse_element();
     }
 
-    /// <summary>
-    /// Parses a single element from the reader and deserializes it as <typeparamref name="T"/>.
-    /// </summary>
+    /**
+    * @brief Parses a single element from the reader and deserializes it as @ref T.
+    **/
     template <typename T>
     nonstd::expected<T, std::string> parse_element() noexcept {
         nonstd::expected<json, std::string> element = parse_element();
@@ -30067,9 +30086,9 @@ public:
         }
         return element.value().template get<T>();
     }
-    /// <summary>
-    /// Parses a single element from the reader.
-    /// </summary>
+    /**
+    * @brief Parses a single element from the reader.
+    **/
     nonstd::expected<json, std::string> parse_element() noexcept {
         std::stack<json> current_elements;
         std::optional<std::string> current_property_name;
@@ -30206,20 +30225,23 @@ public:
 
         return next_element;
     }
-    /// <summary>
-    /// Tries to find the given property name in the reader.<br/>
-    /// For example, to find <c>c</c>:
-    /// <code>
-    /// // Original position
-    /// {
-    ///   "a": "1",
-    ///   "b": {
-    ///     "c": "2"
-    ///   },
-    ///   "c":/* Final position */ "3"
-    /// }
-    /// </code>
-    /// </summary>
+    /**
+    * @brief Tries to find the given property name in the reader.
+    *
+    * For example, to find @c c:
+    *
+    * @code{.jsonh}
+    * // Original position
+    * {
+    *   "a": "1",
+    *   "b": {
+    *     "c": "2"
+    *   },
+    *   "c": // Final position
+    *        "3"
+    * }
+    * @endcode
+    **/
     bool find_property_value(const std::string& property_name) noexcept {
         long long current_depth = 0;
 
@@ -30258,9 +30280,9 @@ public:
         // Path not found
         return false;
     }
-    /// <summary>
-    /// Reads whitespace and returns whether the reader contains another token.
-    /// </summary>
+    /**
+    * @brief Reads whitespace and returns whether the reader contains another token.
+    **/
     bool has_token() noexcept {
         // Whitespace
         read_whitespace();
@@ -30268,9 +30290,9 @@ public:
         // Peek char
         return !!peek();
     }
-    /// <summary>
-    /// Reads comments and whitespace and errors if the reader contains another element.
-    /// </summary>
+    /**
+    * @brief Reads comments and whitespace and errors if the reader contains another element.
+    **/
     std::vector<nonstd::expected<jsonh_token, std::string>> read_end_of_elements() noexcept {
         std::vector<nonstd::expected<jsonh_token, std::string>> tokens = {};
 
@@ -30291,9 +30313,9 @@ public:
 
         return tokens;
     }
-    /// <summary>
-    /// Reads a single element from the reader.
-    /// </summary>
+    /**
+    * @brief Reads a single element from the reader.
+    **/
     std::vector<nonstd::expected<jsonh_token, std::string>> read_element() noexcept {
         std::vector<nonstd::expected<jsonh_token, std::string>> tokens = {};
 
@@ -30355,25 +30377,25 @@ public:
     }
 
 private:
-    /// <summary>
-    /// Runes that cannot be used unescaped in quoteless strings.
-    /// </summary>
+    /**
+    * @brief Runes that cannot be used unescaped in quoteless strings.
+    **/
     const std::set<std::string>& reserved_runes() { return options.supports_version(jsonh_version::v2) ? reserved_runes_v2 : reserved_runes_v1; }
-    /// <summary>
-    /// Runes that cannot be used unescaped in quoteless strings in JSONH V1.
-    /// </summary>
+    /**
+    * @brief Runes that cannot be used unescaped in quoteless strings in JSONH V1.
+    **/
     const std::set<std::string> reserved_runes_v1 = { "\\", ",", ":", "[", "]", "{", "}", "/", "#", "\"", "'" };
-    /// <summary>
-    /// Runes that cannot be used unescaped in quoteless strings in JSONH V2.
-    /// </summary>
+    /**
+    * @brief Runes that cannot be used unescaped in quoteless strings in JSONH V2.
+    **/
     const std::set<std::string> reserved_runes_v2 = { "\\", ",", ":", "[", "]", "{", "}", "/", "#", "\"", "'", "@" };
-    /// <summary>
-    /// Runes that are considered newlines.
-    /// </summary>
+    /**
+    * @brief Runes that are considered newlines.
+    **/
     const std::set<std::string> newline_runes = { "\n", "\r", "\u2028", "\u2029" };
-    /// <summary>
-    /// Runes that are considered whitespace.
-    /// </summary>
+    /**
+    * @brief Runes that are considered whitespace.
+    **/
     const std::set<std::string> whitespace_runes = {
         "\u0020", "\u00A0", "\u1680", "\u2000", "\u2001", "\u2002", "\u2003", "\u2004", "\u2005",
         "\u2006", "\u2007", "\u2008", "\u2009", "\u200A", "\u202F", "\u205F", "\u3000", "\u2028",
