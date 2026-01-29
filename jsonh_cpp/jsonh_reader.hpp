@@ -26,6 +26,10 @@ public:
     /// The options to use when reading JSONH.
     /// </summary>
     jsonh_reader_options options;
+    /// <summary>
+    /// The current recursion depth of the reader.
+    /// </summary>
+    int depth;
 
     /// <summary>
     /// Constructs a reader that reads JSONH from a UTF-8 input stream.
@@ -33,6 +37,7 @@ public:
     explicit jsonh_reader(std::unique_ptr<std::istream> stream, jsonh_reader_options options = jsonh_reader_options()) noexcept
         : utf8_reader(std::move(stream)) {
         this->options = options;
+        this->depth = 0;
     }
     /// <summary>
     /// Constructs a reader that reads JSONH from a UTF-8 input stream.
@@ -428,6 +433,13 @@ private:
         }
         // Start of object
         tokens.push_back(jsonh_token(json_token_type::start_object));
+        depth++;
+
+        // Check exceeded max depth
+        if (depth > options.max_depth) {
+            tokens.push_back(nonstd::unexpected<std::string>("Exceeded max depth"));
+            return tokens;
+        }
 
         while (true) {
             // Comments & whitespace
@@ -443,6 +455,7 @@ private:
             if (!next) {
                 // End of incomplete object
                 if (options.incomplete_inputs) {
+                    depth--;
                     tokens.push_back(jsonh_token(json_token_type::end_object));
                     return tokens;
                 }
@@ -455,6 +468,7 @@ private:
             if (next.value() == "}") {
                 // End of object
                 read();
+                depth--;
                 tokens.push_back(jsonh_token(json_token_type::end_object));
                 return tokens;
             }
@@ -475,6 +489,13 @@ private:
 
         // Start of object
         tokens.push_back(jsonh_token(json_token_type::start_object));
+        depth++;
+
+        // Check exceeded max depth
+        if (depth > options.max_depth) {
+            tokens.push_back(nonstd::unexpected<std::string>("Exceeded max depth"));
+            return tokens;
+        }
 
         // Initial tokens
         if (property_name_tokens) {
@@ -499,6 +520,7 @@ private:
 
             if (!peek()) {
                 // End of braceless object
+                depth--;
                 tokens.push_back(jsonh_token(json_token_type::end_object));
                 return tokens;
             }
@@ -652,6 +674,13 @@ private:
         }
         // Start of array
         tokens.push_back(jsonh_token(json_token_type::start_array));
+        depth++;
+
+        // Check exceeded max depth
+        if (depth > options.max_depth) {
+            tokens.push_back(nonstd::unexpected<std::string>("Exceeded max depth"));
+            return tokens;
+        }
 
         while (true) {
             // Comments & whitespace
@@ -667,6 +696,7 @@ private:
             if (!next) {
                 // End of incomplete array
                 if (options.incomplete_inputs) {
+                    depth--;
                     tokens.push_back(jsonh_token(json_token_type::end_array));
                     return tokens;
                 }
@@ -679,6 +709,7 @@ private:
             if (next.value() == "]") {
                 // End of array
                 read();
+                depth--;
                 tokens.push_back(jsonh_token(json_token_type::end_array));
                 return tokens;
             }

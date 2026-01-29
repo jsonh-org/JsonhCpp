@@ -22,6 +22,21 @@ struct jsonh_reader_options {
     /// </summary>
     bool parse_single_element = false;
     /// <summary>
+    /// Sets the maximum recursion depth allowed when reading JSONH.
+    /// <code>
+    /// // Max depth: 2
+    /// {
+    ///   a: {
+    ///     b: {
+    ///       // Error: Exceeded max depth
+    ///     }
+    ///   }
+    /// }
+    /// </code>
+    /// The default value is 64 to defend against DOS attacks.
+    /// </summary>
+    int max_depth = 64;
+    /// <summary>
     /// Enables/disables parsing unclosed inputs.
     /// <code>
     /// {

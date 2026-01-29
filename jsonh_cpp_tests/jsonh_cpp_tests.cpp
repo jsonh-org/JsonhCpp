@@ -1,8 +1,6 @@
 #define CATCH_CONFIG_MAIN
 #include "catch2/catch_amalgamated.hpp" // for catch2
 
-#include <cassert> // for assert
-#include <iostream> // for std::cout
 #include "../jsonh_cpp/jsonh_cpp.hpp" // for jsonh
 
 using namespace jsonh_cpp;
@@ -190,6 +188,27 @@ TEST_CASE("ParseSingleElementTest") {
 
     REQUIRE(jsonh_reader::parse_element<int>(jsonh2, jsonh_reader_options({
         .parse_single_element = true,
+    })));
+}
+TEST_CASE("MaxDepthTest") {
+    std::string jsonh = R"(
+{
+  a: {
+    b: {
+      c: ""
+    }
+    d: {
+    }
+  }
+}
+)";
+
+    REQUIRE(!jsonh_reader::parse_element(jsonh, jsonh_reader_options({
+        .max_depth = 2,
+    })));
+
+    REQUIRE(jsonh_reader::parse_element(jsonh, jsonh_reader_options({
+        .max_depth = 3,
     })));
 }
 
