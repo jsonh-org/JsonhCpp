@@ -611,18 +611,16 @@ private:
 
         return tokens;
     }
-    std::vector<nonstd::expected<jsonh_token, std::string>> read_property_name(std::optional<std::string> string = std::nullopt) noexcept {
+    std::vector<nonstd::expected<jsonh_token, std::string>> read_property_name() noexcept {
         std::vector<nonstd::expected<jsonh_token, std::string>> tokens = {};
 
         // String
-        if (!string) {
-            nonstd::expected<jsonh_token, std::string> string_token = read_string();
-            if (!string_token) {
-                tokens.push_back(string_token);
-                return tokens;
-            }
-            string = string_token.value().value;
+        nonstd::expected<jsonh_token, std::string> string_result = read_string();
+        if (!string_result) {
+            tokens.push_back(string_result);
+            return tokens;
         }
+        jsonh_token string = string_result.value();
 
         // Comments & whitespace
         for (const nonstd::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
@@ -640,7 +638,7 @@ private:
         }
 
         // End of property name
-        tokens.push_back(jsonh_token(json_token_type::property_name, string.value()));
+        tokens.push_back(jsonh_token(json_token_type::property_name, string.value));
 
         return tokens;
     }
