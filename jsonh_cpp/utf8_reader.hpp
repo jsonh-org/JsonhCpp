@@ -1,7 +1,6 @@
 #pragma once
 
 #include <sstream> // for std::istream
-#include <vector> // for std::vector
 #include <optional> // for std::optional
 #include <set> // for std::set
 
