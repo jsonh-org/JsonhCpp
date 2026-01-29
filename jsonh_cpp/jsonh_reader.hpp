@@ -17,84 +17,84 @@ using namespace nlohmann;
 
 namespace jsonh_cpp {
 
-/// <summary>
-/// A reader that reads tokens from a UTF-8 input stream.
-/// </summary>
+/**
+* @brief A reader that reads tokens from a UTF-8 input stream.
+**/
 class jsonh_reader : utf8_reader {
 public:
-    /// <summary>
-    /// The options to use when reading JSONH.
-    /// </summary>
+    /**
+    * @brief The options to use when reading JSONH.
+    **/
     jsonh_reader_options options;
-    /// <summary>
-    /// The current recursion depth of the reader.
-    /// </summary>
+    /**
+    * @brief The current recursion depth of the reader.
+    **/
     int depth;
 
-    /// <summary>
-    /// Constructs a reader that reads JSONH from a UTF-8 input stream.
-    /// </summary>
+    /**
+    * @brief Constructs a reader that reads JSONH from a UTF-8 input stream.
+    **/
     explicit jsonh_reader(std::unique_ptr<std::istream> stream, jsonh_reader_options options = jsonh_reader_options()) noexcept
         : utf8_reader(std::move(stream)) {
         this->options = options;
         this->depth = 0;
     }
-    /// <summary>
-    /// Constructs a reader that reads JSONH from a UTF-8 input stream.
-    /// </summary>
+    /**
+    * @brief Constructs a reader that reads JSONH from a UTF-8 input stream.
+    **/
     explicit jsonh_reader(std::istream& stream, jsonh_reader_options options = jsonh_reader_options()) noexcept
         : jsonh_reader(std::unique_ptr<std::istream>(&stream)) {
     }
-    /// <summary>
-    /// Constructs a reader that reads JSONH from a UTF-8 string.
-    /// </summary>
+    /**
+    * @brief Constructs a reader that reads JSONH from a UTF-8 string.
+    **/
     explicit jsonh_reader(const std::string& string, jsonh_reader_options options = jsonh_reader_options()) noexcept
         : jsonh_reader(std::make_unique<std::istringstream>(string), options) {
     }
 
-    /// <summary>
-    /// Parses a single element from a UTF-8 input stream and deserializes it as <typeparamref name="T"/>.
-    /// </summary>
+    /**
+    * @brief Parses a single element from a UTF-8 input stream and deserializes it as @ref T.
+    **/
     template <typename T>
     static nonstd::expected<T, std::string> parse_element(std::unique_ptr<std::istream> stream, jsonh_reader_options options = jsonh_reader_options()) noexcept {
         return jsonh_reader(std::move(stream), options).parse_element<T>();
     }
-    /// <summary>
-    /// Parses a single element from a UTF-8 input stream.
-    /// </summary>
+    /**
+    * @brief Parses a single element from a UTF-8 input stream.
+    **/
     static nonstd::expected<json, std::string> parse_element(std::unique_ptr<std::istream> stream, jsonh_reader_options options = jsonh_reader_options()) noexcept {
         return jsonh_reader(std::move(stream), options).parse_element();
     }
-    /// <summary>
-    /// Parses a single element from a UTF-8 input stream and deserializes it as <typeparamref name="T"/>.
-    /// </summary>
+    /**
+    * @brief Parses a single element from a UTF-8 input stream and deserializes it as @ref T.
+    **/
     template <typename T>
     static nonstd::expected<T, std::string> parse_element(std::istream& stream, jsonh_reader_options options = jsonh_reader_options()) noexcept {
         return jsonh_reader(stream, options).parse_element<T>();
     }
-    /// <summary>
-    /// Parses a single element from a UTF-8 input stream.
-    /// </summary>
+    /**
+    * @brief Parses a single element from a UTF-8 input stream.
+    **/
     static nonstd::expected<json, std::string> parse_element(std::istream& stream, jsonh_reader_options options = jsonh_reader_options()) noexcept {
         return jsonh_reader(stream, options).parse_element();
     }
-    /// <summary>
-    /// Parses a single element from a UTF-8 string and deserializes it as <typeparamref name="T"/>.
-    /// </summary>
+    /**
+    * @brief Parses a single element from a UTF-8 string and deserializes it as @ref T.
+    **/
     template <typename T>
     static nonstd::expected<T, std::string> parse_element(const std::string& string, jsonh_reader_options options = jsonh_reader_options()) noexcept {
         return jsonh_reader(string, options).parse_element<T>();
     }
-    /// <summary>
-    /// Parses a single element from a UTF-8 string.
-    /// </summary>
+    /**
+    * @brief Parses a single element from a UTF-8 string.
+    **/
     static nonstd::expected<json, std::string> parse_element(const std::string& string, jsonh_reader_options options = jsonh_reader_options()) noexcept {
         return jsonh_reader(string, options).parse_element();
     }
 
-    /// <summary>
-    /// Parses a single element from the reader and deserializes it as <typeparamref name="T"/>.
-    /// </summary>
+    /**
+    * @brief Parses a single element from the reader and deserializes it as @ref T.
+    **/
     template <typename T>
     nonstd::expected<T, std::string> parse_element() noexcept {
         nonstd::expected<json, std::string> element = parse_element();
@@ -103,9 +103,9 @@ public:
         }
         return element.value().template get<T>();
     }
-    /// <summary>
-    /// Parses a single element from the reader.
-    /// </summary>
+    /**
+    * @brief Parses a single element from the reader.
+    **/
     nonstd::expected<json, std::string> parse_element() noexcept {
         std::stack<json> current_elements;
         std::optional<std::string> current_property_name;
@@ -242,20 +242,23 @@ public:
 
         return next_element;
     }
-    /// <summary>
-    /// Tries to find the given property name in the reader.<br/>
-    /// For example, to find <c>c</c>:
-    /// <code>
-    /// // Original position
-    /// {
-    ///   "a": "1",
-    ///   "b": {
-    ///     "c": "2"
-    ///   },
-    ///   "c":/* Final position */ "3"
-    /// }
-    /// </code>
-    /// </summary>
+    /**
+    * @brief Tries to find the given property name in the reader.
+    * 
+    * For example, to find @c c:
+    * 
+    * @code{.jsonh}
+    * // Original position
+    * {
+    *   "a": "1",
+    *   "b": {
+    *     "c": "2"
+    *   },
+    *   "c": // Final position
+    *        "3"
+    * }
+    * @endcode
+    **/
     bool find_property_value(const std::string& property_name) noexcept {
         long long current_depth = 0;
 
@@ -294,9 +297,9 @@ public:
         // Path not found
         return false;
     }
-    /// <summary>
-    /// Reads whitespace and returns whether the reader contains another token.
-    /// </summary>
+    /**
+    * @brief Reads whitespace and returns whether the reader contains another token.
+    **/
     bool has_token() noexcept {
         // Whitespace
         read_whitespace();
@@ -304,9 +307,9 @@ public:
         // Peek char
         return !!peek();
     }
-    /// <summary>
-    /// Reads comments and whitespace and errors if the reader contains another element.
-    /// </summary>
+    /**
+    * @brief Reads comments and whitespace and errors if the reader contains another element.
+    **/
     std::vector<nonstd::expected<jsonh_token, std::string>> read_end_of_elements() noexcept {
         std::vector<nonstd::expected<jsonh_token, std::string>> tokens = {};
 
@@ -327,9 +330,9 @@ public:
 
         return tokens;
     }
-    /// <summary>
-    /// Reads a single element from the reader.
-    /// </summary>
+    /**
+    * @brief Reads a single element from the reader.
+    **/
     std::vector<nonstd::expected<jsonh_token, std::string>> read_element() noexcept {
         std::vector<nonstd::expected<jsonh_token, std::string>> tokens = {};
 
@@ -391,25 +394,25 @@ public:
     }
 
 private:
-    /// <summary>
-    /// Runes that cannot be used unescaped in quoteless strings.
-    /// </summary>
+    /**
+    * @brief Runes that cannot be used unescaped in quoteless strings.
+    **/
     const std::set<std::string>& reserved_runes() { return options.supports_version(jsonh_version::v2) ? reserved_runes_v2 : reserved_runes_v1; }
-    /// <summary>
-    /// Runes that cannot be used unescaped in quoteless strings in JSONH V1.
-    /// </summary>
+    /**
+    * @brief Runes that cannot be used unescaped in quoteless strings in JSONH V1.
+    **/
     const std::set<std::string> reserved_runes_v1 = { "\\", ",", ":", "[", "]", "{", "}", "/", "#", "\"", "'" };
-    /// <summary>
-    /// Runes that cannot be used unescaped in quoteless strings in JSONH V2.
-    /// </summary>
+    /**
+    * @brief Runes that cannot be used unescaped in quoteless strings in JSONH V2.
+    **/
     const std::set<std::string> reserved_runes_v2 = { "\\", ",", ":", "[", "]", "{", "}", "/", "#", "\"", "'", "@" };
-    /// <summary>
-    /// Runes that are considered newlines.
-    /// </summary>
+    /**
+    * @brief Runes that are considered newlines.
+    **/
     const std::set<std::string> newline_runes = { "\n", "\r", "\u2028", "\u2029" };
-    /// <summary>
-    /// Runes that are considered whitespace.
-    /// </summary>
+    /**
+    * @brief Runes that are considered whitespace.
+    **/
     const std::set<std::string> whitespace_runes = {
         "\u0020", "\u00A0", "\u1680", "\u2000", "\u2001", "\u2002", "\u2003", "\u2004", "\u2005",
         "\u2006", "\u2007", "\u2008", "\u2009", "\u200A", "\u202F", "\u205F", "\u3000", "\u2028",

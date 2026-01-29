@@ -2,68 +2,79 @@
 
 namespace jsonh_cpp {
 
-/// <summary>
-/// The types of tokens that make up a JSON document.
-/// </summary>
+/**
+* @brief The types of tokens that make up a JSON document.
+**/
 enum struct json_token_type : char {
-    /// <summary>
-    /// Indicates that there is no value (not to be confused with null).
-    /// </summary>
+    /**
+    * @brief Indicates that there is no value (not to be confused with null).
+    **/
     none = 0,
-    /// <summary>
-    /// The start of an object.<br/>
-    /// Example: <c>{</c>
-    /// </summary>
+    /**
+    * @brief The start of an object.
+    * 
+    * Example: @c {
+    **/
     start_object = 1,
-    /// <summary>
-    /// The end of an object.<br/>
-    /// Example: <c>}</c>
-    /// </summary>
+    /**
+    * @brief The end of an object.
+    * 
+    * Example: @c }
+    **/
     end_object = 2,
-    /// <summary>
-    /// The start of an array.<br/>
-    /// Example: <c>&#x005B;</c>
-    /// </summary>
+    /**
+    * @brief The start of an array.
+    * 
+    * Example: @c [
+    **/
     start_array = 3,
-    /// <summary>
-    /// The end of an array.<br/>
-    /// Example: <c>&#x005D;</c>
-    /// </summary>
+    /**
+    * @brief The end of an array.
+    * 
+    * Example: @c ]
+    **/
     end_array = 4,
-    /// <summary>
-    /// A property name in an object.<br/>
-    /// Example: <c>"key":</c>
-    /// </summary>
+    /**
+    * @brief A property name in an object.
+    * 
+    * Example: @c "key":
+    **/
     property_name = 5,
-    /// <summary>
-    /// A comment.<br/>
-    /// Example: <c>// comment</c>
-    /// </summary>
+    /**
+    * @brief A comment.
+    * 
+    * Example: @c //comment
+    **/
     comment = 6,
-    /// <summary>
-    /// A string.<br/>
-    /// Example: <c>"value"</c>
-    /// </summary>
+    /**
+    * @brief A string.
+    * 
+    * Example: @c "value"
+    **/
     string = 7,
-    /// <summary>
-    /// A number.<br/>
-    /// Example: <c>10</c>
-    /// </summary>
+    /**
+    * @brief A number.
+    * 
+    * Example: @c 10
+    **/
     number = 8,
-    /// <summary>
-    /// A true boolean.<br/>
-    /// Example: <c>true</c>
-    /// </summary>
+    /**
+    * @brief A true boolean.
+    * 
+    * Example: @c true
+    **/
     true_bool = 9,
-    /// <summary>
-    /// A false boolean.<br/>
-    /// Example: <c>false</c>
-    /// </summary>
+    /**
+    * @brief A false boolean.
+    * 
+    * Example: @c false
+    **/
     false_bool = 10,
-    /// <summary>
-    /// A null value.<br/>
-    /// Example: <c>null</c>
-    /// </summary>
+    /**
+    * @brief A null value.
+    * 
+    * Example: @c null
+    **/
     null = 11,
 };
 

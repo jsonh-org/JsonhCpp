@@ -5,22 +5,22 @@
 
 namespace jsonh_cpp {
 
-/// <summary>
-/// A single JSONH token with a <see cref="json_token_type"/>.
-/// </summary>
+/**
+* @brief A single JSONH token with a @ref json_token_type.
+**/
 struct jsonh_token {
-    /// <summary>
-    /// The type of the token.
-    /// </summary>
+    /**
+    * @brief The type of the token.
+    **/
     json_token_type json_type;
-    /// <summary>
-    /// The value of the token, or an empty string.
-    /// </summary>
+    /**
+    * @brief The value of the token, or an empty string.
+    **/
     std::string value;
 
-    /// <summary>
-    /// Constructs a single JSONH token.
-    /// </summary>
+    /**
+    * @brief Constructs a single JSONH token.
+    **/
     jsonh_token(json_token_type json_type, std::string value = "") noexcept {
         this->json_type = json_type;
         this->value = value;

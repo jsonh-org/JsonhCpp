@@ -2,21 +2,21 @@
 
 namespace jsonh_cpp {
 
-/// <summary>
-/// The major versions of the JSONH specification.
-/// </summary>
+/**
+* @brief The major versions of the JSONH specification.
+**/
 enum struct jsonh_version {
-    /// <summary>
-    /// Indicates that the latest version should be used (currently v2).
-    /// </summary>
+    /**
+    * @brief Indicates that the latest version should be used (currently @ref v2).
+    **/
     latest = 0,
-    /// <summary>
-    /// Version 1 of the specification, released 2025/03/19.
-    /// </summary>
+    /**
+    * @brief Version 1 of the specification, released 2025/03/19.
+    **/
     v1 = 1,
-    /// <summary>
-    /// Version 2 of the specification, released 2025/11/19.
-    /// </summary>
+    /**
+    * @brief Version 2 of the specification, released 2025/11/19.
+    **/
     v2 = 2,
 };
 

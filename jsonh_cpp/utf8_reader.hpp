@@ -6,56 +6,56 @@
 
 namespace jsonh_cpp {
 
-/// <summary>
-/// A reader that reads UTF-8 runes from a UTF-8 input stream.
-/// </summary>
+/**
+* @brief A reader that reads UTF-8 runes from a UTF-8 input stream.
+**/
 class utf8_reader {
 public:
-    /// <summary>
-    /// The byte stream to decode runes from.
-    /// </summary>
+    /**
+    * @brief The byte stream to decode runes from.
+    **/
     std::unique_ptr<std::istream> inner_stream;
-    /// <summary>
-    /// The number of runes read from inner_stream.
-    /// </summary>
+    /**
+    * @brief The number of runes read from inner_stream.
+    **/
     std::int64_t char_counter;
 
-    /// <summary>
-    /// Constructs a reader that reads UTF-8 runes from a UTF-8 input stream.
-    /// </summary>
+    /**
+    * @brief Constructs a reader that reads UTF-8 runes from a UTF-8 input stream.
+    **/
     explicit utf8_reader(std::unique_ptr<std::istream> stream) noexcept {
         this->inner_stream = std::move(stream);
         this->char_counter = 0;
     }
-    /// <summary>
-    /// Constructs a reader that reads UTF-8 runes from a UTF-8 input stream.
-    /// </summary>
+    /**
+    * @brief Constructs a reader that reads UTF-8 runes from a UTF-8 input stream.
+    **/
     explicit utf8_reader(std::istream& stream) noexcept
         : utf8_reader(std::unique_ptr<std::istream>(&stream)) {
     }
-    /// <summary>
-    /// Constructs a reader that reads UTF-8 runes from a UTF-8 string.
-    /// </summary>
+    /**
+    * @brief Constructs a reader that reads UTF-8 runes from a UTF-8 string.
+    **/
     explicit utf8_reader(const std::string& string) noexcept
         : utf8_reader(std::make_unique<std::istringstream>(string)) {
     }
 
-    /// <summary>
-    /// Returns the current byte position in <see cref="inner_stream"/>.
-    /// </summary>
+    /**
+    * @brief Returns the current byte position in @ref inner_stream.
+    **/
     size_t position() const noexcept {
         return inner_stream->tellg();
     }
-    /// <summary>
-    /// Sets the current byte position in <see cref="inner_stream"/> relative to the given anchor.
-    /// </summary>
+    /**
+    * @brief Sets the current byte position in @ref inner_stream relative to the given anchor.
+    **/
     void seek(size_t position, std::ios::seekdir anchor = std::ios::beg) const noexcept {
         inner_stream->seekg(position, anchor);
     }
 
-    /// <summary>
-    /// Reads the next UTF-8 rune from <see cref="inner_stream"/>, moving forward by the number of bytes read.
-    /// </summary>
+    /**
+    * @brief Reads the next UTF-8 rune from @ref inner_stream, moving forward by the number of bytes read.
+    **/
     std::optional<std::string> read() const noexcept {
         // Read first byte
         int first_byte_as_int = inner_stream->get();
@@ -80,18 +80,18 @@ public:
         bytes.resize(1 + inner_stream->gcount());
         return bytes;
     }
-    /// <summary>
-    /// Reads the next UTF-8 rune from <see cref="inner_stream"/>, without moving forward.
-    /// </summary>
+    /**
+    * @brief Reads the next UTF-8 rune from @ref inner_stream, without moving forward.
+    **/
     std::optional<std::string> peek() const noexcept {
         size_t original_position = position();
         std::optional<std::string> next = read();
         seek(original_position);
         return next;
     }
-    /// <summary>
-    /// If the next UTF-8 rune is the given option, moves forward by its number of bytes.
-    /// </summary>
+    /**
+    * @brief If the next UTF-8 rune is the given option, moves forward by its number of bytes.
+    **/
     bool read_one(std::string option) const noexcept {
         if (peek() == option) {
             read();
@@ -99,9 +99,9 @@ public:
         }
         return false;
     }
-    /// <summary>
-    /// If the next UTF-8 rune is one of the given options, moves forward by its number of bytes and returns the option.
-    /// </summary>
+    /**
+    * @brief If the next UTF-8 rune is one of the given options, moves forward by its number of bytes and returns the option.
+    **/
     std::optional<std::string> read_any(const std::set<std::string>& options) const noexcept {
         // Peek char
         std::optional<std::string> next = peek();
@@ -117,9 +117,9 @@ public:
         return next;
     }
 
-    /// <summary>
-    /// Reads the last UTF-8 rune from <see cref="inner_stream"/>, moving backward by the number of bytes read.
-    /// </summary>
+    /**
+    * @brief Reads the last UTF-8 rune from @ref inner_stream, moving backward by the number of bytes read.
+    **/
     std::optional<std::string> read_reverse() const noexcept {
         // Read up to 4 bytes
         std::string bytes;
@@ -146,18 +146,18 @@ public:
         // Never reached first byte
         return std::nullopt;
     }
-    /// <summary>
-    /// Reads the last UTF-8 rune from <see cref="inner_stream"/>, without moving backward.
-    /// </summary>
+    /**
+    * @brief Reads the last UTF-8 rune from @ref inner_stream, without moving backward.
+    **/
     std::optional<std::string> peek_reverse() const noexcept {
         size_t original_position = position();
         std::optional<std::string> last = read_reverse();
         seek(original_position);
         return last;
     }
-    /// <summary>
-    /// If the last UTF-8 rune is the given option, moves backward by its number of bytes.
-    /// </summary>
+    /**
+    * @brief If the last UTF-8 rune is the given option, moves backward by its number of bytes.
+    **/
     bool read_one_reverse(std::string option) const noexcept {
         if (peek_reverse() == option) {
             read_reverse();
@@ -165,9 +165,9 @@ public:
         }
         return false;
     }
-    /// <summary>
-    /// If the last UTF-8 rune is one of the given options, moves backward by its number of bytes and returns the option.
-    /// </summary>
+    /**
+    * @brief If the last UTF-8 rune is one of the given options, moves backward by its number of bytes and returns the option.
+    **/
     std::optional<std::string> read_any_reverse(const std::set<std::string>& options) const noexcept {
         // Peek char
         std::optional<std::string> last = peek_reverse();
@@ -183,18 +183,17 @@ public:
         return last;
     }
 
-    /// <summary>
-    /// Returns whether the byte is the first (or only) byte of a UTF-8 rune as opposed to a continuation byte.
-    /// </summary>
+    /**
+    * @brief Returns whether the byte is the first (or only) byte of a UTF-8 rune as opposed to a continuation byte.
+    **/
     static constexpr bool is_utf8_first_byte(char byte) noexcept {
         return (byte & 0xC0) != 0x80;
     }
-    /// <summary>
-    /// Calculates the byte count of a UTF-8 rune from the bits in its first byte.
-    /// </summary>
-    /// <returns>
-    /// 1 or 2 or 3 or 4.
-    /// </returns>
+    /**
+    * @brief Calculates the byte count of a UTF-8 rune from the bits in its first byte.
+    *
+    * @returns 1 or 2 or 3 or 4.
+    **/
     static constexpr int get_utf8_sequence_length(char first_byte) noexcept {
         // https://codegolf.stackexchange.com/a/173577
         return ((first_byte - 160) >> (20 - (first_byte / 16))) + 2;

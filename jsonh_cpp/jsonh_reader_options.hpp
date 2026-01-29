@@ -4,52 +4,58 @@
 
 namespace jsonh_cpp {
 
-/// <summary>
-/// Options for a jsonh_reader.
-/// </summary>
+/**
+* @brief Options for a jsonh_reader.
+**/
 struct jsonh_reader_options {
-    /// <summary>
-    /// Specifies the major version of the JSONH specification to use.
-    /// </summary>
+    /**
+    * @brief Specifies the major version of the JSONH specification to use.
+    **/
     jsonh_version version = jsonh_version::latest;
-    /// <summary>
-    /// Enables/disables checks for exactly one element when parsing.
-    /// <code>
-    /// "cat"
-    /// "dog" // Error: Expected single element
-    /// </code>
-    /// This option does not apply when reading elements, only when parsing elements.
-    /// </summary>
+    /**
+    * @brief Enables/disables checks for exactly one element when parsing.
+    * 
+    * @code{.jsonh}
+    * "cat"
+    * "dog" // Error: Expected single element
+    * @endcode
+    * 
+    * This option does not apply when reading elements, only when parsing elements.
+    **/
     bool parse_single_element = false;
-    /// <summary>
-    /// Sets the maximum recursion depth allowed when reading JSONH.
-    /// <code>
-    /// // Max depth: 2
-    /// {
-    ///   a: {
-    ///     b: {
-    ///       // Error: Exceeded max depth
-    ///     }
-    ///   }
-    /// }
-    /// </code>
-    /// The default value is 64 to defend against DOS attacks.
-    /// </summary>
+    /**
+    * @brief Sets the maximum recursion depth allowed when reading JSONH.
+    *
+    * @code{.jsonh}
+    * // Max depth: 2
+    * {
+    *   a: {
+    *     b: {
+    *       // Error: Exceeded max depth
+    *     }
+    *   }
+    * }
+    * @endcode
+    * 
+    * The default value is 64 to defend against DOS attacks.
+    **/
     int max_depth = 64;
-    /// <summary>
-    /// Enables/disables parsing unclosed inputs.
-    /// <code>
-    /// {
-    ///   "key": "val
-    /// </code>
-    /// This is potentially useful for large language models that stream responses.<br/>
-    /// Only some tokens can be incomplete in this mode, so it should not be relied upon.
-    /// </summary>
+    /**
+    * @brief Enables/disables parsing unclosed inputs.
+    * 
+    * @code{.jsonh}
+    * {
+    *   "key": "val
+    * @endcode
+    * 
+    * This is potentially useful for large language models that stream responses.
+    * Only some tokens can be incomplete in this mode, so it should not be relied upon.
+    **/
     bool incomplete_inputs = false;
 
-    /// <summary>
-    /// Returns whether <see cref="version"/> is greater than or equal to <paramref name="minimum_version"/>.
-    /// </summary>
+    /**
+    * @brief Returns whether @ref version is greater than or equal to @ref minimum_version.
+    **/
     bool supports_version(jsonh_version minimum_version) const noexcept {
         const jsonh_version latest_version = jsonh_version::v2;
 

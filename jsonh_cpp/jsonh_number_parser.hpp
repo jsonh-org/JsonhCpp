@@ -6,18 +6,21 @@
 
 namespace jsonh_cpp {
 
-/// <summary>
-/// Methods for parsing JSONH numbers (long long / long double).<br/>
-/// Unlike jsonh_reader.read_element, minimal validation is done here. Ensure the input is valid.
-/// </summary>
+/**
+* @brief Methods for parsing JSONH numbers (long long / long double).
+* 
+* Unlike jsonh_reader.read_element, minimal validation is done here. Ensure the input is valid.
+**/
 class jsonh_number_parser final {
 public:
-    /// <summary>
-    /// Converts a JSONH number to a base-10 real.
-    /// For example:<br/>
-    /// Input: <c>+5.2e3.0</c><br/>
-    /// Output: <c>5200</c>
-    /// </summary>
+    /**
+    * @brief Converts a JSONH number to a base-10 real.
+    * For example:
+    * 
+    * Input: @c +5.2e3.0
+    * 
+    * Output: @c 5200
+    **/
     static nonstd::expected<long double, std::string> parse(std::string jsonh_number) noexcept {
         // Remove underscores
         std::erase(jsonh_number, '_');
@@ -66,9 +69,9 @@ public:
     }
 
 private:
-    /// <summary>
-    /// Converts a fractional number with an exponent (e.g. <c>12.3e4.5</c>) from the given base (e.g. <c>01234567</c>) to a base-10 real.
-    /// </summary>
+    /**
+    * @brief Converts a fractional number with an exponent (e.g. @c 12.3e4.5) from the given base (e.g. @c 01234567) to a base-10 real.
+    **/
     static nonstd::expected<long double, std::string> parse_fractional_number_with_exponent(std::string_view digits, std::string_view base_digits) noexcept {
         // Find exponent
         size_t exponent_index = std::string::npos;
@@ -111,9 +114,9 @@ private:
         // Multiply mantissa by 10 ^ exponent
         return mantissa.value() * pow(10, exponent.value());
     }
-    /// <summary>
-    /// Converts a fractional number (e.g. <c>123.45</c>) from the given base (e.g. <c>01234567</c>) to a base-10 real.
-    /// </summary>
+    /**
+    * @brief Converts a fractional number (e.g. @c 123.45) from the given base (e.g. @c 01234567) to a base-10 real.
+    **/
     static nonstd::expected<long double, std::string> parse_fractional_number(std::string_view digits, std::string_view base_digits) noexcept {
         // Optimization for base-10 digits
         if (base_digits == "0123456789") {
@@ -160,9 +163,9 @@ private:
         // Combine whole and fraction
         return std::stold(std::to_string(whole.value()) + "." + fraction_leading_zeroes + std::to_string(fraction.value()));
     }
-    /// <summary>
-    /// Converts a whole number (e.g. <c>12345</c>) from the given base (e.g. <c>01234567</c>) to a base-10 integer.
-    /// </summary>
+    /**
+    * @brief Converts a whole number (e.g. @c 12345) from the given base (e.g. @c 01234567) to a base-10 integer.
+    **/
     static nonstd::expected<long long, std::string> parse_whole_number(std::string_view digits, std::string_view base_digits) noexcept {
         // Optimization for base-10 digits
         if (base_digits == "0123456789") {
