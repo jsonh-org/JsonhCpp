@@ -16,12 +16,17 @@ public:
     /// The byte stream to decode runes from.
     /// </summary>
     std::unique_ptr<std::istream> inner_stream;
+    /// <summary>
+    /// The number of runes read from inner_stream.
+    /// </summary>
+    std::int64_t char_counter;
 
     /// <summary>
     /// Constructs a reader that reads UTF-8 runes from a UTF-8 input stream.
     /// </summary>
     explicit utf8_reader(std::unique_ptr<std::istream> stream) noexcept {
         this->inner_stream = std::move(stream);
+        this->char_counter = 0;
     }
     /// <summary>
     /// Constructs a reader that reads UTF-8 runes from a UTF-8 input stream.
