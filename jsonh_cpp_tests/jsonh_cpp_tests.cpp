@@ -429,3 +429,10 @@ TEST_CASE("FractionLeadingZeroesTest") {
 
     REQUIRE(jsonh_reader::parse_element<long double>(jsonh).value() == 0.04);
 }
+TEST_CASE("UnderscoreAfterLeadingZeroTest") {
+    std::string jsonh = R"(
+0_0
+)";
+
+    REQUIRE(jsonh_reader::parse_element<int>(jsonh).value() == 0'0);
+}

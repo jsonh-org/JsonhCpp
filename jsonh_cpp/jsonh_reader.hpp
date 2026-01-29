@@ -1165,7 +1165,7 @@ private:
     }
     nonstd::expected<void, std::string> read_number_no_exponent(std::string& number_builder, std::string_view base_digits, bool has_base_specifier = false, bool has_leading_zero = false) noexcept {
         // Leading underscore
-        if (!has_base_specifier && peek() == "_") {
+        if (!has_base_specifier && !has_leading_zero && peek() == "_") {
             return nonstd::unexpected<std::string>("Leading `_` in number");
         }
 
