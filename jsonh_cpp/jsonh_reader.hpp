@@ -232,10 +232,12 @@ public:
         nonstd::expected<json, std::string> next_element = parse_next_element();
 
         // Ensure exactly one element
-        if (options.parse_single_element) {
-            for (const nonstd::expected<jsonh_token, std::string>& token : read_end_of_elements()) {
-                if (!token) {
-                    return nonstd::unexpected<std::string>(token.error());
+        if (next_element) {
+            if (options.parse_single_element) {
+                for (const nonstd::expected<jsonh_token, std::string>& token : read_end_of_elements()) {
+                    if (!token) {
+                        return nonstd::unexpected<std::string>(token.error());
+                    }
                 }
             }
         }
