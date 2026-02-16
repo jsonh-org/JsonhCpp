@@ -1,8 +1,10 @@
 #pragma once
 
-#include <string> // for std::string
-#include <cmath> // for pow
-#include "martinmoene/expected.hpp" // for nonstd::expected (std::expected backport)
+#include <string>
+#include <string_view>
+#include <cmath>
+#include <cctype>
+#include "martinmoene/expected.hpp"
 
 namespace jsonh_cpp {
 

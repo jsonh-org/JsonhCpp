@@ -1,8 +1,14 @@
 #pragma once
 
-#include <sstream> // for std::istream
-#include <optional> // for std::optional
-#include <set> // for std::set
+#include <istream>
+#include <sstream>
+#include <optional>
+#include <set>
+#include <cstdint>
+#include <ios>
+#include <memory>
+#include <string>
+#include <utility>
 
 namespace jsonh_cpp {
 

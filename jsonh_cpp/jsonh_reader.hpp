@@ -1,17 +1,25 @@
 #pragma once
 
-#include <string> // for std::string
-#include <sstream> // for std::istringstream
-#include <vector> // for std::vector
-#include <set> // for std::set
-#include <stack> // for std::stack
-#include <optional> // for std::optional
-#include "martinmoene/expected.hpp" // for nonstd::expected (std::expected backport)
-#include "nlohmann/json.hpp" // for nlohmann::json
-#include "jsonh_token.hpp" // for jsonh_cpp::jsonh_token
-#include "jsonh_reader_options.hpp" // for jsonh_cpp::jsonh_reader_options
-#include "jsonh_number_parser.hpp" // for jsonh_cpp::jsonh_number_parser
-#include "utf8_reader.hpp" // for jsonh_cpp::utf8_reader
+#include <string>
+#include <sstream>
+#include <vector>
+#include <set>
+#include <stack>
+#include <optional>
+#include <algorithm>
+#include <ios>
+#include <istream>
+#include <memory>
+#include <string_view>
+#include <utility>
+#include "martinmoene/expected.hpp"
+#include "nlohmann/json.hpp"
+#include "jsonh_token.hpp"
+#include "jsonh_reader_options.hpp"
+#include "jsonh_number_parser.hpp"
+#include "utf8_reader.hpp"
+#include "jsonh_token_type.hpp"
+#include "jsonh_version.hpp"
 
 using namespace nlohmann;
 
