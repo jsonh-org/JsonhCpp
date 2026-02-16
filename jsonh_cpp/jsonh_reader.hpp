@@ -818,7 +818,7 @@ private:
                     string_builder += next.value();
                 }
                 else {
-                    nonstd::expected<std::string, std::string> escape_sequence_result = read_escape_sequence();
+                    nonstd::expected<std::string, std::string> escape_sequence_result = read_escape_sequence(std::nullopt);
                     if (!escape_sequence_result) {
                         return nonstd::unexpected<std::string>(escape_sequence_result.error());
                     }
@@ -980,7 +980,7 @@ private:
                     string_builder += next.value();
                 }
                 else {
-                    nonstd::expected<std::string, std::string> escape_sequence_result = read_escape_sequence();
+                    nonstd::expected<std::string, std::string> escape_sequence_result = read_escape_sequence(std::nullopt);
                     if (!escape_sequence_result) {
                         return nonstd::unexpected<std::string>(escape_sequence_result.error());
                     }
@@ -1436,10 +1436,15 @@ private:
         // Parse unicode character from hex digits
         return (unsigned int)std::stoul(hex_chars, nullptr, 16);
     }
-    nonstd::expected<std::string, std::string> read_escape_sequence() noexcept {
+    nonstd::expected<std::string, std::string> read_escape_sequence(std::optional<unsigned int> high_surrogate) noexcept {
         std::optional<std::string> escape_char = read();
         if (!escape_char) {
             return nonstd::unexpected<std::string>("Expected escape sequence, got end of input");
+        }
+
+        // Ensure high surrogates are completed
+        if (high_surrogate && escape_char.value() != "u" && escape_char.value() != "x" && escape_char.value() != "U") {
+            return nonstd::unexpected<std::string>("Expected low surrogate after high surrogate");
         }
 
         // Reverse solidus
@@ -1484,15 +1489,15 @@ private:
         }
         // Unicode hex sequence
         else if (escape_char.value() == "u") {
-            return read_hex_escape_sequence(4);
+            return read_hex_escape_sequence(4, high_surrogate);
         }
         // Short unicode hex sequence
         else if (escape_char.value() == "x") {
-            return read_hex_escape_sequence(2);
+            return read_hex_escape_sequence(2, high_surrogate);
         }
         // Long unicode hex sequence
         else if (escape_char.value() == "U") {
-            return read_hex_escape_sequence(8);
+            return read_hex_escape_sequence(8, high_surrogate);
         }
         // Escaped newline
         else if (newline_runes.contains(escape_char.value())) {
@@ -1507,54 +1512,30 @@ private:
             return escape_char.value();
         }
     }
-    nonstd::expected<std::string, std::string> read_hex_escape_sequence(size_t length) noexcept {
-        // This method is used to combine escaped UTF-16 surrogate pairs (e.g. "\uD83D\uDC7D" -> "👽")
-
-        // Read hex digits & convert to uint
+    nonstd::expected<std::string, std::string> read_hex_escape_sequence(size_t length, std::optional<unsigned int> high_surrogate) noexcept {
         nonstd::expected<unsigned int, std::string> code_point = read_hex_sequence(length);
         if (!code_point) {
             return nonstd::unexpected<std::string>(code_point.error());
         }
 
-        // High surrogate
-        if (is_utf16_high_surrogate(code_point.value())) {
-            size_t original_position = position();
-            // Escape sequence
-            if (read_one("\\")) {
-                std::optional<std::string> next = read_any({ "u", "x", "U" });
-                // Low surrogate escape sequence
-                if (next) {
-                    // Read hex sequence
-                    nonstd::expected<unsigned int, std::string> low_code_point;
-                    if (next == "u") {
-                        low_code_point = read_hex_sequence(4);
-                    }
-                    else if (next == "x") {
-                        low_code_point = read_hex_sequence(2);
-                    }
-                    else if (next == "U") {
-                        low_code_point = read_hex_sequence(8);
-                    }
-                    // Ensure hex sequence read successfully
-                    if (!low_code_point) {
-                        return nonstd::unexpected<std::string>(low_code_point.error());
-                    }
-                    // Combine high and low surrogates
-                    code_point = utf16_surrogates_to_code_point(code_point.value(), low_code_point.value());
-                }
-                // Other escape sequence
-                else {
-                    seek(original_position);
-                }
+        // Low surrogate
+        if (high_surrogate) {
+            nonstd::expected<unsigned int, std::string> combined = utf16_surrogates_to_code_point(high_surrogate.value(), code_point.value());
+            if (!combined) {
+                return nonstd::unexpected<std::string>(combined.error());
+            }
+            return code_point_to_utf8(combined.value());
+        }
+        else {
+            // High surrogate followed by low surrogate
+            if (is_utf16_high_surrogate(code_point.value()) && read_one("\\")) {
+                return read_escape_sequence(code_point.value());
+            }
+            // Standalone character
+            else {
+                return code_point_to_utf8(code_point.value());
             }
         }
-
-        // Rune
-        nonstd::expected<std::string, std::string> rune = code_point_to_utf8(code_point.value());
-        if (!rune) {
-            return nonstd::unexpected<std::string>(rune.error());
-        }
-        return rune.value();
     }
     static nonstd::expected<std::string, std::string> code_point_to_utf8(unsigned int code_point) noexcept {
         // Invalid surrogate
@@ -1596,13 +1577,22 @@ private:
             return nonstd::unexpected<std::string>("Invalid code point (out of range)");
         }
     }
-    static constexpr unsigned int utf16_surrogates_to_code_point(unsigned int high_surrogate, unsigned int low_surrogate) noexcept {
+    static nonstd::expected<unsigned int, std::string> utf16_surrogates_to_code_point(unsigned int high_surrogate, unsigned int low_surrogate) noexcept {
+        if (!is_utf16_high_surrogate(high_surrogate)) {
+            return nonstd::unexpected<std::string>("High surrogate out of range");
+        }
+        if (!is_utf16_low_surrogate(low_surrogate)) {
+            return nonstd::unexpected<std::string>("Low surrogate out of range");
+        }
         return 0x10000 + (((high_surrogate - 0xD800) << 10) | (low_surrogate - 0xDC00));
     }
     static constexpr bool is_utf16_high_surrogate(unsigned int code_point) noexcept {
         return code_point >= 0xD800 && code_point <= 0xDBFF;
     }
-    static std::string to_ascii_lower(const char* string) noexcept {
+    static constexpr bool is_utf16_low_surrogate(unsigned int code_point) noexcept {
+        return code_point >= 0xDC00 && code_point <= 0xDFFF;
+    }
+    static constexpr std::string to_ascii_lower(const char* string) noexcept {
         std::string result(string);
         for (char& next : result) {
             if (next <= 'Z' && next >= 'A') {
