@@ -1600,7 +1600,7 @@ private:
     static constexpr bool is_utf16_low_surrogate(unsigned int code_point) noexcept {
         return code_point >= 0xDC00 && code_point <= 0xDFFF;
     }
-    static constexpr std::string to_ascii_lower(const char* string) noexcept {
+    static std::string to_ascii_lower(const char* string) noexcept {
         std::string result(string);
         for (char& next : result) {
             if (next <= 'Z' && next >= 'A') {
