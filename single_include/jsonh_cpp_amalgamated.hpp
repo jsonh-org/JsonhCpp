@@ -1,5 +1,5 @@
 // JsonhCpp (JSON for Humans)
-// Version: 6.2
+// Version: 6.3
 // Link: https://github.com/jsonh-org/JsonhCpp
 // License: MIT
 
@@ -9,12 +9,18 @@
 /*** Start of inlined file: jsonh_reader.hpp ***/
 #pragma once
 
-#include <string> // for std::string
-#include <sstream> // for std::istringstream
-#include <vector> // for std::vector
-#include <set> // for std::set
-#include <stack> // for std::stack
-#include <optional> // for std::optional
+#include <string>
+#include <sstream>
+#include <vector>
+#include <set>
+#include <stack>
+#include <optional>
+#include <algorithm>
+#include <ios>
+#include <istream>
+#include <memory>
+#include <string_view>
+#include <utility>
 
 /*** Start of inlined file: expected.hpp ***/
 // This version targets C++11 and later.
@@ -29364,7 +29370,7 @@ inline void swap(nlohmann::NLOHMANN_BASIC_JSON_TPL& j1, nlohmann::NLOHMANN_BASIC
 /*** Start of inlined file: jsonh_token.hpp ***/
 #pragma once
 
-#include <string> // for std::string
+#include <string>
 
 /*** Start of inlined file: jsonh_token_type.hpp ***/
 #pragma once
@@ -29580,13 +29586,16 @@ struct jsonh_reader_options {
 /*** Start of inlined file: jsonh_number_parser.hpp ***/
 #pragma once
 
-#include <string> // for std::string
-#include <cmath> // for pow
+#include <string>
+#include <string_view>
+#include <cmath>
+#include <cctype>
+#include <cstdint>
 
 namespace jsonh_cpp {
 
 /**
-* @brief Methods for parsing JSONH numbers (long long / long double).
+* @brief Methods for parsing JSONH numbers (int64_t / long double).
 *
 * Unlike jsonh_reader.read_element, minimal validation is done here. Ensure the input is valid.
 **/
@@ -29706,7 +29715,7 @@ private:
         size_t dot_index = digits.find('.');
         // If no dot then parse integer
         if (dot_index == std::string::npos) {
-            nonstd::expected<long long, std::string> integer = parse_whole_number(digits, base_digits);
+            nonstd::expected<int64_t, std::string> integer = parse_whole_number(digits, base_digits);
             if (!integer) {
                 return nonstd::unexpected<std::string>(integer.error());
             }
@@ -29718,11 +29727,11 @@ private:
         std::string_view fraction_part = digits.substr(dot_index + 1);
 
         // Parse parts of number
-        nonstd::expected<long long, std::string> whole = parse_whole_number(whole_part, base_digits);
+        nonstd::expected<int64_t, std::string> whole = parse_whole_number(whole_part, base_digits);
         if (!whole) {
             return nonstd::unexpected<std::string>(whole.error());
         }
-        nonstd::expected<long long, std::string> fraction = parse_whole_number(fraction_part, base_digits);
+        nonstd::expected<int64_t, std::string> fraction = parse_whole_number(fraction_part, base_digits);
         if (!fraction) {
             return nonstd::unexpected<std::string>(fraction.error());
         }
@@ -29745,7 +29754,7 @@ private:
     /**
     * @brief Converts a whole number (e.g. @c 12345) from the given base (e.g. @c 01234567) to a base-10 integer.
     **/
-    static nonstd::expected<long long, std::string> parse_whole_number(std::string_view digits, std::string_view base_digits) noexcept {
+    static nonstd::expected<int64_t, std::string> parse_whole_number(std::string_view digits, std::string_view base_digits) noexcept {
         // Optimization for base-10 digits
         if (base_digits == "0123456789") {
             return std::stoll(digits.data());
@@ -29763,7 +29772,7 @@ private:
         }
 
         // Add each column of digits
-        long long integer = 0;
+        int64_t integer = 0;
         for (size_t index = 0; index < digits.size(); index++) {
             // Get current digit
             char digit_char = digits[index];
@@ -29776,10 +29785,10 @@ private:
 
             // Get magnitude of current digit column
             size_t column_number = digits.size() - 1 - index;
-            long long column_magnitude = (long long)pow(base_digits.size(), column_number);
+            int64_t column_magnitude = (int64_t)pow(base_digits.size(), column_number);
 
             // Add value of column
-            integer += (long long)digit_int * column_magnitude;
+            integer += (int64_t)digit_int * column_magnitude;
         }
 
         // Apply sign
@@ -29797,9 +29806,15 @@ private:
 /*** Start of inlined file: utf8_reader.hpp ***/
 #pragma once
 
-#include <sstream> // for std::istream
-#include <optional> // for std::optional
-#include <set> // for std::set
+#include <istream>
+#include <sstream>
+#include <optional>
+#include <set>
+#include <cstdint>
+#include <ios>
+#include <memory>
+#include <string>
+#include <utility>
 
 namespace jsonh_cpp {
 
@@ -29815,7 +29830,7 @@ public:
     /**
     * @brief The number of runes read from inner_stream.
     **/
-    std::int64_t char_counter;
+    int64_t char_counter;
 
     /**
     * @brief Constructs a reader that reads UTF-8 runes from a UTF-8 input stream.
@@ -30805,7 +30820,7 @@ private:
                     string_builder += next.value();
                 }
                 else {
-                    nonstd::expected<std::string, std::string> escape_sequence_result = read_escape_sequence();
+                    nonstd::expected<std::string, std::string> escape_sequence_result = read_escape_sequence(std::nullopt);
                     if (!escape_sequence_result) {
                         return nonstd::unexpected<std::string>(escape_sequence_result.error());
                     }
@@ -30967,7 +30982,7 @@ private:
                     string_builder += next.value();
                 }
                 else {
-                    nonstd::expected<std::string, std::string> escape_sequence_result = read_escape_sequence();
+                    nonstd::expected<std::string, std::string> escape_sequence_result = read_escape_sequence(std::nullopt);
                     if (!escape_sequence_result) {
                         return nonstd::unexpected<std::string>(escape_sequence_result.error());
                     }
@@ -31423,10 +31438,15 @@ private:
         // Parse unicode character from hex digits
         return (unsigned int)std::stoul(hex_chars, nullptr, 16);
     }
-    nonstd::expected<std::string, std::string> read_escape_sequence() noexcept {
+    nonstd::expected<std::string, std::string> read_escape_sequence(std::optional<unsigned int> high_surrogate) noexcept {
         std::optional<std::string> escape_char = read();
         if (!escape_char) {
             return nonstd::unexpected<std::string>("Expected escape sequence, got end of input");
+        }
+
+        // Ensure high surrogates are completed
+        if (high_surrogate && escape_char.value() != "u" && escape_char.value() != "x" && escape_char.value() != "U") {
+            return nonstd::unexpected<std::string>("Expected low surrogate after high surrogate");
         }
 
         // Reverse solidus
@@ -31471,15 +31491,15 @@ private:
         }
         // Unicode hex sequence
         else if (escape_char.value() == "u") {
-            return read_hex_escape_sequence(4);
+            return read_hex_escape_sequence(4, high_surrogate);
         }
         // Short unicode hex sequence
         else if (escape_char.value() == "x") {
-            return read_hex_escape_sequence(2);
+            return read_hex_escape_sequence(2, high_surrogate);
         }
         // Long unicode hex sequence
         else if (escape_char.value() == "U") {
-            return read_hex_escape_sequence(8);
+            return read_hex_escape_sequence(8, high_surrogate);
         }
         // Escaped newline
         else if (newline_runes.contains(escape_char.value())) {
@@ -31494,54 +31514,30 @@ private:
             return escape_char.value();
         }
     }
-    nonstd::expected<std::string, std::string> read_hex_escape_sequence(size_t length) noexcept {
-        // This method is used to combine escaped UTF-16 surrogate pairs (e.g. "\uD83D\uDC7D" -> "👽")
-
-        // Read hex digits & convert to uint
+    nonstd::expected<std::string, std::string> read_hex_escape_sequence(size_t length, std::optional<unsigned int> high_surrogate) noexcept {
         nonstd::expected<unsigned int, std::string> code_point = read_hex_sequence(length);
         if (!code_point) {
             return nonstd::unexpected<std::string>(code_point.error());
         }
 
-        // High surrogate
-        if (is_utf16_high_surrogate(code_point.value())) {
-            size_t original_position = position();
-            // Escape sequence
-            if (read_one("\\")) {
-                std::optional<std::string> next = read_any({ "u", "x", "U" });
-                // Low surrogate escape sequence
-                if (next) {
-                    // Read hex sequence
-                    nonstd::expected<unsigned int, std::string> low_code_point;
-                    if (next == "u") {
-                        low_code_point = read_hex_sequence(4);
-                    }
-                    else if (next == "x") {
-                        low_code_point = read_hex_sequence(2);
-                    }
-                    else if (next == "U") {
-                        low_code_point = read_hex_sequence(8);
-                    }
-                    // Ensure hex sequence read successfully
-                    if (!low_code_point) {
-                        return nonstd::unexpected<std::string>(low_code_point.error());
-                    }
-                    // Combine high and low surrogates
-                    code_point = utf16_surrogates_to_code_point(code_point.value(), low_code_point.value());
-                }
-                // Other escape sequence
-                else {
-                    seek(original_position);
-                }
+        // Low surrogate
+        if (high_surrogate) {
+            nonstd::expected<unsigned int, std::string> combined = utf16_surrogates_to_code_point(high_surrogate.value(), code_point.value());
+            if (!combined) {
+                return nonstd::unexpected<std::string>(combined.error());
+            }
+            return code_point_to_utf8(combined.value());
+        }
+        else {
+            // High surrogate followed by low surrogate
+            if (is_utf16_high_surrogate(code_point.value()) && read_one("\\")) {
+                return read_escape_sequence(code_point.value());
+            }
+            // Standalone character
+            else {
+                return code_point_to_utf8(code_point.value());
             }
         }
-
-        // Rune
-        nonstd::expected<std::string, std::string> rune = code_point_to_utf8(code_point.value());
-        if (!rune) {
-            return nonstd::unexpected<std::string>(rune.error());
-        }
-        return rune.value();
     }
     static nonstd::expected<std::string, std::string> code_point_to_utf8(unsigned int code_point) noexcept {
         // Invalid surrogate
@@ -31583,13 +31579,22 @@ private:
             return nonstd::unexpected<std::string>("Invalid code point (out of range)");
         }
     }
-    static constexpr unsigned int utf16_surrogates_to_code_point(unsigned int high_surrogate, unsigned int low_surrogate) noexcept {
+    static nonstd::expected<unsigned int, std::string> utf16_surrogates_to_code_point(unsigned int high_surrogate, unsigned int low_surrogate) noexcept {
+        if (!is_utf16_high_surrogate(high_surrogate)) {
+            return nonstd::unexpected<std::string>("High surrogate out of range");
+        }
+        if (!is_utf16_low_surrogate(low_surrogate)) {
+            return nonstd::unexpected<std::string>("Low surrogate out of range");
+        }
         return 0x10000 + (((high_surrogate - 0xD800) << 10) | (low_surrogate - 0xDC00));
     }
     static constexpr bool is_utf16_high_surrogate(unsigned int code_point) noexcept {
         return code_point >= 0xD800 && code_point <= 0xDBFF;
     }
-    static std::string to_ascii_lower(const char* string) noexcept {
+    static constexpr bool is_utf16_low_surrogate(unsigned int code_point) noexcept {
+        return code_point >= 0xDC00 && code_point <= 0xDFFF;
+    }
+    static constexpr std::string to_ascii_lower(const char* string) noexcept {
         std::string result(string);
         for (char& next : result) {
             if (next <= 'Z' && next >= 'A') {
