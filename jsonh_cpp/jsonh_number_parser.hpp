@@ -4,12 +4,13 @@
 #include <string_view>
 #include <cmath>
 #include <cctype>
+#include <cstdint>
 #include "martinmoene/expected.hpp"
 
 namespace jsonh_cpp {
 
 /**
-* @brief Methods for parsing JSONH numbers (long long / long double).
+* @brief Methods for parsing JSONH numbers (int64_t / long double).
 * 
 * Unlike jsonh_reader.read_element, minimal validation is done here. Ensure the input is valid.
 **/
@@ -129,7 +130,7 @@ private:
         size_t dot_index = digits.find('.');
         // If no dot then parse integer
         if (dot_index == std::string::npos) {
-            nonstd::expected<long long, std::string> integer = parse_whole_number(digits, base_digits);
+            nonstd::expected<int64_t, std::string> integer = parse_whole_number(digits, base_digits);
             if (!integer) {
                 return nonstd::unexpected<std::string>(integer.error());
             }
@@ -141,11 +142,11 @@ private:
         std::string_view fraction_part = digits.substr(dot_index + 1);
 
         // Parse parts of number
-        nonstd::expected<long long, std::string> whole = parse_whole_number(whole_part, base_digits);
+        nonstd::expected<int64_t, std::string> whole = parse_whole_number(whole_part, base_digits);
         if (!whole) {
             return nonstd::unexpected<std::string>(whole.error());
         }
-        nonstd::expected<long long, std::string> fraction = parse_whole_number(fraction_part, base_digits);
+        nonstd::expected<int64_t, std::string> fraction = parse_whole_number(fraction_part, base_digits);
         if (!fraction) {
             return nonstd::unexpected<std::string>(fraction.error());
         }
@@ -168,7 +169,7 @@ private:
     /**
     * @brief Converts a whole number (e.g. @c 12345) from the given base (e.g. @c 01234567) to a base-10 integer.
     **/
-    static nonstd::expected<long long, std::string> parse_whole_number(std::string_view digits, std::string_view base_digits) noexcept {
+    static nonstd::expected<int64_t, std::string> parse_whole_number(std::string_view digits, std::string_view base_digits) noexcept {
         // Optimization for base-10 digits
         if (base_digits == "0123456789") {
             return std::stoll(digits.data());
@@ -186,7 +187,7 @@ private:
         }
 
         // Add each column of digits
-        long long integer = 0;
+        int64_t integer = 0;
         for (size_t index = 0; index < digits.size(); index++) {
             // Get current digit
             char digit_char = digits[index];
@@ -199,10 +200,10 @@ private:
 
             // Get magnitude of current digit column
             size_t column_number = digits.size() - 1 - index;
-            long long column_magnitude = (long long)pow(base_digits.size(), column_number);
+            int64_t column_magnitude = (int64_t)pow(base_digits.size(), column_number);
 
             // Add value of column
-            integer += (long long)digit_int * column_magnitude;
+            integer += (int64_t)digit_int * column_magnitude;
         }
 
         // Apply sign

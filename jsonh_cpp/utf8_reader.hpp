@@ -24,7 +24,7 @@ public:
     /**
     * @brief The number of runes read from inner_stream.
     **/
-    std::int64_t char_counter;
+    int64_t char_counter;
 
     /**
     * @brief Constructs a reader that reads UTF-8 runes from a UTF-8 input stream.
