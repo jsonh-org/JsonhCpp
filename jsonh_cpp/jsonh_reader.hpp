@@ -12,6 +12,7 @@
 #include <memory>
 #include <string_view>
 #include <utility>
+#include <cstdint>
 #include "martinmoene/expected.hpp"
 #include "nlohmann/json.hpp"
 #include "jsonh_token.hpp"
@@ -37,7 +38,7 @@ public:
     /**
     * @brief The current recursion depth of the reader.
     **/
-    int depth;
+    int32_t depth;
 
     /**
     * @brief Constructs a reader that reads JSONH from a UTF-8 input stream.
@@ -876,7 +877,7 @@ private:
                 utf8_reader string_builder_reader2(string_builder);
                 bool has_trailing_newline_whitespace = false;
                 size_t last_newline_index = 0;
-                int trailing_whitespace_counter = 0;
+                int32_t trailing_whitespace_counter = 0;
                 while (true) {
                     size_t index = string_builder_reader2.position();
                     std::optional<std::string> next = string_builder_reader2.read();
@@ -920,7 +921,7 @@ private:
                         // Pass 5: strip line-leading whitespace
                         utf8_reader string_builder_reader3(string_builder);
                         bool is_line_leading_whitespace = true;
-                        int line_leading_whitespace_counter = 0;
+                        int32_t line_leading_whitespace_counter = 0;
                         while (true) {
                             size_t index = string_builder_reader3.position();
                             std::optional<std::string> next = string_builder_reader3.read();
@@ -1327,7 +1328,7 @@ private:
     }
     nonstd::expected<jsonh_token, std::string> read_comment() noexcept {
         bool block_comment = false;
-        int start_nest_counter = 0;
+        int32_t start_nest_counter = 0;
 
         // Hash-style comment
         if (read_one("#")) {
@@ -1376,7 +1377,7 @@ private:
                     // End of nestable block comment
                     if (options.supports_version(jsonh_version::v2)) {
                         // Count nests
-                        int end_nest_counter = 0;
+                        int32_t end_nest_counter = 0;
                         while (end_nest_counter < start_nest_counter && read_one("=")) {
                             end_nest_counter++;
                         }
@@ -1425,15 +1426,26 @@ private:
             }
         }
     }
-    nonstd::expected<unsigned int, std::string> read_hex_sequence(size_t length) noexcept {
-        std::string hex_chars(length, '\0');
+    template <size_t LENGTH>
+    nonstd::expected<uint32_t, std::string> read_hex_sequence() noexcept {
+        static_assert(LENGTH <= 8);
 
-        for (size_t index = 0; index < length; index++) {
+        uint32_t value = 0;
+
+        for (size_t index = 0; index < LENGTH; index++) {
             std::optional<std::string> next = read();
 
             // Hex digit
-            if ((next >= "0" && next <= "9") || (next >= "A" && next <= "F") || (next >= "a" && next <= "f")) {
-                hex_chars[index] = next.value()[0];
+            if (next && (next >= "0" && next <= "9") || (next >= "A" && next <= "F") || (next >= "a" && next <= "f")) {
+                // Get hex digit
+                char digit = next.value()[0];
+                // Convert hex digit to integer
+                uint32_t integer =
+                    (digit >= 'A' && digit <= 'F') ? digit - 'A' + 10 :
+                    (digit >= 'a' && digit <= 'f') ? digit - 'a' + 10 :
+                    digit - '0';
+                // Aggregate digit into value
+                value = (value * 16) + integer;
             }
             // Unexpected char
             else {
@@ -1441,10 +1453,10 @@ private:
             }
         }
 
-        // Parse unicode character from hex digits
-        return (unsigned int)std::stoul(hex_chars, nullptr, 16);
+        // Return aggregated value
+        return value;
     }
-    nonstd::expected<std::string, std::string> read_escape_sequence(std::optional<unsigned int> high_surrogate) noexcept {
+    nonstd::expected<std::string, std::string> read_escape_sequence(std::optional<uint32_t> high_surrogate) noexcept {
         std::optional<std::string> escape_char = read();
         if (!escape_char) {
             return nonstd::unexpected<std::string>("Expected escape sequence, got end of input");
@@ -1497,15 +1509,15 @@ private:
         }
         // Unicode hex sequence
         else if (escape_char.value() == "u") {
-            return read_hex_escape_sequence(4, high_surrogate);
+            return read_hex_escape_sequence<4>(high_surrogate);
         }
         // Short unicode hex sequence
         else if (escape_char.value() == "x") {
-            return read_hex_escape_sequence(2, high_surrogate);
+            return read_hex_escape_sequence<2>(high_surrogate);
         }
         // Long unicode hex sequence
         else if (escape_char.value() == "U") {
-            return read_hex_escape_sequence(8, high_surrogate);
+            return read_hex_escape_sequence<8>(high_surrogate);
         }
         // Escaped newline
         else if (newline_runes.contains(escape_char.value())) {
@@ -1520,15 +1532,16 @@ private:
             return escape_char.value();
         }
     }
-    nonstd::expected<std::string, std::string> read_hex_escape_sequence(size_t length, std::optional<unsigned int> high_surrogate) noexcept {
-        nonstd::expected<unsigned int, std::string> code_point = read_hex_sequence(length);
+    template <size_t LENGTH>
+    nonstd::expected<std::string, std::string> read_hex_escape_sequence(std::optional<uint32_t> high_surrogate) noexcept {
+        nonstd::expected<uint32_t, std::string> code_point = read_hex_sequence<LENGTH>();
         if (!code_point) {
             return nonstd::unexpected<std::string>(code_point.error());
         }
 
         // Low surrogate
         if (high_surrogate) {
-            nonstd::expected<unsigned int, std::string> combined = utf16_surrogates_to_code_point(high_surrogate.value(), code_point.value());
+            nonstd::expected<uint32_t, std::string> combined = utf16_surrogates_to_code_point(high_surrogate.value(), code_point.value());
             if (!combined) {
                 return nonstd::unexpected<std::string>(combined.error());
             }
@@ -1545,7 +1558,7 @@ private:
             }
         }
     }
-    static nonstd::expected<std::string, std::string> code_point_to_utf8(unsigned int code_point) noexcept {
+    static nonstd::expected<std::string, std::string> code_point_to_utf8(uint32_t code_point) noexcept {
         // Invalid surrogate
         if (code_point >= 0xD800 && code_point <= 0xDFFF) {
             return nonstd::unexpected<std::string>("Invalid code point (surrogate half)");
@@ -1585,7 +1598,7 @@ private:
             return nonstd::unexpected<std::string>("Invalid code point (out of range)");
         }
     }
-    static nonstd::expected<unsigned int, std::string> utf16_surrogates_to_code_point(unsigned int high_surrogate, unsigned int low_surrogate) noexcept {
+    static nonstd::expected<uint32_t, std::string> utf16_surrogates_to_code_point(uint32_t high_surrogate, uint32_t low_surrogate) noexcept {
         if (!is_utf16_high_surrogate(high_surrogate)) {
             return nonstd::unexpected<std::string>("High surrogate out of range");
         }
@@ -1594,10 +1607,10 @@ private:
         }
         return 0x10000 + (((high_surrogate - 0xD800) << 10) | (low_surrogate - 0xDC00));
     }
-    static constexpr bool is_utf16_high_surrogate(unsigned int code_point) noexcept {
+    static constexpr bool is_utf16_high_surrogate(uint32_t code_point) noexcept {
         return code_point >= 0xD800 && code_point <= 0xDBFF;
     }
-    static constexpr bool is_utf16_low_surrogate(unsigned int code_point) noexcept {
+    static constexpr bool is_utf16_low_surrogate(uint32_t code_point) noexcept {
         return code_point >= 0xDC00 && code_point <= 0xDFFF;
     }
     static std::string to_ascii_lower(const char* string) noexcept {
