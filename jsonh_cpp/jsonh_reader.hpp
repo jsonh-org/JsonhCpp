@@ -846,6 +846,7 @@ private:
             utf8_reader string_builder_reader1(string_builder);
             bool has_leading_whitespace_newline = false;
             size_t leading_whitespace_newline_counter = 0;
+            std::optional<std::string> last_char = std::nullopt;
             while (true) {
                 size_t index = string_builder_reader1.position();
                 std::optional<std::string> next = string_builder_reader1.read();
@@ -853,14 +854,14 @@ private:
                     break;
                 }
 
+                // Join CR LF
+                if ((last_char && last_char.value() == "\r") && next == "\n") {
+                    last_char = next.value();
+                    continue;
+                }
+
                 // Newline
                 if (newline_runes.contains(next.value())) {
-                    // Join CR LF
-                    if (next.value() == "\r" && string_builder_reader1.peek() == "\n") {
-                        string_builder_reader1.read();
-                        index = string_builder_reader1.position();
-                    }
-
                     has_leading_whitespace_newline = true;
                     leading_whitespace_newline_counter = index + 1;
                     break;
@@ -869,6 +870,8 @@ private:
                 else if (!whitespace_runes.contains(next.value())) {
                     break;
                 }
+
+                last_char = next.value();
             }
 
             // Condition: skip remaining steps if pass 1 failed
@@ -878,6 +881,7 @@ private:
                 bool has_trailing_newline_whitespace = false;
                 size_t last_newline_index = 0;
                 size_t trailing_whitespace_counter = 0;
+                std::optional<std::string> last_char2 = std::nullopt;
                 while (true) {
                     size_t index = string_builder_reader2.position();
                     std::optional<std::string> next = string_builder_reader2.read();
@@ -886,17 +890,17 @@ private:
                     }
                     size_t next_size = string_builder_reader2.position() - index;
 
+                    // Join CR LF
+                    if ((last_char2 && last_char2.value() == "\r") && next == "\n") {
+                        last_char2 = next.value();
+                        continue;
+                    }
+
                     // Newline
                     if (newline_runes.contains(next.value())) {
                         has_trailing_newline_whitespace = true;
                         last_newline_index = index;
                         trailing_whitespace_counter = 0;
-
-                        // Join CR LF
-                        if (next.value() == "\r" && string_builder_reader2.peek() == "\n") {
-                            string_builder_reader2.read();
-                            index = string_builder_reader2.position();
-                        }
                     }
                     // Whitespace
                     else if (whitespace_runes.contains(next.value())) {
@@ -907,6 +911,8 @@ private:
                         has_trailing_newline_whitespace = false;
                         trailing_whitespace_counter = 0;
                     }
+
+                    last_char2 = next.value();
                 }
 
                 // Condition: skip remaining steps if pass 2 failed
