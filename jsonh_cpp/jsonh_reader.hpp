@@ -842,34 +842,36 @@ private:
 
         // Condition: skip remaining steps unless started with multiple quotes
         if (start_quote_counter > 1) {
-            // Pass 1: count leading whitespace -> newline
-            utf8_reader string_builder_reader1(string_builder);
-            bool has_leading_whitespace_newline = false;
-            size_t leading_whitespace_newline_counter = 0;
+            // Get chars from string builder
+            std::vector<std::string> string_builder_chars = {};
+            utf8_reader string_builder_chars_reader(string_builder);
             while (true) {
-                size_t index = string_builder_reader1.position();
-                std::optional<std::string> next = string_builder_reader1.read();
+                std::optional<std::string> next = string_builder_chars_reader.read();
                 if (!next) {
                     break;
                 }
-                size_t next_size = string_builder_reader1.position() - index;
+                string_builder_chars.push_back(next.value());
+            }
+
+            // Pass 1: count leading whitespace -> newline
+            bool has_leading_whitespace_newline = false;
+            size_t leading_whitespace_newline_counter = 0;
+            for (size_t index = 0; index < string_builder_chars.size(); index++) {
+                std::string next = string_builder_chars[index];
 
                 // Newline
-                if (newline_runes.contains(next.value())) {
+                if (newline_runes.contains(next)) {
                     // Join CR LF
-                    if (next.value() == "\r" && string_builder_reader1.peek() == "\n") {
-                        string_builder_reader1.read();
-                        index = string_builder_reader1.position();
-                        next = "\n";
-                        next_size = 1;
+                    if (next == "\r" && index + 1 < string_builder_chars.size() && string_builder_chars[index + 1] == "\n") {
+                        index++;
                     }
 
                     has_leading_whitespace_newline = true;
-                    leading_whitespace_newline_counter = index + next_size;
+                    leading_whitespace_newline_counter = index + 1;
                     break;
                 }
                 // Non-whitespace
-                else if (!whitespace_runes.contains(next.value())) {
+                else if (!whitespace_runes.contains(next)) {
                     break;
                 }
             }
@@ -877,35 +879,26 @@ private:
             // Condition: skip remaining steps if pass 1 failed
             if (has_leading_whitespace_newline) {
                 // Pass 2: count trailing newline -> whitespace
-                utf8_reader string_builder_reader2(string_builder);
                 bool has_trailing_newline_whitespace = false;
                 size_t last_newline_index = 0;
                 size_t trailing_whitespace_counter = 0;
-                while (true) {
-                    size_t index = string_builder_reader2.position();
-                    std::optional<std::string> next = string_builder_reader2.read();
-                    if (!next) {
-                        break;
-                    }
-                    size_t next_size = string_builder_reader2.position() - index;
+                for (size_t index = 0; index < string_builder_chars.size(); index++) {
+                    std::string next = string_builder_chars[index];
 
                     // Newline
-                    if (newline_runes.contains(next.value())) {
+                    if (newline_runes.contains(next)) {
                         has_trailing_newline_whitespace = true;
                         last_newline_index = index;
                         trailing_whitespace_counter = 0;
 
                         // Join CR LF
-                        if (next.value() == "\r" && string_builder_reader2.peek() == "\n") {
-                            string_builder_reader2.read();
-                            index = string_builder_reader2.position();
-                            next = "\n";
-                            next_size = 1;
+                        if (next == "\r" && index + 1 < string_builder_chars.size() && string_builder_chars[index + 1] == "\n") {
+                            index++;
                         }
                     }
                     // Whitespace
-                    else if (whitespace_runes.contains(next.value())) {
-                        trailing_whitespace_counter += next_size;
+                    else if (whitespace_runes.contains(next)) {
+                        trailing_whitespace_counter++;
                     }
                     // Non-whitespace
                     else {
@@ -917,40 +910,34 @@ private:
                 // Condition: skip remaining steps if pass 2 failed
                 if (has_trailing_newline_whitespace) {
                     // Pass 3: strip trailing newline -> whitespace
-                    string_builder.erase(last_newline_index, string_builder.size() - last_newline_index);
+                    string_builder_chars.erase(string_builder_chars.begin() + last_newline_index, string_builder_chars.begin() + string_builder_chars.size());
 
                     // Pass 4: strip leading whitespace -> newline
-                    string_builder.erase(0, leading_whitespace_newline_counter);
+                    string_builder_chars.erase(string_builder_chars.begin(), string_builder_chars.begin() + leading_whitespace_newline_counter);
 
                     // Condition: skip remaining steps if no trailing whitespace
                     if (trailing_whitespace_counter > 0) {
                         // Pass 5: strip line-leading whitespace
-                        utf8_reader string_builder_reader3(string_builder);
                         bool is_line_leading_whitespace = true;
-                        size_t line_leading_whitespace_counter = 0;
-                        while (true) {
-                            size_t index = string_builder_reader3.position();
-                            std::optional<std::string> next = string_builder_reader3.read();
-                            if (!next) {
-                                break;
-                            }
-                            size_t next_size = string_builder_reader3.position() - index;
+                        int line_leading_whitespace_counter = 0;
+                        for (size_t index = 0; index < string_builder_chars.size(); index++) {
+                            std::string next = string_builder_chars[index];
 
                             // Newline
-                            if (newline_runes.contains(next.value())) {
+                            if (newline_runes.contains(next)) {
                                 is_line_leading_whitespace = true;
                                 line_leading_whitespace_counter = 0;
                             }
                             // Whitespace
-                            else if (whitespace_runes.contains(next.value())) {
+                            else if (whitespace_runes.contains(next)) {
                                 if (is_line_leading_whitespace) {
                                     // Increment line-leading whitespace
-                                    line_leading_whitespace_counter += next_size;
+                                    line_leading_whitespace_counter++;
 
                                     // Maximum line-leading whitespace reached
                                     if (line_leading_whitespace_counter == trailing_whitespace_counter) {
                                         // Remove line-leading whitespace
-                                        string_builder.erase(index + next_size - line_leading_whitespace_counter, line_leading_whitespace_counter);
+                                        string_builder_chars.erase(string_builder_chars.begin() + index + 1 - line_leading_whitespace_counter, string_builder_chars.begin() + index + 1);
                                         index -= line_leading_whitespace_counter;
                                         // Exit line-leading whitespace
                                         is_line_leading_whitespace = false;
@@ -961,7 +948,7 @@ private:
                             else {
                                 if (is_line_leading_whitespace) {
                                     // Remove partial line-leading whitespace
-                                    string_builder.erase(index - line_leading_whitespace_counter, line_leading_whitespace_counter);
+                                    string_builder_chars.erase(string_builder_chars.begin() + index - line_leading_whitespace_counter, string_builder_chars.begin() + index);
                                     index -= line_leading_whitespace_counter;
                                     // Exit line-leading whitespace
                                     is_line_leading_whitespace = false;
@@ -970,6 +957,12 @@ private:
                         }
                     }
                 }
+            }
+
+            // Get string builder from chars
+            string_builder = "";
+            for (const std::string& c : string_builder_chars) {
+                string_builder += c;
             }
         }
 
