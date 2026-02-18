@@ -1206,7 +1206,7 @@ private:
             }
             // Dot
             else if (next.value() == ".") {
-                // Disallow dot preceding underscore
+                // Disallow dot following underscore
                 if (number_builder.size() >= 1 && number_builder.back() == '_') {
                     return nonstd::unexpected<std::string>("`.` must not follow `_` in number");
                 }
