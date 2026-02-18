@@ -877,13 +877,14 @@ private:
                 utf8_reader string_builder_reader2(string_builder);
                 bool has_trailing_newline_whitespace = false;
                 size_t last_newline_index = 0;
-                int32_t trailing_whitespace_counter = 0;
+                size_t trailing_whitespace_counter = 0;
                 while (true) {
                     size_t index = string_builder_reader2.position();
                     std::optional<std::string> next = string_builder_reader2.read();
                     if (!next) {
                         break;
                     }
+                    size_t next_size = string_builder_reader2.position() - index;
 
                     // Newline
                     if (newline_runes.contains(next.value())) {
@@ -899,7 +900,7 @@ private:
                     }
                     // Whitespace
                     else if (whitespace_runes.contains(next.value())) {
-                        trailing_whitespace_counter++;
+                        trailing_whitespace_counter += next_size;
                     }
                     // Non-whitespace
                     else {
@@ -921,13 +922,14 @@ private:
                         // Pass 5: strip line-leading whitespace
                         utf8_reader string_builder_reader3(string_builder);
                         bool is_line_leading_whitespace = true;
-                        int32_t line_leading_whitespace_counter = 0;
+                        size_t line_leading_whitespace_counter = 0;
                         while (true) {
                             size_t index = string_builder_reader3.position();
                             std::optional<std::string> next = string_builder_reader3.read();
                             if (!next) {
                                 break;
                             }
+                            size_t next_size = string_builder_reader3.position() - index;
 
                             // Newline
                             if (newline_runes.contains(next.value())) {
@@ -938,12 +940,12 @@ private:
                             else if (whitespace_runes.contains(next.value())) {
                                 if (is_line_leading_whitespace) {
                                     // Increment line-leading whitespace
-                                    line_leading_whitespace_counter++;
+                                    line_leading_whitespace_counter += next_size;
 
                                     // Maximum line-leading whitespace reached
                                     if (line_leading_whitespace_counter == trailing_whitespace_counter) {
                                         // Remove line-leading whitespace
-                                        string_builder.erase(index + 1 - line_leading_whitespace_counter, line_leading_whitespace_counter);
+                                        string_builder.erase(index + next_size - line_leading_whitespace_counter, line_leading_whitespace_counter);
                                         index -= line_leading_whitespace_counter;
                                         // Exit line-leading whitespace
                                         is_line_leading_whitespace = false;

@@ -445,6 +445,7 @@ TEST_CASE("UnderscoreBesideDotTest") {
 }
 TEST_CASE("MultiQuotedStringWithNonAsciiIndentsTest") {
     std::string jsonh = R"(
+　
 """
 　　 a
 　　"""
