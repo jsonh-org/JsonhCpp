@@ -856,7 +856,7 @@ private:
                 // Newline
                 if (newline_runes.contains(next.value())) {
                     // Join CR LF
-                    if (next.value() == "\r" && peek() == "\n") {
+                    if (next.value() == "\r" && string_builder_reader1.peek() == "\n") {
                         string_builder_reader1.read();
                         index = string_builder_reader1.position();
                     }
@@ -893,7 +893,7 @@ private:
                         trailing_whitespace_counter = 0;
 
                         // Join CR LF
-                        if (next.value() == "\r" && peek() == "\n") {
+                        if (next.value() == "\r" && string_builder_reader2.peek() == "\n") {
                             string_builder_reader2.read();
                             index = string_builder_reader2.position();
                         }
