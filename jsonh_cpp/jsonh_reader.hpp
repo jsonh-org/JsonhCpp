@@ -827,7 +827,7 @@ private:
                     string_builder += next.value();
                 }
                 else {
-                    nonstd::expected<std::string, std::string> escape_sequence_result = read_escape_sequence(std::nullopt);
+                    nonstd::expected<std::string, std::string> escape_sequence_result = read_escape_sequence();
                     if (!escape_sequence_result) {
                         return nonstd::unexpected<std::string>(escape_sequence_result.error());
                     }
@@ -989,7 +989,7 @@ private:
                     string_builder += next.value();
                 }
                 else {
-                    nonstd::expected<std::string, std::string> escape_sequence_result = read_escape_sequence(std::nullopt);
+                    nonstd::expected<std::string, std::string> escape_sequence_result = read_escape_sequence();
                     if (!escape_sequence_result) {
                         return nonstd::unexpected<std::string>(escape_sequence_result.error());
                     }
@@ -1456,7 +1456,7 @@ private:
         // Return aggregated value
         return value;
     }
-    nonstd::expected<std::string, std::string> read_escape_sequence(std::optional<uint32_t> high_surrogate) noexcept {
+    nonstd::expected<std::string, std::string> read_escape_sequence(std::optional<uint32_t> high_surrogate = std::nullopt) noexcept {
         std::optional<std::string> escape_char = read();
         if (!escape_char) {
             return nonstd::unexpected<std::string>("Expected escape sequence, got end of input");
