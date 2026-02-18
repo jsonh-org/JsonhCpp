@@ -852,6 +852,7 @@ private:
                 if (!next) {
                     break;
                 }
+                size_t next_size = string_builder_reader1.position() - index;
 
                 // Newline
                 if (newline_runes.contains(next.value())) {
@@ -859,10 +860,12 @@ private:
                     if (next.value() == "\r" && string_builder_reader1.peek() == "\n") {
                         string_builder_reader1.read();
                         index = string_builder_reader1.position();
+                        next = "\n";
+                        next_size = 1;
                     }
 
                     has_leading_whitespace_newline = true;
-                    leading_whitespace_newline_counter = index + 1;
+                    leading_whitespace_newline_counter = index + next_size;
                     break;
                 }
                 // Non-whitespace
@@ -896,6 +899,8 @@ private:
                         if (next.value() == "\r" && string_builder_reader2.peek() == "\n") {
                             string_builder_reader2.read();
                             index = string_builder_reader2.position();
+                            next = "\n";
+                            next_size = 1;
                         }
                     }
                     // Whitespace
