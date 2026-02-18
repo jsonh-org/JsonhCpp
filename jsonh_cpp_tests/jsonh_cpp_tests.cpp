@@ -443,3 +443,12 @@ TEST_CASE("UnderscoreBesideDotTest") {
 
     REQUIRE(jsonh_reader::parse_element<std::vector<std::string>>(jsonh).value() == std::vector<std::string>({ "0_.0", "0._0" }));
 }
+TEST_CASE("MultiQuotedStringWithNonAsciiIndentsTest") {
+    std::string jsonh = R"(
+"""
+　　 a
+　　"""
+)";
+
+    REQUIRE(jsonh_reader::parse_element<std::string>(jsonh).value() == " a");
+}
