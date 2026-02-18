@@ -1138,7 +1138,7 @@ private:
         // Possible hexadecimal exponent
         if (number_builder.back() == 'e' || number_builder.back() == 'E') {
             // Read sign (mandatory)
-            std::optional<std::string> exponent_sign = read_any({ "+", "-" });
+            std::optional<std::string> exponent_sign = read_any({ "-", "+" });
             if (exponent_sign) {
                 number_builder += exponent_sign.value();
 
