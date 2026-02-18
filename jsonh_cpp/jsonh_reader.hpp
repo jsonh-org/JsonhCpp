@@ -1436,7 +1436,7 @@ private:
             std::optional<std::string> next = read();
 
             // Hex digit
-            if (next && (next >= "0" && next <= "9") || (next >= "A" && next <= "F") || (next >= "a" && next <= "f")) {
+            if (next && ((next >= "0" && next <= "9") || (next >= "A" && next <= "F") || (next >= "a" && next <= "f"))) {
                 // Get hex digit
                 char digit = next.value()[0];
                 // Convert hex digit to integer
