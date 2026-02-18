@@ -454,7 +454,7 @@ TEST_CASE("MultiQuotedStringWithNonAsciiIndentsTest") {
     REQUIRE(jsonh_reader::parse_element<std::string>(jsonh).value() == " a");
 }
 TEST_CASE("JoinCrLfInMultiQuotedStringTest") {
-    std::string jsonh = " ''' \r\nHello\r\n ''' ";
+    std::string jsonh = " ''' \\r\\nHello\r\n ''' ";
 
     REQUIRE(jsonh_reader::parse_element<std::string>(jsonh).value() == "Hello");
 }
