@@ -207,11 +207,6 @@ private:
         }
         return integer;
     }
-    static std::string number_to_string(long double value) {
-        std::ostringstream oss;
-        oss << std::noshowpoint << value;
-        return oss.str();
-    }
     static long double string_to_number(std::string value) {
         return std::strtold(value.c_str(), nullptr);
     }
