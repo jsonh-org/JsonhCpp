@@ -960,7 +960,7 @@ private:
             }
 
             // Get string builder from chars
-            string_builder = "";
+            string_builder.clear();
             for (const std::string& c : string_builder_chars) {
                 string_builder += c;
             }
