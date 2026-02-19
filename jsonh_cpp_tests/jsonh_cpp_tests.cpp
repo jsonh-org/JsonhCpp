@@ -190,6 +190,16 @@ TEST_CASE("ParseSingleElementTest") {
         .parse_single_element = true,
     })));
 }
+TEST_CASE("BigNumbersTest") {
+    std::string jsonh = R"(
+[3.5, 1e99999]
+)";
+    std::vector<long double> element = jsonh_reader::parse_element<std::vector<long double>>(jsonh).value();
+
+    REQUIRE(element.size() == 2);
+    REQUIRE(element[0] == 3.5);
+    REQUIRE(element[1] == std::numeric_limits<float>::infinity());
+}
 TEST_CASE("MaxDepthTest") {
     std::string jsonh = R"(
 {
