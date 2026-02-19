@@ -94,6 +94,7 @@ private:
         else {
             exponent_index = digits.find_first_of("eE");
         }
+
         // If no exponent then parse real
         if (exponent_index == std::string::npos) {
             return parse_fractional_number(digits, base_digits);
