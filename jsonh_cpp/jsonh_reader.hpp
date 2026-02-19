@@ -920,7 +920,7 @@ private:
                         // Pass 5: strip line-leading whitespace
                         bool is_line_leading_whitespace = true;
                         size_t line_leading_whitespace_counter = 0;
-                        for (size_t index = 0; index < string_builder_chars.size(); index++) {
+                        for (size_t index = 0; index < string_builder_chars.size(); index++) { // Wrapping add
                             std::string next = string_builder_chars[index];
 
                             // Newline
@@ -938,7 +938,7 @@ private:
                                     if (line_leading_whitespace_counter == trailing_whitespace_counter) {
                                         // Remove line-leading whitespace
                                         string_builder_chars.erase(string_builder_chars.begin() + index + 1 - line_leading_whitespace_counter, string_builder_chars.begin() + index + 1);
-                                        index -= line_leading_whitespace_counter;
+                                        index -= line_leading_whitespace_counter; // Wrapping sub
                                         // Exit line-leading whitespace
                                         is_line_leading_whitespace = false;
                                     }
@@ -949,7 +949,7 @@ private:
                                 if (is_line_leading_whitespace) {
                                     // Remove partial line-leading whitespace
                                     string_builder_chars.erase(string_builder_chars.begin() + index - line_leading_whitespace_counter, string_builder_chars.begin() + index);
-                                    index -= line_leading_whitespace_counter;
+                                    index -= line_leading_whitespace_counter; // Wrapping sub
                                     // Exit line-leading whitespace
                                     is_line_leading_whitespace = false;
                                 }
