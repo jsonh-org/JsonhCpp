@@ -1,11 +1,13 @@
 #pragma once
 
+#include <cstdint>
+
 namespace jsonh_cpp {
 
 /**
 * @brief The types of tokens that make up a JSON document.
 **/
-enum struct json_token_type : char {
+enum struct json_token_type : uint8_t {
     /**
     * @brief Indicates that there is no value (not to be confused with null).
     **/
