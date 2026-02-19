@@ -4,13 +4,12 @@
 #include <string_view>
 #include <cmath>
 #include <cctype>
-#include <cstdint>
 #include "martinmoene/expected.hpp"
 
 namespace jsonh_cpp {
 
 /**
-* @brief Methods for parsing JSONH numbers (int64_t / long double).
+* @brief Methods for parsing JSONH numbers (long double).
 * 
 * Unlike jsonh_reader.read_element, minimal validation is done here. Ensure the input is valid.
 **/
@@ -130,11 +129,7 @@ private:
         size_t dot_index = digits.find('.');
         // If no dot then parse integer
         if (dot_index == std::string::npos) {
-            nonstd::expected<int64_t, std::string> integer = parse_whole_number(digits, base_digits);
-            if (!integer) {
-                return nonstd::unexpected<std::string>(integer.error());
-            }
-            return (long double)integer.value();
+            return parse_whole_number(digits, base_digits);
         }
 
         // Get parts of number
@@ -142,11 +137,11 @@ private:
         std::string_view fraction_part = digits.substr(dot_index + 1);
 
         // Parse parts of number
-        nonstd::expected<int64_t, std::string> whole = parse_whole_number(whole_part, base_digits);
+        nonstd::expected<long double, std::string> whole = parse_whole_number(whole_part, base_digits);
         if (!whole) {
             return nonstd::unexpected<std::string>(whole.error());
         }
-        nonstd::expected<int64_t, std::string> fraction = parse_whole_number(fraction_part, base_digits);
+        nonstd::expected<long double, std::string> fraction = parse_whole_number(fraction_part, base_digits);
         if (!fraction) {
             return nonstd::unexpected<std::string>(fraction.error());
         }
@@ -164,15 +159,17 @@ private:
         std::string fraction_leading_zeroes = std::string(fraction_leading_zeroes_count, '0');
 
         // Combine whole and fraction
-        return std::stold(std::to_string(whole.value()) + "." + fraction_leading_zeroes + std::to_string(fraction.value()));
+        std::string whole_digits = std::to_string(whole.value());
+        std::string fraction_digits = std::to_string(fraction.value());
+        return std::stold(whole_digits + "." + fraction_leading_zeroes + fraction_digits);
     }
     /**
     * @brief Converts a whole number (e.g. @c 12345) from the given base (e.g. @c 01234567) to a base-10 integer.
     **/
-    static nonstd::expected<int64_t, std::string> parse_whole_number(std::string_view digits, std::string_view base_digits) noexcept {
+    static nonstd::expected<long double, std::string> parse_whole_number(std::string_view digits, std::string_view base_digits) noexcept {
         // Optimization for base-10 digits
         if (base_digits == "0123456789") {
-            return std::stoll(digits.data());
+            return std::stold(digits.data());
         }
 
         // Get sign
@@ -187,7 +184,7 @@ private:
         }
 
         // Add each column of digits
-        int64_t integer = 0;
+        long double integer = 0;
         for (size_t index = 0; index < digits.size(); index++) {
             // Get current digit
             char digit_char = digits[index];
@@ -198,12 +195,8 @@ private:
                 return nonstd::unexpected<std::string>("Invalid digit");
             }
 
-            // Get magnitude of current digit column
-            size_t column_number = digits.size() - 1 - index;
-            int64_t column_magnitude = (int64_t)pow(base_digits.size(), column_number);
-
             // Add value of column
-            integer += (int64_t)digit_int * column_magnitude;
+            integer = (integer * base_digits.size()) + digit_int;
         }
 
         // Apply sign

@@ -77,8 +77,8 @@ If using a different encoding, consider converting to UTF-8 using [utfcpp](https
 
 ### Fixed-size numbers
 
-Numbers are parsed as `int64_t` and `long double`.
-In general, these are 64-bit and have a range of about 9 quintillion and a precision of about 15 decimal places.
+There is no option to parse numbers with arbitrary range/precision.
+Numbers are parsed as `long double`, which is generally 64-bit.
 
 ### No token streaming
 
