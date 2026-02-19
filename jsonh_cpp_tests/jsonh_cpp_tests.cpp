@@ -458,3 +458,16 @@ TEST_CASE("JoinCrLfInMultiQuotedStringTest") {
 
     REQUIRE(jsonh_reader::parse_element<std::string>(jsonh).value() == "Hello");
 }
+TEST_CASE("MassiveNumbersTest") {
+    std::string jsonh = R"(
+[
+    0x999_999_999_999_999_999_999_999,
+    0x999_999_999_999_999_999_999_999.0,
+]
+)";
+
+    REQUIRE(jsonh_reader::parse_element<std::vector<long double>>(jsonh).value() == std::vector<long double>({
+        47'536'897'508'558'602'556'126'370'201.0,
+        47'536'897'508'558'602'556'126'370'201.0,
+    }));
+}
