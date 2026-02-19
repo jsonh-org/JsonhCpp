@@ -919,7 +919,7 @@ private:
                     if (trailing_whitespace_counter > 0) {
                         // Pass 5: strip line-leading whitespace
                         bool is_line_leading_whitespace = true;
-                        int line_leading_whitespace_counter = 0;
+                        size_t line_leading_whitespace_counter = 0;
                         for (size_t index = 0; index < string_builder_chars.size(); index++) {
                             std::string next = string_builder_chars[index];
 
