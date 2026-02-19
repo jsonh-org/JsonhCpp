@@ -486,3 +486,13 @@ TEST_CASE("MassiveNumbersTest") {
     REQUIRE(elements[0] == Catch::Approx(47'536'897'508'558'602'556'126'370'201.0));
     REQUIRE(elements[1] == Catch::Approx(47'536'897'508'558'602'556'126'370'201.0));
 }
+TEST_CASE("FractionalHexadecimalNumbersTest") {
+    std::string jsonh = R"(
+[0xA.A, 0xA.A1]
+)";
+
+    std::vector<long double> elements = jsonh_reader::parse_element<std::vector<long double>>(jsonh).value();
+    REQUIRE(elements.size() == 2);
+    REQUIRE(elements[0] == 10.625);
+    REQUIRE(elements[1] == 10.62890625);
+}
