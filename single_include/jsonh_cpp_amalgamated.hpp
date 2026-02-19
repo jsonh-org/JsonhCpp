@@ -1,5 +1,5 @@
 // JsonhCpp (JSON for Humans)
-// Version: 6.5
+// Version: 6.6
 // Link: https://github.com/jsonh-org/JsonhCpp
 // License: MIT
 
@@ -29733,28 +29733,25 @@ private:
         if (!whole) {
             return nonstd::unexpected<std::string>(whole.error());
         }
-        nonstd::expected<long double, std::string> fraction = parse_whole_number(fraction_part, base_digits);
-        if (!fraction) {
-            return nonstd::unexpected<std::string>(fraction.error());
-        }
 
-        // Get fraction leading zeroes
-        size_t fraction_leading_zeroes_count = 0;
-        for (size_t index = 0; index < fraction_part.size(); index++) {
-            if (fraction_part[index] == '0') {
-                fraction_leading_zeroes_count++;
+        // Add each column of fraction digits
+        long double fraction = 0;
+        for (size_t index = fraction_part.size() - 1; index != std::string::npos; --index) {
+            // Get current digit
+            char digit_char = fraction_part[index];
+            size_t digit_int = base_digits.find((char)std::tolower(digit_char));
+
+            // Ensure digit is valid
+            if (digit_int == std::string::npos) {
+                return nonstd::unexpected<std::string>("Invalid digit");
             }
-            else {
-                break;
-            }
+
+            // Add value of column
+            fraction = (fraction + digit_int) / base_digits.size();
         }
-        std::string fraction_leading_zeroes = std::string(fraction_leading_zeroes_count, '0');
 
         // Combine whole and fraction
-        std::string whole_digits = number_to_string(whole.value());
-        std::string fraction_digits = number_to_string(fraction.value());
-        std::string combined = whole_digits + "." + fraction_leading_zeroes + fraction_digits;
-        return string_to_number(combined);
+        return whole.value() + fraction;
     }
     /**
     * @brief Converts a whole number (e.g. @c 12345) from the given base (e.g. @c 01234567) to a base-10 integer.
@@ -29797,11 +29794,6 @@ private:
             integer *= sign;
         }
         return integer;
-    }
-    static std::string number_to_string(long double value) {
-        std::ostringstream oss;
-        oss << std::noshowpoint << value;
-        return oss.str();
     }
     static long double string_to_number(std::string value) {
         return std::strtold(value.c_str(), nullptr);
