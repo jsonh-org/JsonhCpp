@@ -4,6 +4,9 @@
 #include <string_view>
 #include <cmath>
 #include <cctype>
+#include <cstdlib>
+#include <ios>
+#include <sstream>
 #include "martinmoene/expected.hpp"
 
 namespace jsonh_cpp {
@@ -123,7 +126,7 @@ private:
     static nonstd::expected<long double, std::string> parse_fractional_number(std::string_view digits, std::string_view base_digits) noexcept {
         // Optimization for base-10 digits
         if (base_digits == "0123456789") {
-            return std::stold(std::string(digits));
+            return string_to_number(std::string(digits));
         }
 
         // Find dot
@@ -160,9 +163,10 @@ private:
         std::string fraction_leading_zeroes = std::string(fraction_leading_zeroes_count, '0');
 
         // Combine whole and fraction
-        std::string whole_digits = std::to_string(whole.value());
-        std::string fraction_digits = std::to_string(fraction.value());
-        return std::stold(whole_digits + "." + fraction_leading_zeroes + fraction_digits);
+        std::string whole_digits = number_to_string(whole.value());
+        std::string fraction_digits = number_to_string(fraction.value());
+        std::string combined = whole_digits + "." + fraction_leading_zeroes + fraction_digits;
+        return string_to_number(combined);
     }
     /**
     * @brief Converts a whole number (e.g. @c 12345) from the given base (e.g. @c 01234567) to a base-10 integer.
@@ -170,7 +174,7 @@ private:
     static nonstd::expected<long double, std::string> parse_whole_number(std::string_view digits, std::string_view base_digits) noexcept {
         // Optimization for base-10 digits
         if (base_digits == "0123456789") {
-            return std::stold(digits.data());
+            return string_to_number(std::string(digits));
         }
 
         // Get sign
@@ -205,6 +209,14 @@ private:
             integer *= sign;
         }
         return integer;
+    }
+    static std::string number_to_string(long double value) {
+        std::ostringstream oss;
+        oss << std::noshowpoint << value;
+        return oss.str();
+    }
+    static long double string_to_number(std::string value) {
+        return std::strtold(value.c_str(), nullptr);
     }
 };
 

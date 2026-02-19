@@ -1,7 +1,7 @@
 #define CATCH_CONFIG_MAIN
-#include "catch2/catch_amalgamated.hpp" // for catch2
+#include "catch2/catch_amalgamated.hpp"
 
-#include "../jsonh_cpp/jsonh_cpp.hpp" // for jsonh
+#include "../jsonh_cpp/jsonh_cpp.hpp"
 
 using namespace jsonh_cpp;
 
@@ -192,13 +192,18 @@ TEST_CASE("ParseSingleElementTest") {
 }
 TEST_CASE("BigNumbersTest") {
     std::string jsonh = R"(
-[3.5, 1e99999]
+[
+    3.5,
+    1e99999,
+    999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999
+]
 )";
     std::vector<long double> element = jsonh_reader::parse_element<std::vector<long double>>(jsonh).value();
 
-    REQUIRE(element.size() == 2);
+    REQUIRE(element.size() == 3);
     REQUIRE(element[0] == 3.5);
     REQUIRE(element[1] == std::numeric_limits<float>::infinity());
+    REQUIRE(element[2] == std::numeric_limits<float>::infinity());
 }
 TEST_CASE("MaxDepthTest") {
     std::string jsonh = R"(
@@ -476,8 +481,8 @@ TEST_CASE("MassiveNumbersTest") {
 ]
 )";
 
-    REQUIRE(jsonh_reader::parse_element<std::vector<long double>>(jsonh).value() == std::vector<long double>({
-        47'536'897'508'558'602'556'126'370'201.0,
-        47'536'897'508'558'602'556'126'370'201.0,
-    }));
+    std::vector<long double> elements = jsonh_reader::parse_element<std::vector<long double>>(jsonh).value();
+    REQUIRE(elements.size() == 2);
+    REQUIRE(elements[0] == Catch::Approx(47'536'897'508'558'602'556'126'370'201.0));
+    REQUIRE(elements[1] == Catch::Approx(47'536'897'508'558'602'556'126'370'201.0));
 }
