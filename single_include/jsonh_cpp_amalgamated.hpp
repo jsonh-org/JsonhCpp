@@ -1,5 +1,5 @@
 // JsonhCpp (JSON for Humans)
-// Version: 6.4
+// Version: 6.5
 // Link: https://github.com/jsonh-org/JsonhCpp
 // License: MIT
 
@@ -21,6 +21,7 @@
 #include <memory>
 #include <string_view>
 #include <utility>
+#include <cstdint>
 
 /*** Start of inlined file: expected.hpp ***/
 // This version targets C++11 and later.
@@ -29375,12 +29376,14 @@ inline void swap(nlohmann::NLOHMANN_BASIC_JSON_TPL& j1, nlohmann::NLOHMANN_BASIC
 /*** Start of inlined file: jsonh_token_type.hpp ***/
 #pragma once
 
+#include <cstdint>
+
 namespace jsonh_cpp {
 
 /**
 * @brief The types of tokens that make up a JSON document.
 **/
-enum struct json_token_type : char {
+enum struct json_token_type : uint8_t {
     /**
     * @brief Indicates that there is no value (not to be confused with null).
     **/
@@ -29590,12 +29593,14 @@ struct jsonh_reader_options {
 #include <string_view>
 #include <cmath>
 #include <cctype>
-#include <cstdint>
+#include <cstdlib>
+#include <ios>
+#include <sstream>
 
 namespace jsonh_cpp {
 
 /**
-* @brief Methods for parsing JSONH numbers (int64_t / long double).
+* @brief Methods for parsing JSONH numbers (long double).
 *
 * Unlike jsonh_reader.read_element, minimal validation is done here. Ensure the input is valid.
 **/
@@ -29680,6 +29685,7 @@ private:
         else {
             exponent_index = digits.find_first_of("eE");
         }
+
         // If no exponent then parse real
         if (exponent_index == std::string::npos) {
             return parse_fractional_number(digits, base_digits);
@@ -29708,18 +29714,14 @@ private:
     static nonstd::expected<long double, std::string> parse_fractional_number(std::string_view digits, std::string_view base_digits) noexcept {
         // Optimization for base-10 digits
         if (base_digits == "0123456789") {
-            return std::stold(std::string(digits));
+            return string_to_number(std::string(digits));
         }
 
         // Find dot
         size_t dot_index = digits.find('.');
         // If no dot then parse integer
         if (dot_index == std::string::npos) {
-            nonstd::expected<int64_t, std::string> integer = parse_whole_number(digits, base_digits);
-            if (!integer) {
-                return nonstd::unexpected<std::string>(integer.error());
-            }
-            return (long double)integer.value();
+            return parse_whole_number(digits, base_digits);
         }
 
         // Get parts of number
@@ -29727,11 +29729,11 @@ private:
         std::string_view fraction_part = digits.substr(dot_index + 1);
 
         // Parse parts of number
-        nonstd::expected<int64_t, std::string> whole = parse_whole_number(whole_part, base_digits);
+        nonstd::expected<long double, std::string> whole = parse_whole_number(whole_part, base_digits);
         if (!whole) {
             return nonstd::unexpected<std::string>(whole.error());
         }
-        nonstd::expected<int64_t, std::string> fraction = parse_whole_number(fraction_part, base_digits);
+        nonstd::expected<long double, std::string> fraction = parse_whole_number(fraction_part, base_digits);
         if (!fraction) {
             return nonstd::unexpected<std::string>(fraction.error());
         }
@@ -29749,15 +29751,18 @@ private:
         std::string fraction_leading_zeroes = std::string(fraction_leading_zeroes_count, '0');
 
         // Combine whole and fraction
-        return std::stold(std::to_string(whole.value()) + "." + fraction_leading_zeroes + std::to_string(fraction.value()));
+        std::string whole_digits = number_to_string(whole.value());
+        std::string fraction_digits = number_to_string(fraction.value());
+        std::string combined = whole_digits + "." + fraction_leading_zeroes + fraction_digits;
+        return string_to_number(combined);
     }
     /**
     * @brief Converts a whole number (e.g. @c 12345) from the given base (e.g. @c 01234567) to a base-10 integer.
     **/
-    static nonstd::expected<int64_t, std::string> parse_whole_number(std::string_view digits, std::string_view base_digits) noexcept {
+    static nonstd::expected<long double, std::string> parse_whole_number(std::string_view digits, std::string_view base_digits) noexcept {
         // Optimization for base-10 digits
         if (base_digits == "0123456789") {
-            return std::stoll(digits.data());
+            return string_to_number(std::string(digits));
         }
 
         // Get sign
@@ -29772,7 +29777,7 @@ private:
         }
 
         // Add each column of digits
-        int64_t integer = 0;
+        long double integer = 0;
         for (size_t index = 0; index < digits.size(); index++) {
             // Get current digit
             char digit_char = digits[index];
@@ -29783,12 +29788,8 @@ private:
                 return nonstd::unexpected<std::string>("Invalid digit");
             }
 
-            // Get magnitude of current digit column
-            size_t column_number = digits.size() - 1 - index;
-            int64_t column_magnitude = (int64_t)pow(base_digits.size(), column_number);
-
             // Add value of column
-            integer += (int64_t)digit_int * column_magnitude;
+            integer = (integer * base_digits.size()) + digit_int;
         }
 
         // Apply sign
@@ -29796,6 +29797,14 @@ private:
             integer *= sign;
         }
         return integer;
+    }
+    static std::string number_to_string(long double value) {
+        std::ostringstream oss;
+        oss << std::noshowpoint << value;
+        return oss.str();
+    }
+    static long double string_to_number(std::string value) {
+        return std::strtold(value.c_str(), nullptr);
     }
 };
 
@@ -29881,12 +29890,12 @@ public:
         }
 
         // Get number of bytes in UTF8 character
-        int sequence_length = get_utf8_sequence_length((char)first_byte_as_int);
+        uint8_t sequence_length = get_utf8_sequence_length((uint8_t)first_byte_as_int);
 
         // Read remaining bytes (up to 3 more)
         std::string bytes((size_t)(1 + sequence_length), '\0');
         bytes[0] = (char)first_byte_as_int;
-        inner_stream->read(&bytes[1], sequence_length);
+        inner_stream->read(&bytes[1], std::streamsize(sequence_length - 1));
 
         // Trim excess bytes
         bytes.resize(1 + inner_stream->gcount());
@@ -29998,7 +30007,7 @@ public:
     /**
     * @brief Returns whether the byte is the first (or only) byte of a UTF-8 rune as opposed to a continuation byte.
     **/
-    static constexpr bool is_utf8_first_byte(char byte) noexcept {
+    static constexpr bool is_utf8_first_byte(std::uint8_t byte) noexcept {
         return (byte & 0xC0) != 0x80;
     }
     /**
@@ -30006,7 +30015,7 @@ public:
     *
     * @returns 1 or 2 or 3 or 4.
     **/
-    static constexpr int get_utf8_sequence_length(char first_byte) noexcept {
+    static constexpr uint8_t get_utf8_sequence_length(std::uint8_t first_byte) noexcept {
         // https://codegolf.stackexchange.com/a/173577
         return ((first_byte - 160) >> (20 - (first_byte / 16))) + 2;
     }
@@ -30031,7 +30040,7 @@ public:
     /**
     * @brief The current recursion depth of the reader.
     **/
-    int depth;
+    int32_t depth;
 
     /**
     * @brief Constructs a reader that reads JSONH from a UTF-8 input stream.
@@ -30820,7 +30829,7 @@ private:
                     string_builder += next.value();
                 }
                 else {
-                    nonstd::expected<std::string, std::string> escape_sequence_result = read_escape_sequence(std::nullopt);
+                    nonstd::expected<std::string, std::string> escape_sequence_result = read_escape_sequence();
                     if (!escape_sequence_result) {
                         return nonstd::unexpected<std::string>(escape_sequence_result.error());
                     }
@@ -30835,23 +30844,28 @@ private:
 
         // Condition: skip remaining steps unless started with multiple quotes
         if (start_quote_counter > 1) {
-            // Pass 1: count leading whitespace -> newline
-            utf8_reader string_builder_reader1(string_builder);
-            bool has_leading_whitespace_newline = false;
-            size_t leading_whitespace_newline_counter = 0;
+            // Get chars from string builder
+            std::vector<std::string> string_builder_chars = {};
+            utf8_reader string_builder_chars_reader(string_builder);
             while (true) {
-                size_t index = string_builder_reader1.position();
-                std::optional<std::string> next = string_builder_reader1.read();
+                std::optional<std::string> next = string_builder_chars_reader.read();
                 if (!next) {
                     break;
                 }
+                string_builder_chars.push_back(next.value());
+            }
+
+            // Pass 1: count leading whitespace -> newline
+            bool has_leading_whitespace_newline = false;
+            size_t leading_whitespace_newline_counter = 0;
+            for (size_t index = 0; index < string_builder_chars.size(); index++) {
+                std::string next = string_builder_chars[index];
 
                 // Newline
-                if (newline_runes.contains(next.value())) {
+                if (newline_runes.contains(next)) {
                     // Join CR LF
-                    if (next.value() == "\r" && peek() == "\n") {
-                        string_builder_reader1.read();
-                        index = string_builder_reader1.position();
+                    if (next == "\r" && index + 1 < string_builder_chars.size() && string_builder_chars[index + 1] == "\n") {
+                        index++;
                     }
 
                     has_leading_whitespace_newline = true;
@@ -30859,7 +30873,7 @@ private:
                     break;
                 }
                 // Non-whitespace
-                else if (!whitespace_runes.contains(next.value())) {
+                else if (!whitespace_runes.contains(next)) {
                     break;
                 }
             }
@@ -30867,31 +30881,25 @@ private:
             // Condition: skip remaining steps if pass 1 failed
             if (has_leading_whitespace_newline) {
                 // Pass 2: count trailing newline -> whitespace
-                utf8_reader string_builder_reader2(string_builder);
                 bool has_trailing_newline_whitespace = false;
                 size_t last_newline_index = 0;
-                int trailing_whitespace_counter = 0;
-                while (true) {
-                    size_t index = string_builder_reader2.position();
-                    std::optional<std::string> next = string_builder_reader2.read();
-                    if (!next) {
-                        break;
-                    }
+                size_t trailing_whitespace_counter = 0;
+                for (size_t index = 0; index < string_builder_chars.size(); index++) {
+                    std::string next = string_builder_chars[index];
 
                     // Newline
-                    if (newline_runes.contains(next.value())) {
+                    if (newline_runes.contains(next)) {
                         has_trailing_newline_whitespace = true;
                         last_newline_index = index;
                         trailing_whitespace_counter = 0;
 
                         // Join CR LF
-                        if (next.value() == "\r" && peek() == "\n") {
-                            string_builder_reader2.read();
-                            index = string_builder_reader2.position();
+                        if (next == "\r" && index + 1 < string_builder_chars.size() && string_builder_chars[index + 1] == "\n") {
+                            index++;
                         }
                     }
                     // Whitespace
-                    else if (whitespace_runes.contains(next.value())) {
+                    else if (whitespace_runes.contains(next)) {
                         trailing_whitespace_counter++;
                     }
                     // Non-whitespace
@@ -30904,31 +30912,26 @@ private:
                 // Condition: skip remaining steps if pass 2 failed
                 if (has_trailing_newline_whitespace) {
                     // Pass 3: strip trailing newline -> whitespace
-                    string_builder.erase(last_newline_index, string_builder.size() - last_newline_index);
+                    string_builder_chars.erase(string_builder_chars.begin() + last_newline_index, string_builder_chars.begin() + string_builder_chars.size());
 
                     // Pass 4: strip leading whitespace -> newline
-                    string_builder.erase(0, leading_whitespace_newline_counter);
+                    string_builder_chars.erase(string_builder_chars.begin(), string_builder_chars.begin() + leading_whitespace_newline_counter);
 
                     // Condition: skip remaining steps if no trailing whitespace
                     if (trailing_whitespace_counter > 0) {
                         // Pass 5: strip line-leading whitespace
-                        utf8_reader string_builder_reader3(string_builder);
                         bool is_line_leading_whitespace = true;
-                        int line_leading_whitespace_counter = 0;
-                        while (true) {
-                            size_t index = string_builder_reader3.position();
-                            std::optional<std::string> next = string_builder_reader3.read();
-                            if (!next) {
-                                break;
-                            }
+                        size_t line_leading_whitespace_counter = 0;
+                        for (size_t index = 0; index < string_builder_chars.size(); index++) { // Wrapping add
+                            std::string next = string_builder_chars[index];
 
                             // Newline
-                            if (newline_runes.contains(next.value())) {
+                            if (newline_runes.contains(next)) {
                                 is_line_leading_whitespace = true;
                                 line_leading_whitespace_counter = 0;
                             }
                             // Whitespace
-                            else if (whitespace_runes.contains(next.value())) {
+                            else if (whitespace_runes.contains(next)) {
                                 if (is_line_leading_whitespace) {
                                     // Increment line-leading whitespace
                                     line_leading_whitespace_counter++;
@@ -30936,8 +30939,8 @@ private:
                                     // Maximum line-leading whitespace reached
                                     if (line_leading_whitespace_counter == trailing_whitespace_counter) {
                                         // Remove line-leading whitespace
-                                        string_builder.erase(index + 1 - line_leading_whitespace_counter, line_leading_whitespace_counter);
-                                        index -= line_leading_whitespace_counter;
+                                        string_builder_chars.erase(string_builder_chars.begin() + index + 1 - line_leading_whitespace_counter, string_builder_chars.begin() + index + 1);
+                                        index -= line_leading_whitespace_counter; // Wrapping sub
                                         // Exit line-leading whitespace
                                         is_line_leading_whitespace = false;
                                     }
@@ -30947,8 +30950,8 @@ private:
                             else {
                                 if (is_line_leading_whitespace) {
                                     // Remove partial line-leading whitespace
-                                    string_builder.erase(index - line_leading_whitespace_counter, line_leading_whitespace_counter);
-                                    index -= line_leading_whitespace_counter;
+                                    string_builder_chars.erase(string_builder_chars.begin() + index - line_leading_whitespace_counter, string_builder_chars.begin() + index);
+                                    index -= line_leading_whitespace_counter; // Wrapping sub
                                     // Exit line-leading whitespace
                                     is_line_leading_whitespace = false;
                                 }
@@ -30956,6 +30959,12 @@ private:
                         }
                     }
                 }
+            }
+
+            // Get string builder from chars
+            string_builder.clear();
+            for (const std::string& c : string_builder_chars) {
+                string_builder += c;
             }
         }
 
@@ -30982,7 +30991,7 @@ private:
                     string_builder += next.value();
                 }
                 else {
-                    nonstd::expected<std::string, std::string> escape_sequence_result = read_escape_sequence(std::nullopt);
+                    nonstd::expected<std::string, std::string> escape_sequence_result = read_escape_sequence();
                     if (!escape_sequence_result) {
                         return nonstd::unexpected<std::string>(escape_sequence_result.error());
                     }
@@ -31131,7 +31140,7 @@ private:
         // Possible hexadecimal exponent
         if (number_builder.back() == 'e' || number_builder.back() == 'E') {
             // Read sign (mandatory)
-            std::optional<std::string> exponent_sign = read_any({ "+", "-" });
+            std::optional<std::string> exponent_sign = read_any({ "-", "+" });
             if (exponent_sign) {
                 number_builder += exponent_sign.value();
 
@@ -31199,7 +31208,7 @@ private:
             }
             // Dot
             else if (next.value() == ".") {
-                // Disallow dot preceding underscore
+                // Disallow dot following underscore
                 if (number_builder.size() >= 1 && number_builder.back() == '_') {
                     return nonstd::unexpected<std::string>("`.` must not follow `_` in number");
                 }
@@ -31321,7 +31330,7 @@ private:
     }
     nonstd::expected<jsonh_token, std::string> read_comment() noexcept {
         bool block_comment = false;
-        int start_nest_counter = 0;
+        int32_t start_nest_counter = 0;
 
         // Hash-style comment
         if (read_one("#")) {
@@ -31370,7 +31379,7 @@ private:
                     // End of nestable block comment
                     if (options.supports_version(jsonh_version::v2)) {
                         // Count nests
-                        int end_nest_counter = 0;
+                        int32_t end_nest_counter = 0;
                         while (end_nest_counter < start_nest_counter && read_one("=")) {
                             end_nest_counter++;
                         }
@@ -31419,15 +31428,26 @@ private:
             }
         }
     }
-    nonstd::expected<unsigned int, std::string> read_hex_sequence(size_t length) noexcept {
-        std::string hex_chars(length, '\0');
+    template <size_t LENGTH>
+    nonstd::expected<uint32_t, std::string> read_hex_sequence() noexcept {
+        static_assert(LENGTH <= 8);
 
-        for (size_t index = 0; index < length; index++) {
+        uint32_t value = 0;
+
+        for (size_t index = 0; index < LENGTH; index++) {
             std::optional<std::string> next = read();
 
             // Hex digit
-            if ((next >= "0" && next <= "9") || (next >= "A" && next <= "F") || (next >= "a" && next <= "f")) {
-                hex_chars[index] = next.value()[0];
+            if (next && ((next >= "0" && next <= "9") || (next >= "A" && next <= "F") || (next >= "a" && next <= "f"))) {
+                // Get hex digit
+                char digit = next.value()[0];
+                // Convert hex digit to integer
+                uint32_t integer =
+                    (digit >= 'A' && digit <= 'F') ? digit - 'A' + 10 :
+                    (digit >= 'a' && digit <= 'f') ? digit - 'a' + 10 :
+                    digit - '0';
+                // Aggregate digit into value
+                value = (value * 16) + integer;
             }
             // Unexpected char
             else {
@@ -31435,10 +31455,10 @@ private:
             }
         }
 
-        // Parse unicode character from hex digits
-        return (unsigned int)std::stoul(hex_chars, nullptr, 16);
+        // Return aggregated value
+        return value;
     }
-    nonstd::expected<std::string, std::string> read_escape_sequence(std::optional<unsigned int> high_surrogate) noexcept {
+    nonstd::expected<std::string, std::string> read_escape_sequence(std::optional<uint32_t> high_surrogate = std::nullopt) noexcept {
         std::optional<std::string> escape_char = read();
         if (!escape_char) {
             return nonstd::unexpected<std::string>("Expected escape sequence, got end of input");
@@ -31491,15 +31511,15 @@ private:
         }
         // Unicode hex sequence
         else if (escape_char.value() == "u") {
-            return read_hex_escape_sequence(4, high_surrogate);
+            return read_hex_escape_sequence<4>(high_surrogate);
         }
         // Short unicode hex sequence
         else if (escape_char.value() == "x") {
-            return read_hex_escape_sequence(2, high_surrogate);
+            return read_hex_escape_sequence<2>(high_surrogate);
         }
         // Long unicode hex sequence
         else if (escape_char.value() == "U") {
-            return read_hex_escape_sequence(8, high_surrogate);
+            return read_hex_escape_sequence<8>(high_surrogate);
         }
         // Escaped newline
         else if (newline_runes.contains(escape_char.value())) {
@@ -31514,15 +31534,16 @@ private:
             return escape_char.value();
         }
     }
-    nonstd::expected<std::string, std::string> read_hex_escape_sequence(size_t length, std::optional<unsigned int> high_surrogate) noexcept {
-        nonstd::expected<unsigned int, std::string> code_point = read_hex_sequence(length);
+    template <size_t LENGTH>
+    nonstd::expected<std::string, std::string> read_hex_escape_sequence(std::optional<uint32_t> high_surrogate) noexcept {
+        nonstd::expected<uint32_t, std::string> code_point = read_hex_sequence<LENGTH>();
         if (!code_point) {
             return nonstd::unexpected<std::string>(code_point.error());
         }
 
         // Low surrogate
         if (high_surrogate) {
-            nonstd::expected<unsigned int, std::string> combined = utf16_surrogates_to_code_point(high_surrogate.value(), code_point.value());
+            nonstd::expected<uint32_t, std::string> combined = utf16_surrogates_to_code_point(high_surrogate.value(), code_point.value());
             if (!combined) {
                 return nonstd::unexpected<std::string>(combined.error());
             }
@@ -31539,7 +31560,7 @@ private:
             }
         }
     }
-    static nonstd::expected<std::string, std::string> code_point_to_utf8(unsigned int code_point) noexcept {
+    static nonstd::expected<std::string, std::string> code_point_to_utf8(uint32_t code_point) noexcept {
         // Invalid surrogate
         if (code_point >= 0xD800 && code_point <= 0xDFFF) {
             return nonstd::unexpected<std::string>("Invalid code point (surrogate half)");
@@ -31579,7 +31600,7 @@ private:
             return nonstd::unexpected<std::string>("Invalid code point (out of range)");
         }
     }
-    static nonstd::expected<unsigned int, std::string> utf16_surrogates_to_code_point(unsigned int high_surrogate, unsigned int low_surrogate) noexcept {
+    static nonstd::expected<uint32_t, std::string> utf16_surrogates_to_code_point(uint32_t high_surrogate, uint32_t low_surrogate) noexcept {
         if (!is_utf16_high_surrogate(high_surrogate)) {
             return nonstd::unexpected<std::string>("High surrogate out of range");
         }
@@ -31588,10 +31609,10 @@ private:
         }
         return 0x10000 + (((high_surrogate - 0xD800) << 10) | (low_surrogate - 0xDC00));
     }
-    static constexpr bool is_utf16_high_surrogate(unsigned int code_point) noexcept {
+    static constexpr bool is_utf16_high_surrogate(uint32_t code_point) noexcept {
         return code_point >= 0xD800 && code_point <= 0xDBFF;
     }
-    static constexpr bool is_utf16_low_surrogate(unsigned int code_point) noexcept {
+    static constexpr bool is_utf16_low_surrogate(uint32_t code_point) noexcept {
         return code_point >= 0xDC00 && code_point <= 0xDFFF;
     }
     static std::string to_ascii_lower(const char* string) noexcept {
