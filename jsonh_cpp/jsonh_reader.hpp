@@ -21,6 +21,7 @@
 #include "utf8_reader.hpp"
 #include "jsonh_token_type.hpp"
 #include "jsonh_version.hpp"
+#include "lewissbaker/generator.hpp"
 
 using namespace nlohmann;
 
@@ -317,87 +318,79 @@ public:
     /**
     * @brief Reads comments and whitespace and errors if the reader contains another element.
     **/
-    std::vector<nonstd::expected<jsonh_token, std::string>> read_end_of_elements() noexcept {
-        std::vector<nonstd::expected<jsonh_token, std::string>> tokens = {};
-
+    std::generator<nonstd::expected<jsonh_token, std::string>> read_end_of_elements() noexcept {
         // Comments & whitespace
         for (const nonstd::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
             if (!token) {
-                tokens.push_back(token);
-                return tokens;
+                co_yield(token);
+                co_return;
             }
-            tokens.push_back(token);
+            co_yield(token);
         }
 
         // Peek char
         if (!!peek()) {
-            tokens.push_back(nonstd::unexpected<std::string>("Expected end of elements"));
-            return tokens;
+            co_yield(nonstd::unexpected<std::string>("Expected end of elements"));
+            co_return;
         }
-
-        return tokens;
     }
     /**
     * @brief Reads a single element from the reader.
     **/
-    std::vector<nonstd::expected<jsonh_token, std::string>> read_element() noexcept {
-        std::vector<nonstd::expected<jsonh_token, std::string>> tokens = {};
-
+    std::generator<nonstd::expected<jsonh_token, std::string>> read_element() noexcept {
         // Comments & whitespace
         for (const nonstd::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
             if (!token) {
-                tokens.push_back(token);
-                return tokens;
+                co_yield(token);
+                co_return;
             }
-            tokens.push_back(token);
+            co_yield(token);
         }
 
         // Peek rune
         std::optional<std::string> next = peek();
         if (!next) {
-            tokens.push_back(nonstd::unexpected<std::string>("Expected token, got end of input"));
-            return tokens;
+            co_yield(nonstd::unexpected<std::string>("Expected token, got end of input"));
+            co_return;
         }
 
         // Object
         if (next.value() == "{") {
             for (const nonstd::expected<jsonh_token, std::string>& token : read_object()) {
                 if (!token) {
-                    tokens.push_back(token);
-                    return tokens;
+                    co_yield(token);
+                    co_return;
                 }
-                tokens.push_back(token);
+                co_yield(token);
             }
         }
         // Array
         else if (next.value() == "[") {
             for (const nonstd::expected<jsonh_token, std::string>& token : read_array()) {
                 if (!token) {
-                    tokens.push_back(token);
-                    return tokens;
+                    co_yield(token);
+                    co_return;
                 }
-                tokens.push_back(token);
+                co_yield(token);
             }
         }
         // Primitive value (null, true, false, string, number)
         else {
             nonstd::expected<jsonh_token, std::string> token = read_primitive_element();
             if (!token) {
-                tokens.push_back(nonstd::unexpected<std::string>(token.error()));
-                return tokens;
+                co_yield(nonstd::unexpected<std::string>(token.error()));
+                co_return;
             }
 
             // Detect braceless object from property name
             for (const nonstd::expected<jsonh_token, std::string>& token2 : read_braceless_object_or_end_of_primitive(token.value())) {
                 if (!token2) {
-                    tokens.push_back(token2);
-                    return tokens;
+                    co_yield(token2);
+                    co_return;
                 }
-                tokens.push_back(token2);
+                co_yield(token2);
             }
         }
-
-        return tokens;
     }
 
 private:
@@ -426,39 +419,37 @@ private:
         "\u2029", "\u0009", "\u000A", "\u000B", "\u000C", "\u000D", "\u0085",
     };
 
-    std::vector<nonstd::expected<jsonh_token, std::string>> read_object() noexcept {
-        std::vector<nonstd::expected<jsonh_token, std::string>> tokens = {};
-
+    std::generator<nonstd::expected<jsonh_token, std::string>> read_object() noexcept {
         // Opening brace
         if (!read_one("{")) {
             // Braceless object
             for (const nonstd::expected<jsonh_token, std::string>& token : read_braceless_object()) {
                 if (!token) {
-                    tokens.push_back(token);
-                    return tokens;
+                    co_yield(token);
+                    co_return;
                 }
-                tokens.push_back(token);
+                co_yield(token);
             }
-            return tokens;
+            co_return;
         }
         // Start of object
-        tokens.push_back(jsonh_token(json_token_type::start_object));
+        co_yield(jsonh_token(json_token_type::start_object));
         depth++;
 
         // Check exceeded max depth
         if (depth > options.max_depth) {
-            tokens.push_back(nonstd::unexpected<std::string>("Exceeded max depth"));
-            return tokens;
+            co_yield(nonstd::unexpected<std::string>("Exceeded max depth"));
+            co_return;
         }
 
         while (true) {
             // Comments & whitespace
             for (const nonstd::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
                 if (!token) {
-                    tokens.push_back(token);
-                    return tokens;
+                    co_yield(token);
+                    co_return;
                 }
-                tokens.push_back(token);
+                co_yield(token);
             }
 
             std::optional<std::string> next = peek();
@@ -466,12 +457,12 @@ private:
                 // End of incomplete object
                 if (options.incomplete_inputs) {
                     depth--;
-                    tokens.push_back(jsonh_token(json_token_type::end_object));
-                    return tokens;
+                    co_yield(jsonh_token(json_token_type::end_object));
+                    co_return;
                 }
                 // Missing closing brace
-                tokens.push_back(nonstd::unexpected<std::string>("Expected `}` to end object, got end of input"));
-                return tokens;
+                co_yield(nonstd::unexpected<std::string>("Expected `}` to end object, got end of input"));
+                co_return;
             }
 
             // Closing brace
@@ -479,42 +470,40 @@ private:
                 // End of object
                 read();
                 depth--;
-                tokens.push_back(jsonh_token(json_token_type::end_object));
-                return tokens;
+                co_yield(jsonh_token(json_token_type::end_object));
+                co_return;
             }
             // Property
             else {
                 for (const nonstd::expected<jsonh_token, std::string>& token : read_property()) {
                     if (!token) {
-                        tokens.push_back(token);
-                        return tokens;
+                        co_yield(token);
+                        co_return;
                     }
-                    tokens.push_back(token);
+                    co_yield(token);
                 }
             }
         }
     }
-    std::vector<nonstd::expected<jsonh_token, std::string>> read_braceless_object(std::optional<std::vector<jsonh_token>> property_name_tokens = std::nullopt) noexcept {
-        std::vector<nonstd::expected<jsonh_token, std::string>> tokens = {};
-
+    std::generator<nonstd::expected<jsonh_token, std::string>> read_braceless_object(std::optional<std::vector<jsonh_token>> property_name_tokens = std::nullopt) noexcept {
         // Start of object
-        tokens.push_back(jsonh_token(json_token_type::start_object));
+        co_yield(jsonh_token(json_token_type::start_object));
         depth++;
 
         // Check exceeded max depth
         if (depth > options.max_depth) {
-            tokens.push_back(nonstd::unexpected<std::string>("Exceeded max depth"));
-            return tokens;
+            co_yield(nonstd::unexpected<std::string>("Exceeded max depth"));
+            co_return;
         }
 
         // Initial tokens
         if (property_name_tokens) {
             for (const nonstd::expected<jsonh_token, std::string>& token : read_property(property_name_tokens)) {
                 if (!token) {
-                    tokens.push_back(token);
-                    return tokens;
+                    co_yield(token);
+                    co_return;
                 }
-                tokens.push_back(token);
+                co_yield(token);
             }
         }
 
@@ -522,38 +511,36 @@ private:
             // Comments & whitespace
             for (const nonstd::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
                 if (!token) {
-                    tokens.push_back(token);
-                    return tokens;
+                    co_yield(token);
+                    co_return;
                 }
-                tokens.push_back(token);
+                co_yield(token);
             }
 
             if (!peek()) {
                 // End of braceless object
                 depth--;
-                tokens.push_back(jsonh_token(json_token_type::end_object));
-                return tokens;
+                co_yield(jsonh_token(json_token_type::end_object));
+                co_return;
             }
 
             // Property
             for (const nonstd::expected<jsonh_token, std::string>& token : read_property()) {
                 if (!token) {
-                    tokens.push_back(token);
-                    return tokens;
+                    co_yield(token);
+                    co_return;
                 }
-                tokens.push_back(token);
+                co_yield(token);
             }
         }
     }
-    std::vector<nonstd::expected<jsonh_token, std::string>> read_braceless_object_or_end_of_primitive(const jsonh_token& primitive_token) {
-        std::vector<nonstd::expected<jsonh_token, std::string>> tokens = {};
-
+    std::generator<nonstd::expected<jsonh_token, std::string>> read_braceless_object_or_end_of_primitive(const jsonh_token& primitive_token) {
         // Comments & whitespace
         std::optional<std::vector<jsonh_token>> property_name_tokens = {};
         for (const nonstd::expected<jsonh_token, std::string>& comment_or_whitespace_token : read_comments_and_whitespace()) {
             if (!comment_or_whitespace_token) {
-                tokens.push_back(comment_or_whitespace_token);
-                return tokens;
+                co_yield(comment_or_whitespace_token);
+                co_return;
             }
             if (!property_name_tokens) {
                 property_name_tokens = std::vector<jsonh_token>();
@@ -564,15 +551,15 @@ private:
         // Primitive
         if (!read_one(":")) {
             // Primitive
-            tokens.push_back(primitive_token);
+            co_yield(primitive_token);
             // Comments & whitespace
             if (property_name_tokens) {
                 for (const jsonh_token& comment_or_whitespace_token : property_name_tokens.value()) {
-                    tokens.push_back(comment_or_whitespace_token);
+                    co_yield(comment_or_whitespace_token);
                 }
             }
             // End of primitive
-            return tokens;
+            co_return;
         }
 
         // Property name
@@ -584,122 +571,110 @@ private:
         // Braceless object
         for (const nonstd::expected<jsonh_token, std::string>& object_token : read_braceless_object(property_name_tokens)) {
             if (!object_token) {
-                tokens.push_back(object_token);
-                return tokens;
+                co_yield(object_token);
+                co_return;
             }
-            tokens.push_back(object_token);
+            co_yield(object_token);
         }
-
-        return tokens;
     }
-    std::vector<nonstd::expected<jsonh_token, std::string>> read_property(std::optional<std::vector<jsonh_token>> property_name_tokens = std::nullopt) noexcept {
-        std::vector<nonstd::expected<jsonh_token, std::string>> tokens = {};
-
+    std::generator<nonstd::expected<jsonh_token, std::string>> read_property(std::optional<std::vector<jsonh_token>> property_name_tokens = std::nullopt) noexcept {
         // Property name
         if (property_name_tokens) {
             for (const jsonh_token& token : property_name_tokens.value()) {
-                tokens.push_back(token);
+                co_yield(token);
             }
         }
         else {
             for (const nonstd::expected<jsonh_token, std::string>& token : read_property_name()) {
                 if (!token) {
-                    tokens.push_back(token);
-                    return tokens;
+                    co_yield(token);
+                    co_return;
                 }
-                tokens.push_back(token);
+                co_yield(token);
             }
         }
 
         // Comments & whitespace
         for (const nonstd::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
             if (!token) {
-                tokens.push_back(token);
-                return tokens;
+                co_yield(token);
+                co_return;
             }
-            tokens.push_back(token);
+            co_yield(token);
         }
 
         // Property value
         for (const nonstd::expected<jsonh_token, std::string>& token : read_element()) {
             if (!token) {
-                tokens.push_back(token);
-                return tokens;
+                co_yield(token);
+                co_return;
             }
-            tokens.push_back(token);
+            co_yield(token);
         }
 
         // Comments & whitespace
         for (const nonstd::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
             if (!token) {
-                tokens.push_back(token);
-                return tokens;
+                co_yield(token);
+                co_return;
             }
-            tokens.push_back(token);
+            co_yield(token);
         }
 
         // Optional comma
         read_one(",");
-
-        return tokens;
     }
-    std::vector<nonstd::expected<jsonh_token, std::string>> read_property_name() noexcept {
-        std::vector<nonstd::expected<jsonh_token, std::string>> tokens = {};
-
+    std::generator<nonstd::expected<jsonh_token, std::string>> read_property_name() noexcept {
         // String
         nonstd::expected<jsonh_token, std::string> string_result = read_string();
         if (!string_result) {
-            tokens.push_back(string_result);
-            return tokens;
+            co_yield(string_result);
+            co_return;
         }
         jsonh_token string = string_result.value();
 
         // Comments & whitespace
         for (const nonstd::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
             if (!token) {
-                tokens.push_back(token);
-                return tokens;
+                co_yield(token);
+                co_return;
             }
-            tokens.push_back(token);
+            co_yield(token);
         }
 
         // Colon
         if (!read_one(":")) {
-            tokens.push_back(nonstd::unexpected<std::string>("Expected `:` after property name in object"));
-            return tokens;
+            co_yield(nonstd::unexpected<std::string>("Expected `:` after property name in object"));
+            co_return;
         }
 
         // End of property name
-        tokens.push_back(jsonh_token(json_token_type::property_name, string.value));
-
-        return tokens;
+        co_yield(jsonh_token(json_token_type::property_name, string.value));
     }
-    std::vector<nonstd::expected<jsonh_token, std::string>> read_array() noexcept {
-        std::vector<nonstd::expected<jsonh_token, std::string>> tokens = {};
-
+    std::generator<nonstd::expected<jsonh_token, std::string>> read_array() noexcept {
         // Opening bracket
         if (!read_one("[")) {
-            tokens.push_back(nonstd::unexpected<std::string>("Expected `[` to start array"));
-            return tokens;
+            co_yield(nonstd::unexpected<std::string>("Expected `[` to start array"));
+            co_return;
         }
         // Start of array
-        tokens.push_back(jsonh_token(json_token_type::start_array));
+        co_yield(jsonh_token(json_token_type::start_array));
         depth++;
 
         // Check exceeded max depth
         if (depth > options.max_depth) {
-            tokens.push_back(nonstd::unexpected<std::string>("Exceeded max depth"));
-            return tokens;
+            co_yield(nonstd::unexpected<std::string>("Exceeded max depth"));
+            co_return;
         }
 
         while (true) {
             // Comments & whitespace
             for (const nonstd::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
                 if (!token) {
-                    tokens.push_back(token);
-                    return tokens;
+                    co_yield(token);
+                    co_return;
                 }
-                tokens.push_back(token);
+                co_yield(token);
             }
 
             std::optional<std::string> next = peek();
@@ -707,12 +682,12 @@ private:
                 // End of incomplete array
                 if (options.incomplete_inputs) {
                     depth--;
-                    tokens.push_back(jsonh_token(json_token_type::end_array));
-                    return tokens;
+                    co_yield(jsonh_token(json_token_type::end_array));
+                    co_return;
                 }
                 // Missing closing bracket
-                tokens.push_back(nonstd::unexpected<std::string>("Expected `]` to end array, got end of input"));
-                return tokens;
+                co_yield(nonstd::unexpected<std::string>("Expected `]` to end array, got end of input"));
+                co_return;
             }
 
             // Closing bracket
@@ -720,46 +695,42 @@ private:
                 // End of array
                 read();
                 depth--;
-                tokens.push_back(jsonh_token(json_token_type::end_array));
-                return tokens;
+                co_yield(jsonh_token(json_token_type::end_array));
+                co_return;
             }
             // Item
             else {
                 for (const nonstd::expected<jsonh_token, std::string>& token : read_item()) {
                     if (!token) {
-                        tokens.push_back(token);
-                        return tokens;
+                        co_yield(token);
+                        co_return;
                     }
-                    tokens.push_back(token);
+                    co_yield(token);
                 }
             }
         }
     }
-    std::vector<nonstd::expected<jsonh_token, std::string>> read_item() noexcept {
-        std::vector<nonstd::expected<jsonh_token, std::string>> tokens = {};
-
+    std::generator<nonstd::expected<jsonh_token, std::string>> read_item() noexcept {
         // Element
         for (const nonstd::expected<jsonh_token, std::string>& token : read_element()) {
             if (!token) {
-                tokens.push_back(token);
-                return tokens;
+                co_yield(token);
+                co_return;
             }
-            tokens.push_back(token);
+            co_yield(token);
         }
 
         // Comments & whitespace
         for (const nonstd::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
             if (!token) {
-                tokens.push_back(token);
-                return tokens;
+                co_yield(token);
+                co_return;
             }
-            tokens.push_back(token);
+            co_yield(token);
         }
 
         // Optional comma
         read_one(",");
-
-        return tokens;
     }
     nonstd::expected<jsonh_token, std::string> read_string() noexcept {
         // Verbatim
@@ -1292,9 +1263,7 @@ private:
             return read_quoteless_string();
         }
     }
-    std::vector<nonstd::expected<jsonh_token, std::string>> read_comments_and_whitespace() noexcept {
-        std::vector<nonstd::expected<jsonh_token, std::string>> tokens = {};
-
+    std::generator<nonstd::expected<jsonh_token, std::string>> read_comments_and_whitespace() noexcept {
         while (true) {
             // Whitespace
             read_whitespace();
@@ -1309,18 +1278,16 @@ private:
             if (next.value() == "#" || next.value() == "/") {
                 nonstd::expected<jsonh_token, std::string> comment = read_comment();
                 if (!comment) {
-                    tokens.push_back(comment);
-                    return tokens;
+                    co_yield(comment);
+                    co_return;
                 }
-                tokens.push_back(comment);
+                co_yield(comment);
             }
             // End of comments
             else {
                 break;
             }
         }
-
-        return tokens;
     }
     nonstd::expected<jsonh_token, std::string> read_comment() noexcept {
         bool block_comment = false;

@@ -61,6 +61,7 @@ json::object_t element = jsonh_cpp::jsonh_reader::parse_element<json::object_t>(
 
 - C++20
 - [nlohmann/json](https://github.com/nlohmann/json) (v3.12.0 - patch 2026/02/19 22:32)
+- [lewissbaker/generator](https://github.com/lewissbaker/generator) (patch 2026/03/03 23:26)
 - [martinmoene/expected-lite](https://github.com/martinmoene/expected-lite) (v0.10.0) - backport
 - [catchorg/Catch2](https://github.com/catchorg/Catch2) (v3.13.0) - [help](https://stackoverflow.com/a/78804393)
 - [rindeal/Amalgamate](https://github.com/rindeal/Amalgamate) (v0.99.0)
@@ -79,8 +80,3 @@ If using a different encoding, consider converting to UTF-8 using [utfcpp](https
 
 There is no option to parse numbers with arbitrary range/precision.
 Numbers are parsed as `long double`, which is generally 64-bit.
-
-### No token streaming
-
-While tokens can be read one by one from a stream, the tokens are aggregated in a `std::vector`
-before returning due to a lack of `yield` in C++.
