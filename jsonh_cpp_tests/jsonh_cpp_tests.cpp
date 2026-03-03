@@ -58,6 +58,22 @@ TEST_CASE("NestableBlockCommentTest") {
 
     REQUIRE(!tokens2[1]);
 }
+TEST_CASE("FindPropertyValueTest") {
+    std::string jsonh = R"(
+// Original position
+{
+  "a": "1",
+  "b": {
+    "c": "2"
+  },
+  "c":/* Final position */ "3"
+}
+)";
+    jsonh_reader reader(jsonh);
+
+    REQUIRE(reader.find_property_value("c"));
+    REQUIRE(reader.parse_element<std::string>().value() == "3");
+}
 
 /*
     Parse Tests
