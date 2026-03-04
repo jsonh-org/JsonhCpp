@@ -255,6 +255,147 @@ public:
         return next_element;
     }
     /**
+     * @brief Parses a single element as minified JSON from the reader.
+     *
+     * If @c include_comments is true, comments are included (@c / @c * and @c * @c / are escaped).
+     * 
+     * The result is not safe to embed in HTML.
+     */
+    nonstd::expected<std::string, std::string> parse_json(bool include_comments = false) noexcept {
+        int64_t current_depth = 0;
+        bool is_start_of_structure = true;
+        bool is_property_value = false;
+
+        std::string result_builder;
+
+        for (const nonstd::expected<jsonh_token, std::string>& token_result : read_element()) {
+            // Check error
+            if (!token_result) {
+                return nonstd::unexpected<std::string>(token_result.error());
+            }
+            jsonh_token token = token_result.value();
+
+            if (token.json_type == json_token_type::null || token.json_type == json_token_type::true_bool || token.json_type == json_token_type::false_bool || token.json_type == json_token_type::string || token.json_type == json_token_type::number || token.json_type == json_token_type::start_object || token.json_type == json_token_type::start_array || token.json_type == json_token_type::property_name) {
+                if (!is_property_value) {
+                    if (!is_start_of_structure) {
+                        result_builder.push_back(',');
+                    }
+                    is_start_of_structure = false;
+                }
+            }
+            if (token.json_type == json_token_type::start_object || token.json_type == json_token_type::start_array) {
+                is_start_of_structure = true;
+            }
+            else if (token.json_type == json_token_type::end_object || token.json_type == json_token_type::end_array) {
+                is_start_of_structure = false;
+            }
+
+            switch (token.json_type) {
+                // Null
+                case json_token_type::null: {
+                    result_builder.append("null");
+                    if (current_depth == 0) {
+                        return result_builder;
+                    }
+                    break;
+                }
+                // True
+                case json_token_type::true_bool: {
+                    result_builder.append("true");
+                    if (current_depth == 0) {
+                        return result_builder;
+                    }
+                    break;
+                }
+                // False
+                case json_token_type::false_bool: {
+                    result_builder.append("false");
+                    if (current_depth == 0) {
+                        return result_builder;
+                    }
+                    break;
+                }
+                // String
+                case json_token_type::string: {
+                    result_builder.append(json(token.value).dump());
+                    if (current_depth == 0) {
+                        return result_builder;
+                    }
+                    break;
+                }
+                // Number
+                case json_token_type::number: {
+                    nonstd::expected<long double, std::string> result = jsonh_number_parser::parse(token.value);
+                    if (!result) {
+                        return nonstd::unexpected<std::string>(result.error());
+                    }
+                    result_builder.append(json(result.value()).dump());
+                    if (current_depth == 0) {
+                        return result_builder;
+                    }
+                    break;
+                }
+                // Start Object
+                case json_token_type::start_object: {
+                    result_builder.push_back('{');
+                    current_depth++;
+                    break;
+                }
+                // Start Array
+                case json_token_type::start_array: {
+                    result_builder.push_back('[');
+                    current_depth++;
+                    break;
+                }
+                // End Object
+                case json_token_type::end_object: {
+                    result_builder.push_back('}');
+                    current_depth--;
+                    if (current_depth == 0) {
+                        return result_builder;
+                    }
+                    break;
+                }
+                // End Array
+                case json_token_type::end_array: {
+                    result_builder.push_back(']');
+                    current_depth--;
+                    if (current_depth == 0) {
+                        return result_builder;
+                    }
+                    break;
+                }
+                // Property Name
+                case json_token_type::property_name: {
+                    result_builder.append(json(token.value).dump());
+                    result_builder.push_back(':');
+                    break;
+                }
+                // Comment
+                case json_token_type::comment: {
+                    if (include_comments) {
+                        result_builder.append("/*");
+                        std::string comment_value = token.value;
+                        replace_all(comment_value, "/*", "/ *");
+                        replace_all(comment_value, "*/", "* /");
+                        result_builder.append(comment_value);
+                        result_builder.append("*/");
+                    }
+                    break;
+                }
+                // Not implemented
+                default: {
+                    return nonstd::unexpected<std::string>("Token type not implemented");
+                }
+            }
+
+            is_property_value = token.json_type == json_token_type::property_name;
+        }
+
+        // End of input
+        return nonstd::unexpected<std::string>("Expected token, got end of input");
+    }
+    /**
     * @brief Tries to find the given property name in the reader.
     * 
     * For example, to find @c c:
@@ -272,7 +413,7 @@ public:
     * @endcode
     **/
     bool find_property_value(const std::string& property_name) noexcept {
-        long long current_depth = 0;
+        int64_t current_depth = 0;
 
         for (const nonstd::expected<jsonh_token, std::string>& token_result : read_element()) {
             // Check error
@@ -1584,6 +1725,16 @@ private:
             }
         }
         return result;
+    }
+    static void replace_all(std::string& s, const std::string& search, const std::string& replace) {
+        for (size_t pos = 0; ; pos += replace.length()) {
+            // Locate the substring to replace
+            pos = s.find(search, pos);
+            if (pos == std::string::npos) break;
+            // Replace by erasing and inserting
+            s.erase(pos, search.length());
+            s.insert(pos, replace);
+        }
     }
 };
 

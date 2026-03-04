@@ -83,6 +83,24 @@ TEST_CASE("FindPropertyValueTest") {
     REQUIRE(reader.find_property_value("c"));
     REQUIRE(reader.parse_element<std::string>().value() == "3");
 }
+TEST_CASE("ParseJsonTest") {
+    std::string jsonh = R"(
+{
+  // Hello /* test */ world
+  a: 'b'
+  "c": '''私'''
+  x: [a,b,c]
+  y: {}
+  z: 0.05e1
+}
+)";
+
+    jsonh_reader reader(jsonh);
+    REQUIRE(reader.parse_json() == "{\"a\":\"b\",\"c\":\"私\",\"x\":[\"a\",\"b\",\"c\"],\"y\":{},\"z\":0.5}");
+
+    jsonh_reader reader2(jsonh);
+    REQUIRE(reader2.parse_json(true) == "{/* Hello / * test * / world*/\"a\":\"b\",\"c\":\"私\",\"x\":[\"a\",\"b\",\"c\"],\"y\":{},\"z\":0.5}");
+}
 
 /*
     Parse Tests
