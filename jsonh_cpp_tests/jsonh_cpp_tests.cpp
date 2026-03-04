@@ -100,6 +100,33 @@ TEST_CASE("ParseJsonTest") {
 
     jsonh_reader reader2(jsonh);
     REQUIRE(reader2.parse_json(true) == "{/* Hello / * test * / world*/\"a\":\"b\",\"c\":\"私\",\"x\":[\"a\",\"b\",\"c\"],\"y\":{},\"z\":0.5}");
+
+    jsonh_reader reader3(jsonh);
+    REQUIRE(reader3.parse_json(false, "  ") == R"({
+  "a": "b",
+  "c": "私",
+  "x": [
+    "a",
+    "b",
+    "c"
+  ],
+  "y": {},
+  "z": 0.5
+})");
+
+    jsonh_reader reader4(jsonh);
+    REQUIRE(reader4.parse_json(true, "  ") == R"({
+  /* Hello / * test * / world*/
+  "a": "b",
+  "c": "私",
+  "x": [
+    "a",
+    "b",
+    "c"
+  ],
+  "y": {},
+  "z": 0.5
+})");
 }
 
 /*
