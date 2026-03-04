@@ -369,7 +369,7 @@ struct __generator_promise_base
         if (__root_ != this) {
             __exception_.get() = std::current_exception();
         } else {
-            throw;
+            std::abort();
         }
     }
 
