@@ -1,5 +1,5 @@
 HEADER = "// JsonhCpp (JSON for Humans)
-// Version: 7.1
+// Version: 7.2
 // Link: https://github.com/jsonh-org/JsonhCpp
 // License: MIT"
 
