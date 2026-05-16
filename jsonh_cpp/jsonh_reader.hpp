@@ -427,7 +427,9 @@ public:
                     }
                 }
 
-                is_property_value = token.json_type == json_token_type::property_name;
+                if (token.json_type != json_token_type::comment) {
+                    is_property_value = token.json_type == json_token_type::property_name;
+                }
             }
 
             // End of input
