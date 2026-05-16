@@ -256,12 +256,12 @@ public:
     }
     /**
      * @brief Parses a single element as minified JSON from the reader.
-     *
+     * 
      * If @c include_comments is true, comments are included (@c / @c * and @c * @c / are escaped).
      * 
      * If @c indent is not null, the output is pretty-printed with the given indentation.
-     *
-     * The result is not safe to embed in HTML.
+     * 
+     * Note: The result is @b NOT safe to embed in HTML. To safely embed in HTML, you need to escape characters like @c <, @c > and @c &.
      */
     nonstd::expected<std::string, std::string> parse_json(bool include_comments = false, std::optional<std::string> indent = std::nullopt) noexcept {
         auto parse_next_element_as_json = [&]() -> nonstd::expected<std::string, std::string> {
