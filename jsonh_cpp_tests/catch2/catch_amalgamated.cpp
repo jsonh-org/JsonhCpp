@@ -6,8 +6,8 @@
 
 // SPDX-License-Identifier: BSL-1.0
 
-//  Catch v3.15.0
-//  Generated: 2026-05-12 13:08:21.086523
+//  Catch v3.15.1
+//  Generated: 2026-06-14 10:51:56.053498
 //  ----------------------------------------------------------
 //  This file is an amalgamation of multiple different files.
 //  You probably shouldn't edit it directly.
@@ -2394,7 +2394,7 @@ namespace Catch {
     }
 
     Version const& libraryVersion() {
-        static Version version( 3, 15, 0, "", 0 );
+        static Version version( 3, 15, 1, "", 0 );
         return version;
     }
 
@@ -8016,8 +8016,8 @@ namespace Catch {
                 m_it--;
             }
             // Skip back over UTF-8 continuation bytes to the leading byte
-            while ( isUtf8ContinuationByte( *m_it ) ) {
-                assert( m_it != m_string->begin() );
+            while ( m_it != m_string->begin() &&
+                    isUtf8ContinuationByte( *m_it ) ) {
                 m_it--;
             }
         }
