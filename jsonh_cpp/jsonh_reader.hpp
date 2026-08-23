@@ -509,6 +509,8 @@ public:
     }
     /**
     * @brief Reads whitespace and returns whether the reader contains another token.
+    *
+    * Note: This can be used to skip whitespace without skipping comments.
     **/
     bool has_token() noexcept {
         // Whitespace
