@@ -57,12 +57,15 @@ public:
     /**
     * @brief Reads the next UTF-8 rune from @ref inner_stream, moving forward by the number of bytes read.
     **/
-    std::optional<std::string> read() const noexcept {
+    std::optional<std::string> read() noexcept {
         // Read first byte
         int first_byte_as_int = inner_stream->get();
         if (first_byte_as_int < 0) {
             return std::nullopt;
         }
+
+        // Increment character counter
+        char_counter++;
 
         // Single byte character performance optimization
         if (first_byte_as_int <= 127) {
@@ -84,7 +87,7 @@ public:
     /**
     * @brief Reads the next UTF-8 rune from @ref inner_stream, without moving forward.
     **/
-    std::optional<std::string> peek() const noexcept {
+    std::optional<std::string> peek() noexcept {
         size_t original_position = position();
         std::optional<std::string> next = read();
         seek(original_position);
@@ -93,7 +96,7 @@ public:
     /**
     * @brief If the next UTF-8 rune is the given option, moves forward by its number of bytes.
     **/
-    bool read_one(std::string option) const noexcept {
+    bool read_one(std::string option) noexcept {
         if (peek() == option) {
             read();
             return true;
@@ -103,7 +106,7 @@ public:
     /**
     * @brief If the next UTF-8 rune is one of the given options, moves forward by its number of bytes and returns the option.
     **/
-    std::optional<std::string> read_any(const std::set<std::string>& options) const noexcept {
+    std::optional<std::string> read_any(const std::set<std::string>& options) noexcept {
         // Peek char
         std::optional<std::string> next = peek();
         if (!next) {
@@ -121,7 +124,7 @@ public:
     /**
     * @brief Reads the last UTF-8 rune from @ref inner_stream, moving backward by the number of bytes read.
     **/
-    std::optional<std::string> read_reverse() const noexcept {
+    std::optional<std::string> read_reverse() noexcept {
         // Read up to 4 bytes
         std::string bytes;
         bytes.reserve(4);
@@ -133,6 +136,11 @@ public:
             int next_as_int = inner_stream->peek();
             if (next_as_int < 0) {
                 return std::nullopt;
+            }
+
+            // Increment character counter
+            if (index == 0) {
+                char_counter++;
             }
 
             // Append byte
@@ -151,7 +159,7 @@ public:
     /**
     * @brief Reads the last UTF-8 rune from @ref inner_stream, without moving backward.
     **/
-    std::optional<std::string> peek_reverse() const noexcept {
+    std::optional<std::string> peek_reverse() noexcept {
         size_t original_position = position();
         std::optional<std::string> last = read_reverse();
         seek(original_position);
@@ -160,7 +168,7 @@ public:
     /**
     * @brief If the last UTF-8 rune is the given option, moves backward by its number of bytes.
     **/
-    bool read_one_reverse(std::string option) const noexcept {
+    bool read_one_reverse(std::string option) noexcept {
         if (peek_reverse() == option) {
             read_reverse();
             return true;
@@ -170,7 +178,7 @@ public:
     /**
     * @brief If the last UTF-8 rune is one of the given options, moves backward by its number of bytes and returns the option.
     **/
-    std::optional<std::string> read_any_reverse(const std::set<std::string>& options) const noexcept {
+    std::optional<std::string> read_any_reverse(const std::set<std::string>& options) noexcept {
         // Peek char
         std::optional<std::string> last = peek_reverse();
         if (!last) {
