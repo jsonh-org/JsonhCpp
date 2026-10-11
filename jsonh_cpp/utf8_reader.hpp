@@ -189,7 +189,6 @@ public:
         return last;
     }
 
-private:
     /**
     * @brief Returns whether the byte is the first (or only) byte of a UTF-8 rune as opposed to a continuation byte.
     **/
