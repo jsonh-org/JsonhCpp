@@ -10,7 +10,6 @@
 #include <string>
 #include <utility>
 #include <algorithm>
-#include <string_view>
 
 namespace jsonh_cpp {
 
@@ -100,7 +99,7 @@ public:
     /**
     * @brief If the next UTF-8 rune is the given option, moves forward by its number of bytes.
     **/
-    bool read_one(std::string_view option) const noexcept {
+    bool read_one(std::string option) const noexcept {
         if (peek() == option) {
             read();
             return true;
@@ -110,7 +109,7 @@ public:
     /**
     * @brief If the next UTF-8 rune is one of the given options, moves forward by its number of bytes and returns the option.
     **/
-    std::optional<std::string> read_any(const std::set<std::string_view>& options) const noexcept {
+    std::optional<std::string> read_any(const std::set<std::string>& options) const noexcept {
         // Peek char
         std::optional<std::string> next = peek();
         if (!next) {
@@ -167,7 +166,7 @@ public:
     /**
     * @brief If the last UTF-8 rune is the given option, moves backward by its number of bytes.
     **/
-    bool read_one_reverse(std::string_view option) const noexcept {
+    bool read_one_reverse(std::string option) const noexcept {
         if (peek_reverse() == option) {
             read_reverse();
             return true;
@@ -177,7 +176,7 @@ public:
     /**
     * @brief If the last UTF-8 rune is one of the given options, moves backward by its number of bytes and returns the option.
     **/
-    std::optional<std::string> read_any_reverse(const std::set<std::string_view>& options) const noexcept {
+    std::optional<std::string> read_any_reverse(const std::set<std::string>& options) const noexcept {
         // Peek char
         std::optional<std::string> last = peek_reverse();
         if (!last) {
