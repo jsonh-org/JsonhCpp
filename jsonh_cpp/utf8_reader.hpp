@@ -73,7 +73,7 @@ public:
         uint8_t sequence_length = get_utf8_sequence_length((uint8_t)first_byte_as_int);
 
         // Read remaining bytes (up to 3 more)
-        std::string bytes((size_t)(1 + sequence_length), '\0');
+        std::string bytes((size_t)sequence_length, '\0');
         bytes[0] = (char)first_byte_as_int;
         inner_stream->read(&bytes[1], std::streamsize(sequence_length - 1));
 
