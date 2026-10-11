@@ -97,6 +97,10 @@ public:
     std::optional<std::string> peek() noexcept {
         std::streampos original_position = position();
         std::optional<std::string> next = read();
+        if (next) {
+            // Undo increment character counter
+            char_counter--;
+        }
         seek(original_position);
         return next;
     }
@@ -174,6 +178,10 @@ public:
     std::optional<std::string> peek_reverse() noexcept {
         std::streampos original_position = position();
         std::optional<std::string> last = read_reverse();
+        if (last) {
+            // Undo increment character counter
+            char_counter--;
+        }
         seek(original_position);
         return last;
     }
