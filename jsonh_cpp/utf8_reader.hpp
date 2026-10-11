@@ -9,6 +9,7 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include <algorithm>
 
 namespace jsonh_cpp {
 
@@ -145,6 +146,7 @@ public:
 
             // End if reached first byte
             if (is_utf8_first_byte((char)next_as_int)) {
+                std::reverse(bytes.begin(), bytes.end());
                 return bytes;
             }
         }
