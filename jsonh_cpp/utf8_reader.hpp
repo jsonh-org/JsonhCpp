@@ -71,7 +71,7 @@ public:
             return std::nullopt;
         }
 
-        // Single byte character performance optimisation
+        // Single byte character performance optimization
         if (first_byte_as_int <= 127) {
             return std::string({ (char)first_byte_as_int });
         }
