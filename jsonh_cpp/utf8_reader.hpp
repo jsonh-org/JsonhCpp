@@ -35,12 +35,6 @@ public:
         this->char_counter = 0;
     }
     /**
-    * @brief Constructs a reader that reads UTF-8 runes from a UTF-8 input stream.
-    **/
-    explicit utf8_reader(std::istream& stream) noexcept
-        : utf8_reader(std::unique_ptr<std::istream>(&stream)) {
-    }
-    /**
     * @brief Constructs a reader that reads UTF-8 runes from a UTF-8 string.
     **/
     explicit utf8_reader(const std::string& string) noexcept

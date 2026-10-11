@@ -50,12 +50,6 @@ public:
         this->depth = 0;
     }
     /**
-    * @brief Constructs a reader that reads JSONH from a UTF-8 input stream.
-    **/
-    explicit jsonh_reader(std::istream& stream, jsonh_reader_options options = jsonh_reader_options()) noexcept
-        : jsonh_reader(std::unique_ptr<std::istream>(&stream)) {
-    }
-    /**
     * @brief Constructs a reader that reads JSONH from a UTF-8 string.
     **/
     explicit jsonh_reader(const std::string& string, jsonh_reader_options options = jsonh_reader_options()) noexcept
@@ -74,19 +68,6 @@ public:
     **/
     static nonstd::expected<json, std::string> parse_element(std::unique_ptr<std::istream> stream, jsonh_reader_options options = jsonh_reader_options()) noexcept {
         return jsonh_reader(std::move(stream), options).parse_element();
-    }
-    /**
-    * @brief Parses a single element from a UTF-8 input stream and deserializes it as @ref T.
-    **/
-    template <typename T>
-    static nonstd::expected<T, std::string> parse_element(std::istream& stream, jsonh_reader_options options = jsonh_reader_options()) noexcept {
-        return jsonh_reader(stream, options).parse_element<T>();
-    }
-    /**
-    * @brief Parses a single element from a UTF-8 input stream.
-    **/
-    static nonstd::expected<json, std::string> parse_element(std::istream& stream, jsonh_reader_options options = jsonh_reader_options()) noexcept {
-        return jsonh_reader(stream, options).parse_element();
     }
     /**
     * @brief Parses a single element from a UTF-8 string and deserializes it as @ref T.
