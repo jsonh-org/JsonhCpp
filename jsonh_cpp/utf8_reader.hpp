@@ -10,6 +10,7 @@
 #include <string>
 #include <utility>
 #include <algorithm>
+#include <cstdlib>
 
 namespace jsonh_cpp {
 
@@ -44,13 +45,19 @@ public:
     /**
     * @brief Returns the current byte position in @ref inner_stream.
     **/
-    size_t position() const noexcept {
+    std::streampos position() const noexcept {
         return inner_stream->tellg();
     }
     /**
-    * @brief Sets the current byte position in @ref inner_stream relative to the given anchor.
+    * @brief Sets the current byte position in @ref inner_stream.
     **/
-    void seek(size_t position, std::ios::seekdir anchor = std::ios::beg) const noexcept {
+    void seek(std::streampos position) const noexcept {
+        inner_stream->seekg(position);
+    }
+    /**
+    * @brief Sets the current byte position in @ref inner_stream relative to the given anchor (such as @ref std::ios::cur).
+    **/
+    void seek(std::streamoff position, std::ios::seekdir anchor) const noexcept {
         inner_stream->seekg(position, anchor);
     }
 
@@ -88,7 +95,7 @@ public:
     * @brief Reads the next UTF-8 rune from @ref inner_stream, without moving forward.
     **/
     std::optional<std::string> peek() noexcept {
-        size_t original_position = position();
+        std::streampos original_position = position();
         std::optional<std::string> next = read();
         seek(original_position);
         return next;
@@ -129,6 +136,11 @@ public:
         std::string bytes;
         bytes.reserve(4);
         for (size_t index = 0; index < 4; index++) {
+            // Ensure last byte is available
+            if (position() == 0) {
+                return std::nullopt;
+            }
+
             // Move before last byte
             seek(-1, std::ios::cur);
 
@@ -160,7 +172,7 @@ public:
     * @brief Reads the last UTF-8 rune from @ref inner_stream, without moving backward.
     **/
     std::optional<std::string> peek_reverse() noexcept {
-        size_t original_position = position();
+        std::streampos original_position = position();
         std::optional<std::string> last = read_reverse();
         seek(original_position);
         return last;

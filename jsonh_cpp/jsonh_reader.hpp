@@ -1172,12 +1172,12 @@ private:
         // Trim leading whitespace
         utf8_reader string_builder_reader(string_builder);
         while (true) {
-            size_t original_position = string_builder_reader.position();
+            std::streampos original_position = string_builder_reader.position();
             std::optional<std::string> next = string_builder_reader.read();
 
             // Non-whitespace
             if (!next || !whitespace_runes.contains(next.value())) {
-                string_builder.erase(0, original_position);
+                string_builder.erase(0, (size_t)original_position);
                 break;
             }
         }
@@ -1185,12 +1185,12 @@ private:
         utf8_reader string_builder_reader2(string_builder);
         string_builder_reader2.seek(0, std::ios_base::end);
         while (true) {
-            size_t original_position = string_builder_reader2.position();
+            std::streampos original_position = string_builder_reader2.position();
             std::optional<std::string> last = string_builder_reader2.read_reverse();
 
             // Non-whitespace
             if (!last || !whitespace_runes.contains(last.value())) {
-                string_builder.erase(original_position);
+                string_builder.erase((size_t)original_position);
                 break;
             }
         }
