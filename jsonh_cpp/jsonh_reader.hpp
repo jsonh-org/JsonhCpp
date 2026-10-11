@@ -363,7 +363,7 @@ public:
                         }
                         result_builder.append(json(result.value()).dump());
                         if (result_builder.ends_with(".0")) {
-                            result_builder.erase(result_builder.size() - 2);
+                            result_builder.erase(result_builder.length() - 2);
                         }
                         if (current_depth == 0) {
                             return result_builder;
@@ -1314,7 +1314,7 @@ private:
                 number_builder += exponent_sign.value();
 
                 // Missing digit between base specifier and exponent (e.g. `0xe+`)
-                if (has_base_specifier && number_builder.size() == 4) {
+                if (has_base_specifier && number_builder.length() == 4) {
                     return nonstd::unexpected<std::string>("Missing digit between base specifier and exponent");
                 }
 
@@ -1378,7 +1378,7 @@ private:
             // Dot
             else if (next.value() == ".") {
                 // Disallow dot following underscore
-                if (number_builder.size() >= 1 && number_builder.back() == '_') {
+                if (number_builder.length() >= 1 && number_builder.back() == '_') {
                     return nonstd::unexpected<std::string>("`.` must not follow `_` in number");
                 }
 
@@ -1395,7 +1395,7 @@ private:
             // Underscore
             else if (next.value() == "_") {
                 // Disallow underscore following dot
-                if (number_builder.size() >= 1 && number_builder.back() == '.') {
+                if (number_builder.length() >= 1 && number_builder.back() == '.') {
                     return nonstd::unexpected<std::string>("`_` must not follow `.` in number");
                 }
 
