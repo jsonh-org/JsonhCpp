@@ -195,7 +195,7 @@ public:
     /**
     * @brief Returns whether the byte is the first (or only) byte of a UTF-8 rune as opposed to a continuation byte.
     **/
-    static constexpr bool is_utf8_first_byte(std::uint8_t byte) noexcept {
+    static constexpr bool is_utf8_first_byte(uint8_t byte) noexcept {
         return (byte & 0xC0) != 0x80;
     }
     /**
@@ -203,7 +203,7 @@ public:
     *
     * @returns 1 or 2 or 3 or 4.
     **/
-    static constexpr uint8_t get_utf8_sequence_length(std::uint8_t first_byte) noexcept {
+    static constexpr uint8_t get_utf8_sequence_length(uint8_t first_byte) noexcept {
         // https://codegolf.stackexchange.com/a/173577
         return ((first_byte - 160) >> (20 - (first_byte / 16))) + 2;
     }
