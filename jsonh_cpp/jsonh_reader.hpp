@@ -24,8 +24,6 @@
 #include "json_token_type.hpp"
 #include "jsonh_version.hpp"
 
-using namespace nlohmann;
-
 namespace jsonh_cpp {
 
 /**
@@ -67,7 +65,7 @@ public:
     /**
     * @brief Parses a single element from a UTF-8 input stream.
     **/
-    static std::expected<json, std::string> parse_element(std::unique_ptr<std::istream> stream, jsonh_reader_options options = jsonh_reader_options()) noexcept {
+    static std::expected<nlohmann::json, std::string> parse_element(std::unique_ptr<std::istream> stream, jsonh_reader_options options = jsonh_reader_options()) noexcept {
         return jsonh_reader(std::move(stream), options).parse_element();
     }
     /**
@@ -80,7 +78,7 @@ public:
     /**
     * @brief Parses a single element from a UTF-8 string.
     **/
-    static std::expected<json, std::string> parse_element(const std::string& string, jsonh_reader_options options = jsonh_reader_options()) noexcept {
+    static std::expected<nlohmann::json, std::string> parse_element(const std::string& string, jsonh_reader_options options = jsonh_reader_options()) noexcept {
         return jsonh_reader(string, options).parse_element();
     }
 
@@ -89,7 +87,7 @@ public:
     **/
     template <typename T>
     std::expected<T, std::string> parse_element() noexcept {
-        std::expected<json, std::string> element = parse_element();
+        std::expected<nlohmann::json, std::string> element = parse_element();
         if (!element) {
             return std::unexpected<std::string>(element.error());
         }
@@ -98,11 +96,11 @@ public:
     /**
     * @brief Parses a single element from the reader.
     **/
-    std::expected<json, std::string> parse_element() noexcept {
-        std::stack<json> current_elements;
+    std::expected<nlohmann::json, std::string> parse_element() noexcept {
+        std::stack<nlohmann::json> current_elements;
         std::optional<std::string> current_property_name;
 
-        auto submit_element = [&](const json& element) -> bool {
+        auto submit_element = [&](const nlohmann::json& element) -> bool {
             // Root value
             if (current_elements.empty()) {
                 return true;
@@ -119,11 +117,11 @@ public:
                 return false;
             }
         };
-        auto start_element = [&](const json& element) -> void {
+        auto start_element = [&](const nlohmann::json& element) -> void {
             submit_element(element);
             current_elements.push(element);
         };
-        auto parse_next_element = [&]() -> std::expected<json, std::string> {
+        auto parse_next_element = [&]() -> std::expected<nlohmann::json, std::string> {
             for (const std::expected<jsonh_token, std::string>& token_result : read_element()) {
                 // Check error
                 if (!token_result) {
@@ -134,7 +132,7 @@ public:
                 switch (token.json_type) {
                     // Null
                     case json_token_type::null: {
-                        json element = json(nullptr);
+                        nlohmann::json element = nlohmann::json(nullptr);
                         if (submit_element(element)) {
                             return element;
                         }
@@ -142,7 +140,7 @@ public:
                     }
                     // True
                     case json_token_type::true_bool: {
-                        json element = json(true);
+                        nlohmann::json element = nlohmann::json(true);
                         if (submit_element(element)) {
                             return element;
                         }
@@ -150,7 +148,7 @@ public:
                     }
                     // False
                     case json_token_type::false_bool: {
-                        json element = json(false);
+                        nlohmann::json element = nlohmann::json(false);
                         if (submit_element(element)) {
                             return element;
                         }
@@ -158,7 +156,7 @@ public:
                     }
                     // String
                     case json_token_type::string: {
-                        json element = json(token.value);
+                        nlohmann::json element = nlohmann::json(token.value);
                         if (submit_element(element)) {
                             return element;
                         }
@@ -170,7 +168,7 @@ public:
                         if (!result) {
                             return std::unexpected<std::string>(result.error());
                         }
-                        json element = json(result.value());
+                        nlohmann::json element = nlohmann::json(result.value());
                         if (submit_element(element)) {
                             return element;
                         }
@@ -178,13 +176,13 @@ public:
                     }
                     // Start Object
                     case json_token_type::start_object: {
-                        json element = json::object();
+                        nlohmann::json element = nlohmann::json::object();
                         start_element(element);
                         break;
                     }
                     // Start Array
                     case json_token_type::start_array: {
-                        json element = json::array();
+                        nlohmann::json element = nlohmann::json::array();
                         start_element(element);
                         break;
                     }
@@ -221,7 +219,7 @@ public:
         };
 
         // Parse next element
-        std::expected<json, std::string> next_element = parse_next_element();
+        std::expected<nlohmann::json, std::string> next_element = parse_next_element();
 
         // Ensure exactly one element
         if (next_element) {
@@ -331,7 +329,7 @@ public:
                     }
                     // String
                     case json_token_type::string: {
-                        result_builder.append(json(token.value).dump());
+                        result_builder.append(nlohmann::json(token.value).dump());
                         if (current_depth == 0) {
                             return result_builder;
                         }
@@ -343,7 +341,7 @@ public:
                         if (!result) {
                             return std::unexpected<std::string>(result.error());
                         }
-                        result_builder.append(json(result.value()).dump());
+                        result_builder.append(nlohmann::json(result.value()).dump());
                         if (result_builder.ends_with(".0")) {
                             result_builder.erase(result_builder.length() - 2);
                         }
@@ -384,7 +382,7 @@ public:
                     }
                     // Property Name
                     case json_token_type::property_name: {
-                        result_builder.append(json(token.value).dump());
+                        result_builder.append(nlohmann::json(token.value).dump());
                         result_builder.push_back(':');
                         if (indent) {
                             result_builder.push_back(' ');
