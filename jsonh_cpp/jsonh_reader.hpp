@@ -177,13 +177,13 @@ public:
                     }
                     // Start Object
                     case json_token_type::start_object: {
-                        json_element element = json_element::json_object();
+                        json_element element = json_element::json_object_t();
                         start_element(element);
                         break;
                     }
                     // Start Array
                     case json_token_type::start_array: {
-                        json_element element = json_element::json_array();
+                        json_element element = json_element::json_array_t();
                         start_element(element);
                         break;
                     }
