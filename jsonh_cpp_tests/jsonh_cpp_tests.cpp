@@ -1,6 +1,11 @@
 #define CATCH_CONFIG_MAIN
 #include "catch2/catch_amalgamated.hpp"
 
+#include <string>
+#include <vector>
+#include <limits>
+#include <map>
+#include <expected>
 #include "../jsonh_cpp/jsonh_cpp.hpp"
 
 using namespace jsonh_cpp;
