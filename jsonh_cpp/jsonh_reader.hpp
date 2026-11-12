@@ -751,7 +751,7 @@ private:
         if (!property_name_tokens) {
             property_name_tokens = std::vector<jsonh_token>();
         }
-        property_name_tokens.value().push_back(jsonh_token(json_token_type::property_name, primitive_token.value));
+        property_name_tokens.value().emplace_back(jsonh_token(json_token_type::property_name, primitive_token.value));
 
         // Braceless object
         for (const std::expected<jsonh_token, std::string>& object_token : read_braceless_object(property_name_tokens)) {
