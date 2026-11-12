@@ -145,13 +145,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="jsonh_reader.hpp" />
+    <ClCompile Include="json_element.hpp" />
     <ClInclude Include="jsonh_cpp.hpp" />
     <ClInclude Include="jsonh_number_parser.hpp" />
     <ClInclude Include="jsonh_reader_options.hpp" />
     <ClInclude Include="jsonh_token.hpp" />
     <ClInclude Include="json_token_type.hpp" />
     <ClInclude Include="jsonh_version.hpp" />
-    <ClInclude Include="nlohmann\json.hpp" />
     <ClInclude Include="utf8_reader.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

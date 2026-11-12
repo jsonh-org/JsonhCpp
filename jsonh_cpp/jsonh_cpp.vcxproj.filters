@@ -18,11 +18,11 @@
     <ClCompile Include="jsonh_reader.hpp">
       <Filter>Header Files</Filter>
     </ClCompile>
+    <ClCompile Include="json_element.hpp">
+      <Filter>Header Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="nlohmann\json.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="jsonh_reader_options.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>

@@ -128,14 +128,14 @@ TEST_CASE("ArrayTest") {
     4 5, 6
 ]
 )";
-    nlohmann::json element = jsonh_reader::parse_element(jsonh).value();
+    json_element element = jsonh_reader::parse_element(jsonh).value();
 
-    REQUIRE(element.size() == 5);
-    REQUIRE(element[0] == 1);
-    REQUIRE(element[1] == 2);
-    REQUIRE(element[2] == 3);
-    REQUIRE(element[3] == "4 5");
-    REQUIRE(element[4] == 6);
+    REQUIRE(element.as_array().size() == 5);
+    REQUIRE(element.as_array()[0].as_number() == 1);
+    REQUIRE(element.as_array()[1].as_number() == 2);
+    REQUIRE(element.as_array()[2].as_number() == 3);
+    REQUIRE(element.as_array()[3].as_string() == "4 5");
+    REQUIRE(element.as_array()[4].as_number() == 6);
 }
 TEST_CASE("NumberParserTest") {
     REQUIRE((int)jsonh_number_parser::parse("1.2e3.4").value() == 3014);
@@ -145,11 +145,11 @@ TEST_CASE("BracelessObjectTest") {
 a: b
 c : d
 )";
-    nlohmann::json element = jsonh_reader::parse_element(jsonh).value();
+    json_element element = jsonh_reader::parse_element(jsonh).value();
 
-    REQUIRE(element.size() == 2);
-    REQUIRE(element["a"] == "b");
-    REQUIRE(element["c"] == "d");
+    REQUIRE(element.as_object().size() == 2);
+    REQUIRE(element.as_object()["a"].as_string() == "b");
+    REQUIRE(element.as_object()["c"].as_string() == "d");
 }
 TEST_CASE("CommentTest") {
     std::string jsonh = R"(
@@ -175,28 +175,28 @@ TEST_CASE("VerbatimStringTest") {
     @e\\: f\\
 }
 )";
-    nlohmann::json element = jsonh_reader::parse_element(jsonh).value();
+    json_element element = jsonh_reader::parse_element(jsonh).value();
 
-    REQUIRE(element.size() == 3);
-    REQUIRE(element["a\\"] == "b\\");
-    REQUIRE(element["c\\\\"] == "d\\\\");
-    REQUIRE(element["e\\\\"] == "f\\");
+    REQUIRE(element.as_object().size() == 3);
+    REQUIRE(element.as_object()["a\\"].as_string() == "b\\");
+    REQUIRE(element.as_object()["c\\\\"].as_string() == "d\\\\");
+    REQUIRE(element.as_object()["e\\\\"].as_string() == "f\\");
 
-    nlohmann::json element2 = jsonh_reader::parse_element(jsonh, jsonh_reader_options({
+    json_element element2 = jsonh_reader::parse_element(jsonh, jsonh_reader_options({
         .version = jsonh_version::v1,
     })).value();
-    REQUIRE(element2.size() == 3);
-    REQUIRE(element2["a\\"] == "b\\");
-    REQUIRE(element2["@c\\"] == "@d\\");
-    REQUIRE(element2["@e\\"] == "f\\");
+    REQUIRE(element2.as_object().size() == 3);
+    REQUIRE(element2.as_object()["a\\"].as_string() == "b\\");
+    REQUIRE(element2.as_object()["@c\\"].as_string() == "@d\\");
+    REQUIRE(element2.as_object()["@e\\"].as_string() == "f\\");
 
     std::string jsonh2 = R"(
 @"a\\": @'''b\\'''
 )";
-    nlohmann::json element3 = jsonh_reader::parse_element(jsonh2).value();
+    json_element element3 = jsonh_reader::parse_element(jsonh2).value();
 
-    REQUIRE(element3.size() == 1);
-    REQUIRE(element3["a\\\\"] == "b\\\\");
+    REQUIRE(element3.as_object().size() == 1);
+    REQUIRE(element3.as_object()["a\\\\"].as_string() == "b\\\\");
 }
 TEST_CASE("ParseSingleElementTest") {
     std::string jsonh = R"(
@@ -335,13 +335,13 @@ TEST_CASE("QuotelessStringStartingWithKeywordTest") {
     std::string jsonh = R"(
 [nulla, null b, null, @null]
 )";
-    std::vector<nlohmann::json> element = jsonh_reader::parse_element<std::vector<nlohmann::json>>(jsonh).value();
+    std::vector<json_element> element = jsonh_reader::parse_element<std::vector<json_element>>(jsonh).value();
 
     REQUIRE(element.size() == 4);
-    REQUIRE(element[0] == "nulla");
-    REQUIRE(element[1] == "null b");
-    REQUIRE(element[2] == nullptr);
-    REQUIRE(element[3] == "null");
+    REQUIRE(element[0].as_string() == "nulla");
+    REQUIRE(element[1].as_string() == "null b");
+    REQUIRE(element[2].as_null() == nullptr);
+    REQUIRE(element[3].as_string() == "null");
 }
 TEST_CASE("BracelessObjectWithInvalidValueTest") {
     std::string jsonh = R"(
@@ -377,10 +377,10 @@ TEST_CASE("SpaceInQuotelessPropertyNameTest") {
     a b: c d
 }
 )";
-    nlohmann::json element = jsonh_reader::parse_element(jsonh).value();
+    json_element element = jsonh_reader::parse_element(jsonh).value();
 
-    REQUIRE(element.size() == 1);
-    REQUIRE(element["a b"] == "c d");
+    REQUIRE(element.as_object().size() == 1);
+    REQUIRE(element.as_object()["a b"].as_string() == "c d");
 }
 TEST_CASE("QuotelessStringsEscapeTest") {
     std::string jsonh = R"(
@@ -388,12 +388,12 @@ a: \"5
 b: \\z
 c: 5 \\
 )";
-    nlohmann::json element = jsonh_reader::parse_element(jsonh).value();
+    json_element element = jsonh_reader::parse_element(jsonh).value();
 
-    REQUIRE(element.size() == 3);
-    REQUIRE(element["a"] == "\"5");
-    REQUIRE(element["b"] == "\\z");
-    REQUIRE(element["c"] == "5 \\");
+    REQUIRE(element.as_object().size() == 3);
+    REQUIRE(element.as_object()["a"].as_string() == "\"5");
+    REQUIRE(element.as_object()["b"].as_string() == "\\z");
+    REQUIRE(element.as_object()["c"].as_string() == "5 \\");
 }
 TEST_CASE("MultiQuotedStringsNoLastNewlineWhitespaceTest") {
     std::string jsonh = R"(
@@ -457,14 +457,14 @@ TEST_CASE("NumberDotTest") {
 .
 )";
 
-    REQUIRE(jsonh_reader::parse_element(jsonh).value().type() == nlohmann::json::value_t::string);
+    REQUIRE(jsonh_reader::parse_element(jsonh).value().type() == json_element_type::string);
     REQUIRE(jsonh_reader::parse_element<std::string>(jsonh).value() == ".");
 
     std::string jsonh2 = R"(
 -.
 )";
 
-    REQUIRE(jsonh_reader::parse_element(jsonh2).value().type() == nlohmann::json::value_t::string);
+    REQUIRE(jsonh_reader::parse_element(jsonh2).value().type() == json_element_type::string);
     REQUIRE(jsonh_reader::parse_element<std::string>(jsonh2).value() == "-.");
 }
 TEST_CASE("DuplicatePropertyNameTest") {
@@ -486,7 +486,7 @@ TEST_CASE("EmptyNumberTest") {
 0e
 )";
 
-    REQUIRE(jsonh_reader::parse_element(jsonh).value().type() == nlohmann::json::value_t::string);
+    REQUIRE(jsonh_reader::parse_element(jsonh).value().type() == json_element_type::string);
     REQUIRE(jsonh_reader::parse_element<std::string>(jsonh).value() == "0e");
 }
 TEST_CASE("LeadingZeroWithExponentTest") {
@@ -494,21 +494,21 @@ TEST_CASE("LeadingZeroWithExponentTest") {
 [0e4, 0xe, 0xEe+2]
 )";
 
-    REQUIRE(jsonh_reader::parse_element(jsonh).value().type() == nlohmann::json::value_t::array);
+    REQUIRE(jsonh_reader::parse_element(jsonh).value().type() == json_element_type::array);
     REQUIRE(jsonh_reader::parse_element<std::vector<long double>>(jsonh).value() == std::vector<long double>({ 0e4, 0xe, 1400 }));
 
     std::string jsonh2 = R"(
 [e+2, 0xe+2, 0oe+2, 0be+2]
 )";
 
-    REQUIRE(jsonh_reader::parse_element(jsonh2).value().type() == nlohmann::json::value_t::array);
+    REQUIRE(jsonh_reader::parse_element(jsonh2).value().type() == json_element_type::array);
     REQUIRE(jsonh_reader::parse_element<std::vector<std::string>>(jsonh2).value() == std::vector<std::string>({ "e+2", "0xe+2", "0oe+2", "0be+2" }));
 
     std::string jsonh3 = R"(
 [0x0e+, 0b0e+_1]
 )";
 
-    REQUIRE(jsonh_reader::parse_element(jsonh3).value().type() == nlohmann::json::value_t::array);
+    REQUIRE(jsonh_reader::parse_element(jsonh3).value().type() == json_element_type::array);
     REQUIRE(jsonh_reader::parse_element<std::vector<std::string>>(jsonh3).value() == std::vector<std::string>({ "0x0e+", "0b0e+_1" }));
 }
 TEST_CASE("ErrorInBracelessPropertyNameTest") {
