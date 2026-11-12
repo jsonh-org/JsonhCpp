@@ -1,7 +1,8 @@
-#pragma once
+#ifndef JSONH_CPP_JSONH_TOKEN_H
+#define JSONH_CPP_JSONH_TOKEN_H
 
 #include <string>
-#include "jsonh_token_type.hpp"
+#include "json_token_type.hpp"
 
 namespace jsonh_cpp {
 
@@ -28,3 +29,5 @@ struct jsonh_token {
 };
 
 }
+
+#endif // JSONH_CPP_JSONH_TOKEN_H

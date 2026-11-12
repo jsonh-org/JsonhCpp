@@ -1,4 +1,5 @@
-#pragma once
+#ifndef JSONH_CPP_UTF8_READER_H
+#define JSONH_CPP_UTF8_READER_H
 
 #include <istream>
 #include <sstream>
@@ -230,3 +231,5 @@ public:
 };
 
 }
+
+#endif // JSONH_CPP_UTF8_READER_H

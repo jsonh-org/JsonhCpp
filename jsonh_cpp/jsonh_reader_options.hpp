@@ -1,4 +1,5 @@
-#pragma once
+#ifndef JSONH_CPP_JSONH_READER_OPTIONS_H
+#define JSONH_CPP_JSONH_READER_OPTIONS_H
 
 #include "jsonh_version.hpp"
 
@@ -67,3 +68,5 @@ struct jsonh_reader_options {
 };
 
 }
+
+#endif // JSONH_CPP_JSONH_READER_OPTIONS_H

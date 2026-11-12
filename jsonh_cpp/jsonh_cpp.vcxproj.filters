@@ -29,7 +29,7 @@
     <ClInclude Include="jsonh_token.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="jsonh_token_type.hpp">
+    <ClInclude Include="json_token_type.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="jsonh_cpp.hpp">

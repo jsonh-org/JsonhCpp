@@ -1,4 +1,5 @@
-#pragma once
+#ifndef JSONH_CPP_JSONH_READER_H
+#define JSONH_CPP_JSONH_READER_H
 
 #include <string>
 #include <sstream>
@@ -20,7 +21,7 @@
 #include "jsonh_reader_options.hpp"
 #include "jsonh_number_parser.hpp"
 #include "utf8_reader.hpp"
-#include "jsonh_token_type.hpp"
+#include "json_token_type.hpp"
 #include "jsonh_version.hpp"
 
 using namespace nlohmann;
@@ -1783,3 +1784,5 @@ private:
 };
 
 }
+
+#endif // JSONH_CPP_JSONH_READER_H

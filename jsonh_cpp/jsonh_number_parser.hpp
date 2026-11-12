@@ -1,4 +1,5 @@
-#pragma once
+#ifndef JSONH_CPP_JSONH_NUMBER_PARSER_H
+#define JSONH_CPP_JSONH_NUMBER_PARSER_H
 
 #include <string>
 #include <string_view>
@@ -211,3 +212,5 @@ private:
 };
 
 }
+
+#endif // JSONH_CPP_JSONH_NUMBER_PARSER_H

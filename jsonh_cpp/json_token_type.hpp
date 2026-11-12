@@ -1,4 +1,5 @@
-#pragma once
+#ifndef JSONH_CPP_JSON_TOKEN_TYPE_H
+#define JSONH_CPP_JSON_TOKEN_TYPE_H
 
 #include <cstdint>
 
@@ -81,3 +82,5 @@ enum struct json_token_type : uint8_t {
 };
 
 }
+
+#endif // JSONH_CPP_JSON_TOKEN_TYPE_H

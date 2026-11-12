@@ -1,4 +1,5 @@
-#pragma once
+#ifndef JSONH_CPP_JSONH_VERSION_H
+#define JSONH_CPP_JSONH_VERSION_H
 
 namespace jsonh_cpp {
 
@@ -21,3 +22,5 @@ enum struct jsonh_version {
 };
 
 }
+
+#endif // JSONH_CPP_JSONH_VERSION_H
