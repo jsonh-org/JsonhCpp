@@ -16,7 +16,6 @@
 #include <cstdint>
 #include <generator>
 #include <expected>
-#include <variant>
 #include "json_element.hpp"
 #include "jsonh_token.hpp"
 #include "jsonh_reader_options.hpp"
