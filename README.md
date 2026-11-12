@@ -60,8 +60,8 @@ json::object_t element = jsonh_cpp::jsonh_reader::parse_element<json::object_t>(
 ## Dependencies
 
 - C++23
-- [nlohmann/json](https://github.com/nlohmann/json) (v3.12.0 - patch 2026/10/11 05:00)
-- [catchorg/Catch2](https://github.com/catchorg/Catch2) (v3.16.1) - [help](https://stackoverflow.com/a/78804393)
+- [nlohmann/json](https://github.com/nlohmann/json) (b54267d2a74c085ff2b05b01e369ecb7dd70cec6 - 2026/11/05)
+- [catchorg/Catch2](https://github.com/catchorg/Catch2) (v3.16.1)
 - [rindeal/Amalgamate](https://github.com/rindeal/Amalgamate) (v0.99.0)
 
 ## Limitations
