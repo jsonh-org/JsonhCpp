@@ -75,7 +75,7 @@ public:
     *
     * Example: @c 10
     **/
-    using json_number_t = long double;
+    using json_number_t = double;
     /**
     * @brief A string.
     *

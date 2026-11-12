@@ -229,7 +229,7 @@ TEST_CASE("BigNumbersTest") {
     999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999
 ]
 )";
-    std::vector<long double> element = jsonh_reader::parse_element<std::vector<long double>>(jsonh).value();
+    std::vector<double> element = jsonh_reader::parse_element<std::vector<double>>(jsonh).value();
 
     REQUIRE(element.size() == 3);
     REQUIRE(element[0] == 3.5);
@@ -495,7 +495,7 @@ TEST_CASE("LeadingZeroWithExponentTest") {
 )";
 
     REQUIRE(jsonh_reader::parse_element(jsonh).value().type() == json_element_type::array);
-    REQUIRE(jsonh_reader::parse_element<std::vector<long double>>(jsonh).value() == std::vector<long double>({ 0e4, 0xe, 1400 }));
+    REQUIRE(jsonh_reader::parse_element<std::vector<double>>(jsonh).value() == std::vector<double>({ 0e4, 0xe, 1400 }));
 
     std::string jsonh2 = R"(
 [e+2, 0xe+2, 0oe+2, 0be+2]
@@ -542,7 +542,7 @@ TEST_CASE("FractionLeadingZeroesTest") {
 0.04
 )";
 
-    REQUIRE(jsonh_reader::parse_element<long double>(jsonh).value() == 0.04);
+    REQUIRE(jsonh_reader::parse_element<double>(jsonh).value() == 0.04);
 }
 TEST_CASE("UnderscoreAfterLeadingZeroTest") {
     std::string jsonh = R"(
@@ -581,7 +581,7 @@ TEST_CASE("MassiveNumbersTest") {
 ]
 )";
 
-    std::vector<long double> elements = jsonh_reader::parse_element<std::vector<long double>>(jsonh).value();
+    std::vector<double> elements = jsonh_reader::parse_element<std::vector<double>>(jsonh).value();
     REQUIRE(elements.size() == 2);
     REQUIRE(elements[0] == Catch::Approx(47'536'897'508'558'602'556'126'370'201.0));
     REQUIRE(elements[1] == Catch::Approx(47'536'897'508'558'602'556'126'370'201.0));
@@ -591,7 +591,7 @@ TEST_CASE("FractionalHexadecimalNumbersTest") {
 [0xA.A, 0xA.A1]
 )";
 
-    std::vector<long double> elements = jsonh_reader::parse_element<std::vector<long double>>(jsonh).value();
+    std::vector<double> elements = jsonh_reader::parse_element<std::vector<double>>(jsonh).value();
     REQUIRE(elements.size() == 2);
     REQUIRE(elements[0] == 10.625);
     REQUIRE(elements[1] == 10.62890625);

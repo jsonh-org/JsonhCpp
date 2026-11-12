@@ -76,4 +76,4 @@ If using a different encoding, consider converting to UTF-8 using [utfcpp](https
 ### Fixed-size numbers
 
 There is no option to parse numbers with arbitrary range/precision.
-Numbers are parsed as `long double`, which is generally 64-bit.
+Numbers are parsed as `double`, which is generally 64-bit.

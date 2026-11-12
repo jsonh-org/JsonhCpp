@@ -165,7 +165,7 @@ public:
                     }
                     // Number
                     case json_token_type::number: {
-                        std::expected<long double, std::string> result = jsonh_number_parser::parse(token.value);
+                        std::expected<double, std::string> result = jsonh_number_parser::parse(token.value);
                         if (!result) {
                             return std::unexpected<std::string>(result.error());
                         }
@@ -338,7 +338,7 @@ public:
                     }
                     // Number
                     case json_token_type::number: {
-                        std::expected<long double, std::string> result = jsonh_number_parser::parse(token.value);
+                        std::expected<double, std::string> result = jsonh_number_parser::parse(token.value);
                         if (!result) {
                             return std::unexpected<std::string>(result.error());
                         }
@@ -1816,7 +1816,7 @@ private:
         result += '"';
         return result;
     }
-    std::string to_json_number(long double value) {
+    std::string to_json_number(double value) {
         std::ostringstream stream;
         stream << std::defaultfloat << value;
         return stream.str();

@@ -11,7 +11,7 @@
 namespace jsonh_cpp {
 
 /**
-* @brief Methods for parsing JSONH numbers (long double).
+* @brief Methods for parsing JSONH numbers (double).
 * 
 * Unlike jsonh_reader.read_element, minimal validation is done here. Ensure the input is valid.
 **/
@@ -25,7 +25,7 @@ public:
     * 
     * Output: @c 5200
     **/
-    static std::expected<long double, std::string> parse(std::string jsonh_number) noexcept {
+    static std::expected<double, std::string> parse(std::string jsonh_number) noexcept {
         // Remove underscores
         std::erase(jsonh_number, '_');
         std::string_view digits = jsonh_number;
@@ -60,7 +60,7 @@ public:
         }
 
         // Parse number with base digits
-        std::expected<long double, std::string> number = parse_fractional_number_with_exponent(digits, base_digits);
+        std::expected<double, std::string> number = parse_fractional_number_with_exponent(digits, base_digits);
         if (!number) {
             return std::unexpected<std::string>(number.error());
         }
@@ -76,7 +76,7 @@ private:
     /**
     * @brief Converts a fractional number with an exponent (e.g. @c 12.3e4.5) from the given base (e.g. @c 01234567) to a base-10 real.
     **/
-    static std::expected<long double, std::string> parse_fractional_number_with_exponent(std::string_view digits, std::string_view base_digits) noexcept {
+    static std::expected<double, std::string> parse_fractional_number_with_exponent(std::string_view digits, std::string_view base_digits) noexcept {
         // Find exponent
         size_t exponent_index = std::string::npos;
         // Hexadecimal exponent
@@ -107,11 +107,11 @@ private:
         std::string_view exponent_part = digits.substr(exponent_index + 1);
 
         // Parse mantissa and exponent
-        std::expected<long double, std::string> mantissa = parse_fractional_number(mantissa_part, base_digits);
+        std::expected<double, std::string> mantissa = parse_fractional_number(mantissa_part, base_digits);
         if (!mantissa) {
             return std::unexpected<std::string>(mantissa.error());
         }
-        std::expected<long double, std::string> exponent = parse_fractional_number(exponent_part, base_digits);
+        std::expected<double, std::string> exponent = parse_fractional_number(exponent_part, base_digits);
         if (!exponent) {
             return std::unexpected<std::string>(exponent.error());
         }
@@ -122,7 +122,7 @@ private:
     /**
     * @brief Converts a fractional number (e.g. @c 123.45) from the given base (e.g. @c 01234567) to a base-10 real.
     **/
-    static std::expected<long double, std::string> parse_fractional_number(std::string_view digits, std::string_view base_digits) noexcept {
+    static std::expected<double, std::string> parse_fractional_number(std::string_view digits, std::string_view base_digits) noexcept {
         // Optimization for base-10 digits
         if (base_digits == "0123456789") {
             return string_to_number(std::string(digits));
@@ -140,13 +140,13 @@ private:
         std::string_view fraction_part = digits.substr(dot_index + 1);
 
         // Parse parts of number
-        std::expected<long double, std::string> whole = parse_whole_number(whole_part, base_digits);
+        std::expected<double, std::string> whole = parse_whole_number(whole_part, base_digits);
         if (!whole) {
             return std::unexpected<std::string>(whole.error());
         }
 
         // Add each column of fraction digits
-        long double fraction = 0;
+        double fraction = 0;
         for (size_t index = fraction_part.size() - 1; index != std::string::npos; --index) {
             // Get current digit
             char digit_char = fraction_part[index];
@@ -167,7 +167,7 @@ private:
     /**
     * @brief Converts a whole number (e.g. @c 12345) from the given base (e.g. @c 01234567) to a base-10 integer.
     **/
-    static std::expected<long double, std::string> parse_whole_number(std::string_view digits, std::string_view base_digits) noexcept {
+    static std::expected<double, std::string> parse_whole_number(std::string_view digits, std::string_view base_digits) noexcept {
         // Optimization for base-10 digits
         if (base_digits == "0123456789") {
             return string_to_number(std::string(digits));
@@ -185,7 +185,7 @@ private:
         }
 
         // Add each column of digits
-        long double integer = 0;
+        double integer = 0;
         for (size_t index = 0; index < digits.size(); index++) {
             // Get current digit
             char digit_char = digits[index];
@@ -206,8 +206,8 @@ private:
         }
         return integer;
     }
-    static long double string_to_number(std::string value) {
-        return std::strtold(value.c_str(), nullptr);
+    static double string_to_number(std::string value) {
+        return std::strtod(value.c_str(), nullptr);
     }
 };
 
