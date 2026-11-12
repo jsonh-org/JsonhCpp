@@ -6,6 +6,7 @@
 #include <limits>
 #include <map>
 #include <expected>
+#include <generator>
 #include "../jsonh_cpp/jsonh_cpp.hpp"
 
 using namespace jsonh_cpp;
