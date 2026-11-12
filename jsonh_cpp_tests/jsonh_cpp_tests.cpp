@@ -25,9 +25,9 @@ TEST_CASE("BasicObjectTest") {
 }
 )";
     jsonh_reader reader(jsonh);
-    std::vector<nonstd::expected<jsonh_token, std::string>> tokens = to_vector(reader.read_element());
+    std::vector<std::expected<jsonh_token, std::string>> tokens = to_vector(reader.read_element());
 
-    for (const nonstd::expected<jsonh_token, std::string>& token : tokens) {
+    for (const std::expected<jsonh_token, std::string>& token : tokens) {
         REQUIRE(token);
     }
     REQUIRE(tokens[0].value().json_type == json_token_type::start_object);
@@ -46,9 +46,9 @@ TEST_CASE("NestableBlockCommentTest") {
 0
 )";
     jsonh_reader reader(jsonh);
-    std::vector<nonstd::expected<jsonh_token, std::string>> tokens = to_vector(reader.read_element());
+    std::vector<std::expected<jsonh_token, std::string>> tokens = to_vector(reader.read_element());
 
-    for (const nonstd::expected<jsonh_token, std::string>& token : tokens) {
+    for (const std::expected<jsonh_token, std::string>& token : tokens) {
         REQUIRE(token);
     }
     REQUIRE(tokens[0].value().json_type == json_token_type::comment);
@@ -63,7 +63,7 @@ TEST_CASE("NestableBlockCommentTest") {
     REQUIRE(tokens[4].value().value == "0");
 
     jsonh_reader reader2(jsonh, jsonh_reader_options({ .version = jsonh_version::v1 }));
-    std::vector<nonstd::expected<jsonh_token, std::string>> tokens2 = to_vector(reader2.read_element());
+    std::vector<std::expected<jsonh_token, std::string>> tokens2 = to_vector(reader2.read_element());
 
     REQUIRE(!tokens2[1]);
 }

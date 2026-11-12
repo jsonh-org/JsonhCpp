@@ -10,7 +10,6 @@
 #include <string>
 #include <utility>
 #include <algorithm>
-#include <cstdlib>
 
 namespace jsonh_cpp {
 

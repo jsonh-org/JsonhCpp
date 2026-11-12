@@ -13,7 +13,8 @@
 #include <string_view>
 #include <utility>
 #include <cstdint>
-#include "martinmoene/expected.hpp"
+#include <generator>
+#include <expected>
 #include "nlohmann/json.hpp"
 #include "jsonh_token.hpp"
 #include "jsonh_reader_options.hpp"
@@ -21,7 +22,6 @@
 #include "utf8_reader.hpp"
 #include "jsonh_token_type.hpp"
 #include "jsonh_version.hpp"
-#include "lewissbaker/generator.hpp"
 
 using namespace nlohmann;
 
@@ -60,26 +60,26 @@ public:
     * @brief Parses a single element from a UTF-8 input stream and deserializes it as @ref T.
     **/
     template <typename T>
-    static nonstd::expected<T, std::string> parse_element(std::unique_ptr<std::istream> stream, jsonh_reader_options options = jsonh_reader_options()) noexcept {
+    static std::expected<T, std::string> parse_element(std::unique_ptr<std::istream> stream, jsonh_reader_options options = jsonh_reader_options()) noexcept {
         return jsonh_reader(std::move(stream), options).parse_element<T>();
     }
     /**
     * @brief Parses a single element from a UTF-8 input stream.
     **/
-    static nonstd::expected<json, std::string> parse_element(std::unique_ptr<std::istream> stream, jsonh_reader_options options = jsonh_reader_options()) noexcept {
+    static std::expected<json, std::string> parse_element(std::unique_ptr<std::istream> stream, jsonh_reader_options options = jsonh_reader_options()) noexcept {
         return jsonh_reader(std::move(stream), options).parse_element();
     }
     /**
     * @brief Parses a single element from a UTF-8 string and deserializes it as @ref T.
     **/
     template <typename T>
-    static nonstd::expected<T, std::string> parse_element(const std::string& string, jsonh_reader_options options = jsonh_reader_options()) noexcept {
+    static std::expected<T, std::string> parse_element(const std::string& string, jsonh_reader_options options = jsonh_reader_options()) noexcept {
         return jsonh_reader(string, options).parse_element<T>();
     }
     /**
     * @brief Parses a single element from a UTF-8 string.
     **/
-    static nonstd::expected<json, std::string> parse_element(const std::string& string, jsonh_reader_options options = jsonh_reader_options()) noexcept {
+    static std::expected<json, std::string> parse_element(const std::string& string, jsonh_reader_options options = jsonh_reader_options()) noexcept {
         return jsonh_reader(string, options).parse_element();
     }
 
@@ -87,17 +87,17 @@ public:
     * @brief Parses a single element from the reader and deserializes it as @ref T.
     **/
     template <typename T>
-    nonstd::expected<T, std::string> parse_element() noexcept {
-        nonstd::expected<json, std::string> element = parse_element();
+    std::expected<T, std::string> parse_element() noexcept {
+        std::expected<json, std::string> element = parse_element();
         if (!element) {
-            return nonstd::unexpected<std::string>(element.error());
+            return std::unexpected<std::string>(element.error());
         }
         return element.value().template get<T>();
     }
     /**
     * @brief Parses a single element from the reader.
     **/
-    nonstd::expected<json, std::string> parse_element() noexcept {
+    std::expected<json, std::string> parse_element() noexcept {
         std::stack<json> current_elements;
         std::optional<std::string> current_property_name;
 
@@ -122,11 +122,11 @@ public:
             submit_element(element);
             current_elements.push(element);
         };
-        auto parse_next_element = [&]() -> nonstd::expected<json, std::string> {
-            for (const nonstd::expected<jsonh_token, std::string>& token_result : read_element()) {
+        auto parse_next_element = [&]() -> std::expected<json, std::string> {
+            for (const std::expected<jsonh_token, std::string>& token_result : read_element()) {
                 // Check error
                 if (!token_result) {
-                    return nonstd::unexpected<std::string>(token_result.error());
+                    return std::unexpected<std::string>(token_result.error());
                 }
                 jsonh_token token = token_result.value();
 
@@ -165,9 +165,9 @@ public:
                     }
                     // Number
                     case json_token_type::number: {
-                        nonstd::expected<long double, std::string> result = jsonh_number_parser::parse(token.value);
+                        std::expected<long double, std::string> result = jsonh_number_parser::parse(token.value);
                         if (!result) {
-                            return nonstd::unexpected<std::string>(result.error());
+                            return std::unexpected<std::string>(result.error());
                         }
                         json element = json(result.value());
                         if (submit_element(element)) {
@@ -210,24 +210,24 @@ public:
                     }
                     // Not implemented
                     default: {
-                        return nonstd::unexpected<std::string>("Token type not implemented");
+                        return std::unexpected<std::string>("Token type not implemented");
                     }
                 }
             }
 
             // End of input
-            return nonstd::unexpected<std::string>("Expected token, got end of input");
+            return std::unexpected<std::string>("Expected token, got end of input");
         };
 
         // Parse next element
-        nonstd::expected<json, std::string> next_element = parse_next_element();
+        std::expected<json, std::string> next_element = parse_next_element();
 
         // Ensure exactly one element
         if (next_element) {
             if (options.parse_single_element) {
-                for (const nonstd::expected<jsonh_token, std::string>& token : read_end_of_elements()) {
+                for (const std::expected<jsonh_token, std::string>& token : read_end_of_elements()) {
                     if (!token) {
-                        return nonstd::unexpected<std::string>(token.error());
+                        return std::unexpected<std::string>(token.error());
                     }
                 }
             }
@@ -244,18 +244,18 @@ public:
      * 
      * Note: The result is @b NOT safe to embed in HTML. To safely embed in HTML, you need to escape characters like less-than, greater-than and ampersand.
      */
-    nonstd::expected<std::string, std::string> parse_json(bool include_comments = false, std::optional<std::string> indent = std::nullopt) noexcept {
-        auto parse_next_element_as_json = [&]() -> nonstd::expected<std::string, std::string> {
+    std::expected<std::string, std::string> parse_json(bool include_comments = false, std::optional<std::string> indent = std::nullopt) noexcept {
+        auto parse_next_element_as_json = [&]() -> std::expected<std::string, std::string> {
             int64_t current_depth = 0;
             bool is_start_of_structure = true;
             bool is_property_value = false;
 
             std::string result_builder;
 
-            for (const nonstd::expected<jsonh_token, std::string>& token_result : read_element()) {
+            for (const std::expected<jsonh_token, std::string>& token_result : read_element()) {
                 // Check error
                 if (!token_result) {
-                    return nonstd::unexpected<std::string>(token_result.error());
+                    return std::unexpected<std::string>(token_result.error());
                 }
                 jsonh_token token = token_result.value();
 
@@ -338,9 +338,9 @@ public:
                     }
                     // Number
                     case json_token_type::number: {
-                        nonstd::expected<long double, std::string> result = jsonh_number_parser::parse(token.value);
+                        std::expected<long double, std::string> result = jsonh_number_parser::parse(token.value);
                         if (!result) {
-                            return nonstd::unexpected<std::string>(result.error());
+                            return std::unexpected<std::string>(result.error());
                         }
                         result_builder.append(json(result.value()).dump());
                         if (result_builder.ends_with(".0")) {
@@ -404,7 +404,7 @@ public:
                     }
                     // Not implemented
                     default: {
-                        return nonstd::unexpected<std::string>("Token type not implemented");
+                        return std::unexpected<std::string>("Token type not implemented");
                     }
                 }
 
@@ -414,18 +414,18 @@ public:
             }
 
             // End of input
-            return nonstd::unexpected<std::string>("Expected token, got end of input");
+            return std::unexpected<std::string>("Expected token, got end of input");
         };
 
         // Parse next element as JSON
-        nonstd::expected<std::string, std::string> next_element_as_json = parse_next_element_as_json();
+        std::expected<std::string, std::string> next_element_as_json = parse_next_element_as_json();
 
         // Ensure exactly one element
         if (next_element_as_json) {
             if (options.parse_single_element) {
-                for (const nonstd::expected<jsonh_token, std::string>& token : read_end_of_elements()) {
+                for (const std::expected<jsonh_token, std::string>& token : read_end_of_elements()) {
                     if (!token) {
-                        return nonstd::unexpected<std::string>(token.error());
+                        return std::unexpected<std::string>(token.error());
                     }
                 }
             }
@@ -453,7 +453,7 @@ public:
     bool find_property_value(const std::string& property_name) noexcept {
         int64_t current_depth = 0;
 
-        for (const nonstd::expected<jsonh_token, std::string>& token_result : read_element()) {
+        for (const std::expected<jsonh_token, std::string>& token_result : read_element()) {
             // Check error
             if (!token_result) {
                 return false;
@@ -503,9 +503,9 @@ public:
     /**
     * @brief Reads comments and whitespace and errors if the reader contains another element.
     **/
-    std::generator<nonstd::expected<jsonh_token, std::string>> read_end_of_elements() noexcept {
+    std::generator<std::expected<jsonh_token, std::string>> read_end_of_elements() noexcept {
         // Comments & whitespace
-        for (const nonstd::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
+        for (const std::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
             if (!token) {
                 co_yield(token);
                 co_return;
@@ -515,16 +515,16 @@ public:
 
         // Peek char
         if (!!peek()) {
-            co_yield(nonstd::unexpected<std::string>("Expected end of elements"));
+            co_yield(std::unexpected<std::string>("Expected end of elements"));
             co_return;
         }
     }
     /**
     * @brief Reads a single element from the reader.
     **/
-    std::generator<nonstd::expected<jsonh_token, std::string>> read_element() noexcept {
+    std::generator<std::expected<jsonh_token, std::string>> read_element() noexcept {
         // Comments & whitespace
-        for (const nonstd::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
+        for (const std::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
             if (!token) {
                 co_yield(token);
                 co_return;
@@ -535,13 +535,13 @@ public:
         // Peek rune
         std::optional<std::string> next = peek();
         if (!next) {
-            co_yield(nonstd::unexpected<std::string>("Expected token, got end of input"));
+            co_yield(std::unexpected<std::string>("Expected token, got end of input"));
             co_return;
         }
 
         // Object
         if (next.value() == "{") {
-            for (const nonstd::expected<jsonh_token, std::string>& token : read_object()) {
+            for (const std::expected<jsonh_token, std::string>& token : read_object()) {
                 if (!token) {
                     co_yield(token);
                     co_return;
@@ -551,7 +551,7 @@ public:
         }
         // Array
         else if (next.value() == "[") {
-            for (const nonstd::expected<jsonh_token, std::string>& token : read_array()) {
+            for (const std::expected<jsonh_token, std::string>& token : read_array()) {
                 if (!token) {
                     co_yield(token);
                     co_return;
@@ -561,14 +561,14 @@ public:
         }
         // Primitive value (null, true, false, string, number)
         else {
-            nonstd::expected<jsonh_token, std::string> token = read_primitive_element();
+            std::expected<jsonh_token, std::string> token = read_primitive_element();
             if (!token) {
-                co_yield(nonstd::unexpected<std::string>(token.error()));
+                co_yield(std::unexpected<std::string>(token.error()));
                 co_return;
             }
 
             // Detect braceless object from property name
-            for (const nonstd::expected<jsonh_token, std::string>& token2 : read_braceless_object_or_end_of_primitive(token.value())) {
+            for (const std::expected<jsonh_token, std::string>& token2 : read_braceless_object_or_end_of_primitive(token.value())) {
                 if (!token2) {
                     co_yield(token2);
                     co_return;
@@ -604,11 +604,11 @@ private:
         "\u2029", "\u0009", "\u000A", "\u000B", "\u000C", "\u000D", "\u0085",
     };
 
-    std::generator<nonstd::expected<jsonh_token, std::string>> read_object() noexcept {
+    std::generator<std::expected<jsonh_token, std::string>> read_object() noexcept {
         // Opening brace
         if (!read_one("{")) {
             // Braceless object
-            for (const nonstd::expected<jsonh_token, std::string>& token : read_braceless_object()) {
+            for (const std::expected<jsonh_token, std::string>& token : read_braceless_object()) {
                 if (!token) {
                     co_yield(token);
                     co_return;
@@ -623,13 +623,13 @@ private:
 
         // Check exceeded max depth
         if (depth > options.max_depth) {
-            co_yield(nonstd::unexpected<std::string>("Exceeded max depth"));
+            co_yield(std::unexpected<std::string>("Exceeded max depth"));
             co_return;
         }
 
         while (true) {
             // Comments & whitespace
-            for (const nonstd::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
+            for (const std::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
                 if (!token) {
                     co_yield(token);
                     co_return;
@@ -646,7 +646,7 @@ private:
                     co_return;
                 }
                 // Missing closing brace
-                co_yield(nonstd::unexpected<std::string>("Expected `}` to end object, got end of input"));
+                co_yield(std::unexpected<std::string>("Expected `}` to end object, got end of input"));
                 co_return;
             }
 
@@ -660,7 +660,7 @@ private:
             }
             // Property
             else {
-                for (const nonstd::expected<jsonh_token, std::string>& token : read_property()) {
+                for (const std::expected<jsonh_token, std::string>& token : read_property()) {
                     if (!token) {
                         co_yield(token);
                         co_return;
@@ -670,20 +670,20 @@ private:
             }
         }
     }
-    std::generator<nonstd::expected<jsonh_token, std::string>> read_braceless_object(std::optional<std::vector<jsonh_token>> property_name_tokens = std::nullopt) noexcept {
+    std::generator<std::expected<jsonh_token, std::string>> read_braceless_object(std::optional<std::vector<jsonh_token>> property_name_tokens = std::nullopt) noexcept {
         // Start of object
         co_yield(jsonh_token(json_token_type::start_object));
         depth++;
 
         // Check exceeded max depth
         if (depth > options.max_depth) {
-            co_yield(nonstd::unexpected<std::string>("Exceeded max depth"));
+            co_yield(std::unexpected<std::string>("Exceeded max depth"));
             co_return;
         }
 
         // Initial tokens
         if (property_name_tokens) {
-            for (const nonstd::expected<jsonh_token, std::string>& token : read_property(property_name_tokens)) {
+            for (const std::expected<jsonh_token, std::string>& token : read_property(property_name_tokens)) {
                 if (!token) {
                     co_yield(token);
                     co_return;
@@ -694,7 +694,7 @@ private:
 
         while (true) {
             // Comments & whitespace
-            for (const nonstd::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
+            for (const std::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
                 if (!token) {
                     co_yield(token);
                     co_return;
@@ -710,7 +710,7 @@ private:
             }
 
             // Property
-            for (const nonstd::expected<jsonh_token, std::string>& token : read_property()) {
+            for (const std::expected<jsonh_token, std::string>& token : read_property()) {
                 if (!token) {
                     co_yield(token);
                     co_return;
@@ -719,10 +719,10 @@ private:
             }
         }
     }
-    std::generator<nonstd::expected<jsonh_token, std::string>> read_braceless_object_or_end_of_primitive(const jsonh_token& primitive_token) {
+    std::generator<std::expected<jsonh_token, std::string>> read_braceless_object_or_end_of_primitive(const jsonh_token& primitive_token) {
         // Comments & whitespace
         std::optional<std::vector<jsonh_token>> property_name_tokens = {};
-        for (const nonstd::expected<jsonh_token, std::string>& comment_or_whitespace_token : read_comments_and_whitespace()) {
+        for (const std::expected<jsonh_token, std::string>& comment_or_whitespace_token : read_comments_and_whitespace()) {
             if (!comment_or_whitespace_token) {
                 co_yield(comment_or_whitespace_token);
                 co_return;
@@ -754,7 +754,7 @@ private:
         property_name_tokens.value().push_back(jsonh_token(json_token_type::property_name, primitive_token.value));
 
         // Braceless object
-        for (const nonstd::expected<jsonh_token, std::string>& object_token : read_braceless_object(property_name_tokens)) {
+        for (const std::expected<jsonh_token, std::string>& object_token : read_braceless_object(property_name_tokens)) {
             if (!object_token) {
                 co_yield(object_token);
                 co_return;
@@ -762,7 +762,7 @@ private:
             co_yield(object_token);
         }
     }
-    std::generator<nonstd::expected<jsonh_token, std::string>> read_property(std::optional<std::vector<jsonh_token>> property_name_tokens = std::nullopt) noexcept {
+    std::generator<std::expected<jsonh_token, std::string>> read_property(std::optional<std::vector<jsonh_token>> property_name_tokens = std::nullopt) noexcept {
         // Property name
         if (property_name_tokens) {
             for (const jsonh_token& token : property_name_tokens.value()) {
@@ -770,7 +770,7 @@ private:
             }
         }
         else {
-            for (const nonstd::expected<jsonh_token, std::string>& token : read_property_name()) {
+            for (const std::expected<jsonh_token, std::string>& token : read_property_name()) {
                 if (!token) {
                     co_yield(token);
                     co_return;
@@ -780,7 +780,7 @@ private:
         }
 
         // Comments & whitespace
-        for (const nonstd::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
+        for (const std::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
             if (!token) {
                 co_yield(token);
                 co_return;
@@ -789,7 +789,7 @@ private:
         }
 
         // Property value
-        for (const nonstd::expected<jsonh_token, std::string>& token : read_element()) {
+        for (const std::expected<jsonh_token, std::string>& token : read_element()) {
             if (!token) {
                 co_yield(token);
                 co_return;
@@ -798,7 +798,7 @@ private:
         }
 
         // Comments & whitespace
-        for (const nonstd::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
+        for (const std::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
             if (!token) {
                 co_yield(token);
                 co_return;
@@ -809,9 +809,9 @@ private:
         // Optional comma
         read_one(",");
     }
-    std::generator<nonstd::expected<jsonh_token, std::string>> read_property_name() noexcept {
+    std::generator<std::expected<jsonh_token, std::string>> read_property_name() noexcept {
         // String
-        nonstd::expected<jsonh_token, std::string> string_result = read_string();
+        std::expected<jsonh_token, std::string> string_result = read_string();
         if (!string_result) {
             co_yield(string_result);
             co_return;
@@ -819,7 +819,7 @@ private:
         jsonh_token string = string_result.value();
 
         // Comments & whitespace
-        for (const nonstd::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
+        for (const std::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
             if (!token) {
                 co_yield(token);
                 co_return;
@@ -829,17 +829,17 @@ private:
 
         // Colon
         if (!read_one(":")) {
-            co_yield(nonstd::unexpected<std::string>("Expected `:` after property name in object"));
+            co_yield(std::unexpected<std::string>("Expected `:` after property name in object"));
             co_return;
         }
 
         // End of property name
         co_yield(jsonh_token(json_token_type::property_name, string.value));
     }
-    std::generator<nonstd::expected<jsonh_token, std::string>> read_array() noexcept {
+    std::generator<std::expected<jsonh_token, std::string>> read_array() noexcept {
         // Opening bracket
         if (!read_one("[")) {
-            co_yield(nonstd::unexpected<std::string>("Expected `[` to start array"));
+            co_yield(std::unexpected<std::string>("Expected `[` to start array"));
             co_return;
         }
         // Start of array
@@ -848,13 +848,13 @@ private:
 
         // Check exceeded max depth
         if (depth > options.max_depth) {
-            co_yield(nonstd::unexpected<std::string>("Exceeded max depth"));
+            co_yield(std::unexpected<std::string>("Exceeded max depth"));
             co_return;
         }
 
         while (true) {
             // Comments & whitespace
-            for (const nonstd::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
+            for (const std::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
                 if (!token) {
                     co_yield(token);
                     co_return;
@@ -871,7 +871,7 @@ private:
                     co_return;
                 }
                 // Missing closing bracket
-                co_yield(nonstd::unexpected<std::string>("Expected `]` to end array, got end of input"));
+                co_yield(std::unexpected<std::string>("Expected `]` to end array, got end of input"));
                 co_return;
             }
 
@@ -885,7 +885,7 @@ private:
             }
             // Item
             else {
-                for (const nonstd::expected<jsonh_token, std::string>& token : read_item()) {
+                for (const std::expected<jsonh_token, std::string>& token : read_item()) {
                     if (!token) {
                         co_yield(token);
                         co_return;
@@ -895,9 +895,9 @@ private:
             }
         }
     }
-    std::generator<nonstd::expected<jsonh_token, std::string>> read_item() noexcept {
+    std::generator<std::expected<jsonh_token, std::string>> read_item() noexcept {
         // Element
-        for (const nonstd::expected<jsonh_token, std::string>& token : read_element()) {
+        for (const std::expected<jsonh_token, std::string>& token : read_element()) {
             if (!token) {
                 co_yield(token);
                 co_return;
@@ -906,7 +906,7 @@ private:
         }
 
         // Comments & whitespace
-        for (const nonstd::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
+        for (const std::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
             if (!token) {
                 co_yield(token);
                 co_return;
@@ -917,7 +917,7 @@ private:
         // Optional comma
         read_one(",");
     }
-    nonstd::expected<jsonh_token, std::string> read_string() noexcept {
+    std::expected<jsonh_token, std::string> read_string() noexcept {
         // Verbatim
         bool is_verbatim = false;
         if (options.supports_version(jsonh_version::v2) && read_one("@")) {
@@ -926,7 +926,7 @@ private:
             // Ensure string immediately follows verbatim symbol
             std::optional<std::string> next = peek();
             if (!next || next.value() == "#" || next.value() == "/" || whitespace_runes.contains(next.value())) {
-                return nonstd::unexpected<std::string>("Expected string to immediately follow verbatim symbol");
+                return std::unexpected<std::string>("Expected string to immediately follow verbatim symbol");
             }
         }
 
@@ -957,7 +957,7 @@ private:
         while (true) {
             std::optional<std::string> next = read();
             if (!next) {
-                return nonstd::unexpected<std::string>("Expected end of string, got end of input");
+                return std::unexpected<std::string>("Expected end of string, got end of input");
             }
 
             // Partial end quote was actually part of string
@@ -979,9 +979,9 @@ private:
                     string_builder += next.value();
                 }
                 else {
-                    nonstd::expected<std::string, std::string> escape_sequence_result = read_escape_sequence();
+                    std::expected<std::string, std::string> escape_sequence_result = read_escape_sequence();
                     if (!escape_sequence_result) {
-                        return nonstd::unexpected<std::string>(escape_sequence_result.error());
+                        return std::unexpected<std::string>(escape_sequence_result.error());
                     }
                     string_builder += escape_sequence_result.value();
                 }
@@ -1121,7 +1121,7 @@ private:
         // End of string
         return jsonh_token(json_token_type::string, string_builder);
     }
-    nonstd::expected<jsonh_token, std::string> read_quoteless_string(const std::string& initial_chars = "", bool is_verbatim = false) noexcept {
+    std::expected<jsonh_token, std::string> read_quoteless_string(const std::string& initial_chars = "", bool is_verbatim = false) noexcept {
         bool is_named_literal_possible = !is_verbatim;
 
         // Read quoteless string
@@ -1141,9 +1141,9 @@ private:
                     string_builder += next.value();
                 }
                 else {
-                    nonstd::expected<std::string, std::string> escape_sequence_result = read_escape_sequence();
+                    std::expected<std::string, std::string> escape_sequence_result = read_escape_sequence();
                     if (!escape_sequence_result) {
-                        return nonstd::unexpected<std::string>(escape_sequence_result.error());
+                        return std::unexpected<std::string>(escape_sequence_result.error());
                     }
                     string_builder += escape_sequence_result.value();
                 }
@@ -1166,7 +1166,7 @@ private:
 
         // Ensure not empty
         if (string_builder.empty()) {
-            return nonstd::unexpected<std::string>("Empty quoteless string");
+            return std::unexpected<std::string>("Empty quoteless string");
         }
 
         // Trim leading whitespace
@@ -1239,7 +1239,7 @@ private:
         std::optional<std::string> next_char = peek();
         return next_char && (next_char.value() == "\\" || !reserved_runes().contains(next_char.value()));
     }
-    nonstd::expected<jsonh_token, std::string> read_number(std::string& number_builder) noexcept {
+    std::expected<jsonh_token, std::string> read_number(std::string& number_builder) noexcept {
         // Read sign
         std::optional<std::string> sign = read_any({ "-", "+" });
         if (sign) {
@@ -1282,9 +1282,9 @@ private:
         }
 
         // Read main number
-        nonstd::expected<void, std::string> main_result = read_number_no_exponent(number_builder, base_digits, has_base_specifier, has_leading_zero);
+        std::expected<void, std::string> main_result = read_number_no_exponent(number_builder, base_digits, has_base_specifier, has_leading_zero);
         if (!main_result) {
-            return nonstd::unexpected<std::string>(main_result.error());
+            return std::unexpected<std::string>(main_result.error());
         }
 
         // Possible hexadecimal exponent
@@ -1296,13 +1296,13 @@ private:
 
                 // Missing digit between base specifier and exponent (e.g. `0xe+`)
                 if (has_base_specifier && number_builder.length() == 4) {
-                    return nonstd::unexpected<std::string>("Missing digit between base specifier and exponent");
+                    return std::unexpected<std::string>("Missing digit between base specifier and exponent");
                 }
 
                 // Read exponent number
-                nonstd::expected<void, std::string> exponent_result = read_number_no_exponent(number_builder, base_digits);
+                std::expected<void, std::string> exponent_result = read_number_no_exponent(number_builder, base_digits);
                 if (!exponent_result) {
-                    return nonstd::unexpected<std::string>(exponent_result.error());
+                    return std::unexpected<std::string>(exponent_result.error());
                 }
             }
         }
@@ -1319,9 +1319,9 @@ private:
                 }
 
                 // Read exponent number
-                nonstd::expected<void, std::string> exponent_result = read_number_no_exponent(number_builder, base_digits);
+                std::expected<void, std::string> exponent_result = read_number_no_exponent(number_builder, base_digits);
                 if (!exponent_result) {
-                    return nonstd::unexpected<std::string>(exponent_result.error());
+                    return std::unexpected<std::string>(exponent_result.error());
                 }
             }
         }
@@ -1329,10 +1329,10 @@ private:
         // End of number
         return jsonh_token(json_token_type::number, number_builder);
     }
-    nonstd::expected<void, std::string> read_number_no_exponent(std::string& number_builder, std::string_view base_digits, bool has_base_specifier = false, bool has_leading_zero = false) noexcept {
+    std::expected<void, std::string> read_number_no_exponent(std::string& number_builder, std::string_view base_digits, bool has_base_specifier = false, bool has_leading_zero = false) noexcept {
         // Leading underscore
         if (!has_base_specifier && !has_leading_zero && peek() == "_") {
-            return nonstd::unexpected<std::string>("Leading `_` in number");
+            return std::unexpected<std::string>("Leading `_` in number");
         }
 
         bool is_fraction = false;
@@ -1360,7 +1360,7 @@ private:
             else if (next.value() == ".") {
                 // Disallow dot following underscore
                 if (number_builder.length() >= 1 && number_builder.back() == '_') {
-                    return nonstd::unexpected<std::string>("`.` must not follow `_` in number");
+                    return std::unexpected<std::string>("`.` must not follow `_` in number");
                 }
 
                 read();
@@ -1369,7 +1369,7 @@ private:
 
                 // Duplicate dot
                 if (is_fraction) {
-                    return nonstd::unexpected<std::string>("Duplicate `.` in number");
+                    return std::unexpected<std::string>("Duplicate `.` in number");
                 }
                 is_fraction = true;
             }
@@ -1377,7 +1377,7 @@ private:
             else if (next.value() == "_") {
                 // Disallow underscore following dot
                 if (number_builder.length() >= 1 && number_builder.back() == '.') {
-                    return nonstd::unexpected<std::string>("`_` must not follow `.` in number");
+                    return std::unexpected<std::string>("`_` must not follow `.` in number");
                 }
 
                 read();
@@ -1392,26 +1392,26 @@ private:
 
         // Ensure not empty
         if (is_empty) {
-            return nonstd::unexpected<std::string>("Empty number");
+            return std::unexpected<std::string>("Empty number");
         }
 
         // Ensure at least one digit
         if (number_builder.find_first_not_of(".-+_") == std::string::npos) {
-            return nonstd::unexpected<std::string>("Number must have at least one digit");
+            return std::unexpected<std::string>("Number must have at least one digit");
         }
 
         // Trailing underscore
         if (number_builder.ends_with('_')) {
-            return nonstd::unexpected<std::string>("Trailing `_` in number");
+            return std::unexpected<std::string>("Trailing `_` in number");
         }
 
         // End of number
-        return nonstd::expected<void, std::string>(); // Success
+        return std::expected<void, std::string>(); // Success
     }
-    nonstd::expected<jsonh_token, std::string> read_number_or_quoteless_string() noexcept {
+    std::expected<jsonh_token, std::string> read_number_or_quoteless_string() noexcept {
         // Read number
         std::string number_builder;
-        nonstd::expected<jsonh_token, std::string> number = read_number(number_builder);
+        std::expected<jsonh_token, std::string> number = read_number(number_builder);
         if (number) {
             // Try read quoteless string starting with number
             std::string whitespace_chars;
@@ -1428,11 +1428,11 @@ private:
             return read_quoteless_string(number_builder);
         }
     }
-    nonstd::expected<jsonh_token, std::string> read_primitive_element() noexcept {
+    std::expected<jsonh_token, std::string> read_primitive_element() noexcept {
         // Peek rune
         std::optional<std::string> next = peek();
         if (!next) {
-            return nonstd::unexpected<std::string>("Expected primitive element, got end of input");
+            return std::unexpected<std::string>("Expected primitive element, got end of input");
         }
 
         // Number
@@ -1448,7 +1448,7 @@ private:
             return read_quoteless_string();
         }
     }
-    std::generator<nonstd::expected<jsonh_token, std::string>> read_comments_and_whitespace() noexcept {
+    std::generator<std::expected<jsonh_token, std::string>> read_comments_and_whitespace() noexcept {
         while (true) {
             // Whitespace
             read_whitespace();
@@ -1461,7 +1461,7 @@ private:
 
             // Comment
             if (next.value() == "#" || next.value() == "/") {
-                nonstd::expected<jsonh_token, std::string> comment = read_comment();
+                std::expected<jsonh_token, std::string> comment = read_comment();
                 if (!comment) {
                     co_yield(comment);
                     co_return;
@@ -1474,7 +1474,7 @@ private:
             }
         }
     }
-    nonstd::expected<jsonh_token, std::string> read_comment() noexcept {
+    std::expected<jsonh_token, std::string> read_comment() noexcept {
         bool block_comment = false;
         int32_t start_nest_counter = 0;
 
@@ -1496,15 +1496,15 @@ private:
                     start_nest_counter++;
                 }
                 if (!read_one("*")) {
-                    return nonstd::unexpected<std::string>("Expected `*` after start of nesting block comment");
+                    return std::unexpected<std::string>("Expected `*` after start of nesting block comment");
                 }
             }
             else {
-                return nonstd::unexpected<std::string>("Unexpected `/`");
+                return std::unexpected<std::string>("Unexpected `/`");
             }
         }
         else {
-            return nonstd::unexpected<std::string>("Unexpected character");
+            return std::unexpected<std::string>("Unexpected character");
         }
 
         // Read comment
@@ -1517,7 +1517,7 @@ private:
             if (block_comment) {
                 // Error
                 if (!next) {
-                    return nonstd::unexpected<std::string>("Expected end of block comment, got end of input");
+                    return std::unexpected<std::string>("Expected end of block comment, got end of input");
                 }
 
                 // End of block comment
@@ -1575,7 +1575,7 @@ private:
         }
     }
     template <size_t LENGTH>
-    nonstd::expected<uint32_t, std::string> read_hex_sequence() noexcept {
+    std::expected<uint32_t, std::string> read_hex_sequence() noexcept {
         static_assert(LENGTH <= 8);
 
         uint32_t value = 0;
@@ -1597,22 +1597,22 @@ private:
             }
             // Unexpected char
             else {
-                return nonstd::unexpected<std::string>("Incorrect number of hexadecimal digits in unicode escape sequence");
+                return std::unexpected<std::string>("Incorrect number of hexadecimal digits in unicode escape sequence");
             }
         }
 
         // Return aggregated value
         return value;
     }
-    nonstd::expected<std::string, std::string> read_escape_sequence(std::optional<uint32_t> high_surrogate = std::nullopt) noexcept {
+    std::expected<std::string, std::string> read_escape_sequence(std::optional<uint32_t> high_surrogate = std::nullopt) noexcept {
         std::optional<std::string> escape_char = read();
         if (!escape_char) {
-            return nonstd::unexpected<std::string>("Expected escape sequence, got end of input");
+            return std::unexpected<std::string>("Expected escape sequence, got end of input");
         }
 
         // Ensure high surrogates are completed
         if (high_surrogate && escape_char.value() != "u" && escape_char.value() != "x" && escape_char.value() != "U") {
-            return nonstd::unexpected<std::string>("Expected low surrogate after high surrogate");
+            return std::unexpected<std::string>("Expected low surrogate after high surrogate");
         }
 
         // Reverse solidus
@@ -1681,17 +1681,17 @@ private:
         }
     }
     template <size_t LENGTH>
-    nonstd::expected<std::string, std::string> read_hex_escape_sequence(std::optional<uint32_t> high_surrogate) noexcept {
-        nonstd::expected<uint32_t, std::string> code_point = read_hex_sequence<LENGTH>();
+    std::expected<std::string, std::string> read_hex_escape_sequence(std::optional<uint32_t> high_surrogate) noexcept {
+        std::expected<uint32_t, std::string> code_point = read_hex_sequence<LENGTH>();
         if (!code_point) {
-            return nonstd::unexpected<std::string>(code_point.error());
+            return std::unexpected<std::string>(code_point.error());
         }
 
         // Low surrogate
         if (high_surrogate) {
-            nonstd::expected<uint32_t, std::string> combined = utf16_surrogates_to_code_point(high_surrogate.value(), code_point.value());
+            std::expected<uint32_t, std::string> combined = utf16_surrogates_to_code_point(high_surrogate.value(), code_point.value());
             if (!combined) {
-                return nonstd::unexpected<std::string>(combined.error());
+                return std::unexpected<std::string>(combined.error());
             }
             return code_point_to_utf8(combined.value());
         }
@@ -1706,10 +1706,10 @@ private:
             }
         }
     }
-    static nonstd::expected<std::string, std::string> code_point_to_utf8(uint32_t code_point) noexcept {
+    static std::expected<std::string, std::string> code_point_to_utf8(uint32_t code_point) noexcept {
         // Invalid surrogate
         if (code_point >= 0xD800 && code_point <= 0xDFFF) {
-            return nonstd::unexpected<std::string>("Invalid code point (surrogate half)");
+            return std::unexpected<std::string>("Invalid code point (surrogate half)");
         }
         // 1-byte UTF-8
         else if (code_point <= 0x7F) {
@@ -1743,15 +1743,15 @@ private:
         }
         // Invalid UTF-8
         else {
-            return nonstd::unexpected<std::string>("Invalid code point (out of range)");
+            return std::unexpected<std::string>("Invalid code point (out of range)");
         }
     }
-    static nonstd::expected<uint32_t, std::string> utf16_surrogates_to_code_point(uint32_t high_surrogate, uint32_t low_surrogate) noexcept {
+    static std::expected<uint32_t, std::string> utf16_surrogates_to_code_point(uint32_t high_surrogate, uint32_t low_surrogate) noexcept {
         if (!is_utf16_high_surrogate(high_surrogate)) {
-            return nonstd::unexpected<std::string>("High surrogate out of range");
+            return std::unexpected<std::string>("High surrogate out of range");
         }
         if (!is_utf16_low_surrogate(low_surrogate)) {
-            return nonstd::unexpected<std::string>("Low surrogate out of range");
+            return std::unexpected<std::string>("Low surrogate out of range");
         }
         return 0x10000 + (((high_surrogate - 0xD800) << 10) | (low_surrogate - 0xDC00));
     }

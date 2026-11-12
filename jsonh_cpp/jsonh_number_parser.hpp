@@ -5,7 +5,7 @@
 #include <cmath>
 #include <cctype>
 #include <cstdlib>
-#include "martinmoene/expected.hpp"
+#include <expected>
 
 namespace jsonh_cpp {
 
@@ -24,7 +24,7 @@ public:
     * 
     * Output: @c 5200
     **/
-    static nonstd::expected<long double, std::string> parse(std::string jsonh_number) noexcept {
+    static std::expected<long double, std::string> parse(std::string jsonh_number) noexcept {
         // Remove underscores
         std::erase(jsonh_number, '_');
         std::string_view digits = jsonh_number;
@@ -59,9 +59,9 @@ public:
         }
 
         // Parse number with base digits
-        nonstd::expected<long double, std::string> number = parse_fractional_number_with_exponent(digits, base_digits);
+        std::expected<long double, std::string> number = parse_fractional_number_with_exponent(digits, base_digits);
         if (!number) {
-            return nonstd::unexpected<std::string>(number.error());
+            return std::unexpected<std::string>(number.error());
         }
 
         // Apply sign
@@ -75,7 +75,7 @@ private:
     /**
     * @brief Converts a fractional number with an exponent (e.g. @c 12.3e4.5) from the given base (e.g. @c 01234567) to a base-10 real.
     **/
-    static nonstd::expected<long double, std::string> parse_fractional_number_with_exponent(std::string_view digits, std::string_view base_digits) noexcept {
+    static std::expected<long double, std::string> parse_fractional_number_with_exponent(std::string_view digits, std::string_view base_digits) noexcept {
         // Find exponent
         size_t exponent_index = std::string::npos;
         // Hexadecimal exponent
@@ -106,13 +106,13 @@ private:
         std::string_view exponent_part = digits.substr(exponent_index + 1);
 
         // Parse mantissa and exponent
-        nonstd::expected<long double, std::string> mantissa = parse_fractional_number(mantissa_part, base_digits);
+        std::expected<long double, std::string> mantissa = parse_fractional_number(mantissa_part, base_digits);
         if (!mantissa) {
-            return nonstd::unexpected<std::string>(mantissa.error());
+            return std::unexpected<std::string>(mantissa.error());
         }
-        nonstd::expected<long double, std::string> exponent = parse_fractional_number(exponent_part, base_digits);
+        std::expected<long double, std::string> exponent = parse_fractional_number(exponent_part, base_digits);
         if (!exponent) {
-            return nonstd::unexpected<std::string>(exponent.error());
+            return std::unexpected<std::string>(exponent.error());
         }
 
         // Multiply mantissa by 10 ^ exponent
@@ -121,7 +121,7 @@ private:
     /**
     * @brief Converts a fractional number (e.g. @c 123.45) from the given base (e.g. @c 01234567) to a base-10 real.
     **/
-    static nonstd::expected<long double, std::string> parse_fractional_number(std::string_view digits, std::string_view base_digits) noexcept {
+    static std::expected<long double, std::string> parse_fractional_number(std::string_view digits, std::string_view base_digits) noexcept {
         // Optimization for base-10 digits
         if (base_digits == "0123456789") {
             return string_to_number(std::string(digits));
@@ -139,9 +139,9 @@ private:
         std::string_view fraction_part = digits.substr(dot_index + 1);
 
         // Parse parts of number
-        nonstd::expected<long double, std::string> whole = parse_whole_number(whole_part, base_digits);
+        std::expected<long double, std::string> whole = parse_whole_number(whole_part, base_digits);
         if (!whole) {
-            return nonstd::unexpected<std::string>(whole.error());
+            return std::unexpected<std::string>(whole.error());
         }
 
         // Add each column of fraction digits
@@ -153,7 +153,7 @@ private:
 
             // Ensure digit is valid
             if (digit_int == std::string::npos) {
-                return nonstd::unexpected<std::string>("Invalid digit");
+                return std::unexpected<std::string>("Invalid digit");
             }
 
             // Add value of column
@@ -166,7 +166,7 @@ private:
     /**
     * @brief Converts a whole number (e.g. @c 12345) from the given base (e.g. @c 01234567) to a base-10 integer.
     **/
-    static nonstd::expected<long double, std::string> parse_whole_number(std::string_view digits, std::string_view base_digits) noexcept {
+    static std::expected<long double, std::string> parse_whole_number(std::string_view digits, std::string_view base_digits) noexcept {
         // Optimization for base-10 digits
         if (base_digits == "0123456789") {
             return string_to_number(std::string(digits));
@@ -192,7 +192,7 @@ private:
 
             // Ensure digit is valid
             if (digit_int == std::string::npos) {
-                return nonstd::unexpected<std::string>("Invalid digit");
+                return std::unexpected<std::string>("Invalid digit");
             }
 
             // Add value of column
