@@ -56,7 +56,8 @@ enum struct json_element_type : uint8_t {
 /**
 * @brief A single JSON element.
 **/
-struct json_element {
+class json_element {
+public:
     /**
     * @brief A null value.
     *
@@ -95,6 +96,8 @@ struct json_element {
     using json_object_t = std::map<json_string_t, json_element>;
     /**
     * @brief Any JSON element.
+    *
+    * This variant's types match @ref json_element_type.
     **/
     using json_element_t = std::variant<
         json_null_t,
@@ -104,11 +107,6 @@ struct json_element {
         json_array_t,
         json_object_t
     >;
-
-    /**
-    * @brief The value stored inside the @ref json_element.
-    **/
-    json_element_t value;
 
     /**
     * @brief Constructs a JSON element with a value of null.
@@ -124,6 +122,10 @@ struct json_element {
     }
     /**
     * @brief Constructs a JSON element with the given value.
+    *
+    * Supports @ref json_element, @ref json_element_t, @ref json_null_t, @ref json_boolean_t, @ref json_number_t, @ref json_string_t,
+    * @ref json_array_t, @ref json_object_t, types convertible to "const char*", arithmetic types, types like @ref std::map, and
+    * types like @ref std::vector.
     **/
     template<typename T>
     json_element(const T& value) {
@@ -189,57 +191,110 @@ struct json_element {
         }
     }
 
+    /**
+    * @brief Returns the type of the JSON element as a @ref json_element_type.
+    **/
     json_element_type type() const noexcept {
         return static_cast<json_element_type>(value.index());
     }
 
+    /**
+    * @brief Returns true if the JSON element is null (@ref json_null_t).
+    **/
     bool is_null() const noexcept {
         return std::holds_alternative<json_null_t>(value);
     }
+    /**
+    * @brief Returns true if the JSON element is a boolean (@ref json_boolean_t).
+    **/
     bool is_boolean() const noexcept {
         return std::holds_alternative<json_boolean_t>(value);
     }
+    /**
+    * @brief Returns true if the JSON element is a number (@ref json_number_t).
+    **/
     bool is_number() const noexcept {
         return std::holds_alternative<json_number_t>(value);
     }
+    /**
+    * @brief Returns true if the JSON element is a string (@ref json_string_t).
+    **/
     bool is_string() const noexcept {
         return std::holds_alternative<json_string_t>(value);
     }
+    /**
+    * @brief Returns true if the JSON element is an array (@ref json_array_t).
+    **/
     bool is_array() const noexcept {
         return std::holds_alternative<json_array_t>(value);
     }
+    /**
+    * @brief Returns true if the JSON element is an object (@ref json_object_t).
+    **/
     bool is_object() const noexcept {
         return std::holds_alternative<json_object_t>(value);
     }
 
+    /**
+    * @brief Casts the JSON element to null (@ref json_null_t).
+    **/
     json_null_t as_null() const noexcept {
         return std::get<json_null_t>(value);
     }
+    /**
+    * @brief Casts the JSON element to a boolean (@ref json_boolean_t).
+    **/
     json_boolean_t as_boolean() const noexcept {
         return std::get<json_boolean_t>(value);
     }
+    /**
+    * @brief Casts the JSON element to a number (@ref json_number_t).
+    **/
     json_number_t as_number() const noexcept {
         return std::get<json_number_t>(value);
     }
+    /**
+    * @brief Casts the JSON element to a string (@ref json_string_t).
+    **/
     json_string_t& as_string() noexcept {
         return std::get<json_string_t>(value);
     }
+    /**
+    * @brief Casts the JSON element to a string (@ref json_string_t).
+    **/
     const json_string_t& as_string() const noexcept {
         return std::get<json_string_t>(value);
     }
+    /**
+    * @brief Casts the JSON element to an array (@ref json_array_t).
+    **/
     json_array_t& as_array() noexcept {
         return std::get<json_array_t>(value);
     }
+    /**
+    * @brief Casts the JSON element to an array (@ref json_array_t).
+    **/
     const json_array_t& as_array() const noexcept {
         return std::get<json_array_t>(value);
     }
+    /**
+    * @brief Casts the JSON element to an object (@ref json_object_t).
+    **/
     json_object_t& as_object() noexcept {
         return std::get<json_object_t>(value);
     }
+    /**
+    * @brief Casts the JSON element to an object (@ref json_object_t).
+    **/
     const json_object_t& as_object() const noexcept {
         return std::get<json_object_t>(value);
     }
-
+    /**
+    * @brief Casts the JSON element to the given type.
+    *
+    * Supports @ref json_element, @ref json_element_t, @ref json_null_t, @ref json_boolean_t, @ref json_number_t, @ref json_string_t,
+    * @ref json_array_t, @ref json_object_t, arithmetic types, types like @ref std::map, and types like @ref std::vector.
+    **/
     template<typename T>
     T as() const {
         // Cast to json_element
@@ -299,6 +354,12 @@ struct json_element {
             static_assert(std::is_same_v<T, void>, "Unsupported conversion from json_element to T");
         }
     }
+
+private:
+    /**
+    * @brief The value stored inside the @ref json_element.
+    **/
+    json_element_t value;
 };
 
 };
