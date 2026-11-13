@@ -159,7 +159,7 @@ TEST_CASE("CommentTest") {
         3 /* block comment */, 4
 ]
 )";
-    std::vector<int> element = jsonh_reader::parse_element<std::vector<int>>(jsonh).value();
+    std::vector<int32_t> element = jsonh_reader::parse_element<std::vector<int32_t>>(jsonh).value();
 
     REQUIRE(element.size() == 4);
     REQUIRE(element[0] == 1);
@@ -203,11 +203,11 @@ TEST_CASE("ParseSingleElementTest") {
 1
 2
 )";
-    int element = jsonh_reader::parse_element<int>(jsonh).value();
+    int element = jsonh_reader::parse_element<int32_t>(jsonh).value();
 
     REQUIRE(element == 1);
 
-    REQUIRE(!jsonh_reader::parse_element<int>(jsonh, jsonh_reader_options({
+    REQUIRE(!jsonh_reader::parse_element<int32_t>(jsonh, jsonh_reader_options({
         .parse_single_element = true,
     })));
 
@@ -217,7 +217,7 @@ TEST_CASE("ParseSingleElementTest") {
 
 )";
 
-    REQUIRE(jsonh_reader::parse_element<int>(jsonh2, jsonh_reader_options({
+    REQUIRE(jsonh_reader::parse_element<int32_t>(jsonh2, jsonh_reader_options({
         .parse_single_element = true,
     })));
 }
@@ -423,34 +423,34 @@ TEST_CASE("HexNumberWithETest") {
 0x5e3
 )";
 
-    REQUIRE(jsonh_reader::parse_element<int>(jsonh).value() == 0x5e3);
+    REQUIRE(jsonh_reader::parse_element<int32_t>(jsonh).value() == 0x5e3);
 
     std::string jsonh2 = R"(
 0x5e+3
 )";
 
-    REQUIRE(jsonh_reader::parse_element<int>(jsonh2).value() == 5000);
+    REQUIRE(jsonh_reader::parse_element<int32_t>(jsonh2).value() == 5000);
 }
 TEST_CASE("NumberWithRepeatedUnderscoresTest") {
     std::string jsonh = R"(
 100__000
 )";
 
-    REQUIRE(jsonh_reader::parse_element<int>(jsonh).value() == 100'000);
+    REQUIRE(jsonh_reader::parse_element<int32_t>(jsonh).value() == 100'000);
 }
 TEST_CASE("NumberWithUnderscoreAfterBaseSpecifierTest") {
     std::string jsonh = R"(
 0b_100
 )";
 
-    REQUIRE(jsonh_reader::parse_element<int>(jsonh).value() == 0b100);
+    REQUIRE(jsonh_reader::parse_element<int32_t>(jsonh).value() == 0b100);
 }
 TEST_CASE("NegativeNumberWithBaseSpecifierTest") {
     std::string jsonh = R"(
 -0x5
 )";
 
-    REQUIRE(jsonh_reader::parse_element<int>(jsonh).value() == -0x5);
+    REQUIRE(jsonh_reader::parse_element<int32_t>(jsonh).value() == -0x5);
 }
 TEST_CASE("NumberDotTest") {
     std::string jsonh = R"(
@@ -549,7 +549,7 @@ TEST_CASE("UnderscoreAfterLeadingZeroTest") {
 0_0
 )";
 
-    REQUIRE(jsonh_reader::parse_element<int>(jsonh).value() == 0'0);
+    REQUIRE(jsonh_reader::parse_element<int32_t>(jsonh).value() == 0'0);
 }
 TEST_CASE("UnderscoreBesideDotTest") {
     std::string jsonh = R"(
