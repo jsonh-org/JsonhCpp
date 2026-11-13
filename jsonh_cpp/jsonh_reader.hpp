@@ -89,7 +89,7 @@ public:
     std::expected<T, std::string> parse_element() noexcept {
         std::expected<json_element, std::string> element = parse_element();
         if (!element) {
-            return std::unexpected<std::string>(element.error());
+            return std::unexpected(element.error());
         }
         return element.value().as<T>();
     }
@@ -125,7 +125,7 @@ public:
             for (const std::expected<jsonh_token, std::string>& token_result : read_element()) {
                 // Check error
                 if (!token_result) {
-                    return std::unexpected<std::string>(token_result.error());
+                    return std::unexpected(token_result.error());
                 }
                 jsonh_token token = token_result.value();
 
@@ -166,7 +166,7 @@ public:
                     case json_token_type::number: {
                         std::expected<double, std::string> result = jsonh_number_parser::parse(token.value);
                         if (!result) {
-                            return std::unexpected<std::string>(result.error());
+                            return std::unexpected(result.error());
                         }
                         json_element element = json_element(result.value());
                         if (submit_element(element)) {
@@ -209,13 +209,13 @@ public:
                     }
                     // Not implemented
                     default: {
-                        return std::unexpected<std::string>("Token type not implemented");
+                        return std::unexpected("Token type not implemented");
                     }
                 }
             }
 
             // End of input
-            return std::unexpected<std::string>("Expected token, got end of input");
+            return std::unexpected("Expected token, got end of input");
         };
 
         // Parse next element
@@ -226,7 +226,7 @@ public:
             if (options.parse_single_element) {
                 for (const std::expected<jsonh_token, std::string>& token : read_end_of_elements()) {
                     if (!token) {
-                        return std::unexpected<std::string>(token.error());
+                        return std::unexpected(token.error());
                     }
                 }
             }
@@ -254,7 +254,7 @@ public:
             for (const std::expected<jsonh_token, std::string>& token_result : read_element()) {
                 // Check error
                 if (!token_result) {
-                    return std::unexpected<std::string>(token_result.error());
+                    return std::unexpected(token_result.error());
                 }
                 jsonh_token token = token_result.value();
 
@@ -339,7 +339,7 @@ public:
                     case json_token_type::number: {
                         std::expected<double, std::string> result = jsonh_number_parser::parse(token.value);
                         if (!result) {
-                            return std::unexpected<std::string>(result.error());
+                            return std::unexpected(result.error());
                         }
                         result_builder.append(to_json_number(result.value()));
                         if (result_builder.ends_with(".0")) {
@@ -403,7 +403,7 @@ public:
                     }
                     // Not implemented
                     default: {
-                        return std::unexpected<std::string>("Token type not implemented");
+                        return std::unexpected("Token type not implemented");
                     }
                 }
 
@@ -413,7 +413,7 @@ public:
             }
 
             // End of input
-            return std::unexpected<std::string>("Expected token, got end of input");
+            return std::unexpected("Expected token, got end of input");
         };
 
         // Parse next element as JSON
@@ -424,7 +424,7 @@ public:
             if (options.parse_single_element) {
                 for (const std::expected<jsonh_token, std::string>& token : read_end_of_elements()) {
                     if (!token) {
-                        return std::unexpected<std::string>(token.error());
+                        return std::unexpected(token.error());
                     }
                 }
             }
@@ -514,7 +514,7 @@ public:
 
         // Peek char
         if (!!peek()) {
-            co_yield(std::unexpected<std::string>("Expected end of elements"));
+            co_yield(std::unexpected("Expected end of elements"));
             co_return;
         }
     }
@@ -534,7 +534,7 @@ public:
         // Peek rune
         std::optional<std::string> next = peek();
         if (!next) {
-            co_yield(std::unexpected<std::string>("Expected token, got end of input"));
+            co_yield(std::unexpected("Expected token, got end of input"));
             co_return;
         }
 
@@ -562,7 +562,7 @@ public:
         else {
             std::expected<jsonh_token, std::string> token = read_primitive_element();
             if (!token) {
-                co_yield(std::unexpected<std::string>(token.error()));
+                co_yield(std::unexpected(token.error()));
                 co_return;
             }
 
@@ -622,7 +622,7 @@ private:
 
         // Check exceeded max depth
         if (depth > options.max_depth) {
-            co_yield(std::unexpected<std::string>("Exceeded max depth"));
+            co_yield(std::unexpected("Exceeded max depth"));
             co_return;
         }
 
@@ -645,7 +645,7 @@ private:
                     co_return;
                 }
                 // Missing closing brace
-                co_yield(std::unexpected<std::string>("Expected `}` to end object, got end of input"));
+                co_yield(std::unexpected("Expected `}` to end object, got end of input"));
                 co_return;
             }
 
@@ -676,7 +676,7 @@ private:
 
         // Check exceeded max depth
         if (depth > options.max_depth) {
-            co_yield(std::unexpected<std::string>("Exceeded max depth"));
+            co_yield(std::unexpected("Exceeded max depth"));
             co_return;
         }
 
@@ -828,7 +828,7 @@ private:
 
         // Colon
         if (!read_one(":")) {
-            co_yield(std::unexpected<std::string>("Expected `:` after property name in object"));
+            co_yield(std::unexpected("Expected `:` after property name in object"));
             co_return;
         }
 
@@ -838,7 +838,7 @@ private:
     std::generator<std::expected<jsonh_token, std::string>> read_array() noexcept {
         // Opening bracket
         if (!read_one("[")) {
-            co_yield(std::unexpected<std::string>("Expected `[` to start array"));
+            co_yield(std::unexpected("Expected `[` to start array"));
             co_return;
         }
         // Start of array
@@ -847,7 +847,7 @@ private:
 
         // Check exceeded max depth
         if (depth > options.max_depth) {
-            co_yield(std::unexpected<std::string>("Exceeded max depth"));
+            co_yield(std::unexpected("Exceeded max depth"));
             co_return;
         }
 
@@ -870,7 +870,7 @@ private:
                     co_return;
                 }
                 // Missing closing bracket
-                co_yield(std::unexpected<std::string>("Expected `]` to end array, got end of input"));
+                co_yield(std::unexpected("Expected `]` to end array, got end of input"));
                 co_return;
             }
 
@@ -925,7 +925,7 @@ private:
             // Ensure string immediately follows verbatim symbol
             std::optional<std::string> next = peek();
             if (!next || next.value() == "#" || next.value() == "/" || whitespace_runes.contains(next.value())) {
-                return std::unexpected<std::string>("Expected string to immediately follow verbatim symbol");
+                return std::unexpected("Expected string to immediately follow verbatim symbol");
             }
         }
 
@@ -956,7 +956,7 @@ private:
         while (true) {
             std::optional<std::string> next = read();
             if (!next) {
-                return std::unexpected<std::string>("Expected end of string, got end of input");
+                return std::unexpected("Expected end of string, got end of input");
             }
 
             // Partial end quote was actually part of string
@@ -980,7 +980,7 @@ private:
                 else {
                     std::expected<std::string, std::string> escape_sequence_result = read_escape_sequence();
                     if (!escape_sequence_result) {
-                        return std::unexpected<std::string>(escape_sequence_result.error());
+                        return std::unexpected(escape_sequence_result.error());
                     }
                     string_builder += escape_sequence_result.value();
                 }
@@ -1142,7 +1142,7 @@ private:
                 else {
                     std::expected<std::string, std::string> escape_sequence_result = read_escape_sequence();
                     if (!escape_sequence_result) {
-                        return std::unexpected<std::string>(escape_sequence_result.error());
+                        return std::unexpected(escape_sequence_result.error());
                     }
                     string_builder += escape_sequence_result.value();
                 }
@@ -1165,7 +1165,7 @@ private:
 
         // Ensure not empty
         if (string_builder.empty()) {
-            return std::unexpected<std::string>("Empty quoteless string");
+            return std::unexpected("Empty quoteless string");
         }
 
         // Trim leading whitespace
@@ -1283,7 +1283,7 @@ private:
         // Read main number
         std::expected<void, std::string> main_result = read_number_no_exponent(number_builder, base_digits, has_base_specifier, has_leading_zero);
         if (!main_result) {
-            return std::unexpected<std::string>(main_result.error());
+            return std::unexpected(main_result.error());
         }
 
         // Possible hexadecimal exponent
@@ -1295,13 +1295,13 @@ private:
 
                 // Missing digit between base specifier and exponent (e.g. `0xe+`)
                 if (has_base_specifier && number_builder.length() == 4) {
-                    return std::unexpected<std::string>("Missing digit between base specifier and exponent");
+                    return std::unexpected("Missing digit between base specifier and exponent");
                 }
 
                 // Read exponent number
                 std::expected<void, std::string> exponent_result = read_number_no_exponent(number_builder, base_digits);
                 if (!exponent_result) {
-                    return std::unexpected<std::string>(exponent_result.error());
+                    return std::unexpected(exponent_result.error());
                 }
             }
         }
@@ -1320,7 +1320,7 @@ private:
                 // Read exponent number
                 std::expected<void, std::string> exponent_result = read_number_no_exponent(number_builder, base_digits);
                 if (!exponent_result) {
-                    return std::unexpected<std::string>(exponent_result.error());
+                    return std::unexpected(exponent_result.error());
                 }
             }
         }
@@ -1331,7 +1331,7 @@ private:
     std::expected<void, std::string> read_number_no_exponent(std::string& number_builder, std::string_view base_digits, bool has_base_specifier = false, bool has_leading_zero = false) noexcept {
         // Leading underscore
         if (!has_base_specifier && !has_leading_zero && peek() == "_") {
-            return std::unexpected<std::string>("Leading `_` in number");
+            return std::unexpected("Leading `_` in number");
         }
 
         bool is_fraction = false;
@@ -1359,7 +1359,7 @@ private:
             else if (next.value() == ".") {
                 // Disallow dot following underscore
                 if (number_builder.length() >= 1 && number_builder.back() == '_') {
-                    return std::unexpected<std::string>("`.` must not follow `_` in number");
+                    return std::unexpected("`.` must not follow `_` in number");
                 }
 
                 read();
@@ -1368,7 +1368,7 @@ private:
 
                 // Duplicate dot
                 if (is_fraction) {
-                    return std::unexpected<std::string>("Duplicate `.` in number");
+                    return std::unexpected("Duplicate `.` in number");
                 }
                 is_fraction = true;
             }
@@ -1376,7 +1376,7 @@ private:
             else if (next.value() == "_") {
                 // Disallow underscore following dot
                 if (number_builder.length() >= 1 && number_builder.back() == '.') {
-                    return std::unexpected<std::string>("`_` must not follow `.` in number");
+                    return std::unexpected("`_` must not follow `.` in number");
                 }
 
                 read();
@@ -1391,17 +1391,17 @@ private:
 
         // Ensure not empty
         if (is_empty) {
-            return std::unexpected<std::string>("Empty number");
+            return std::unexpected("Empty number");
         }
 
         // Ensure at least one digit
         if (number_builder.find_first_not_of(".-+_") == std::string::npos) {
-            return std::unexpected<std::string>("Number must have at least one digit");
+            return std::unexpected("Number must have at least one digit");
         }
 
         // Trailing underscore
         if (number_builder.ends_with('_')) {
-            return std::unexpected<std::string>("Trailing `_` in number");
+            return std::unexpected("Trailing `_` in number");
         }
 
         // End of number
@@ -1431,7 +1431,7 @@ private:
         // Peek rune
         std::optional<std::string> next = peek();
         if (!next) {
-            return std::unexpected<std::string>("Expected primitive element, got end of input");
+            return std::unexpected("Expected primitive element, got end of input");
         }
 
         // Number
@@ -1495,15 +1495,15 @@ private:
                     start_nest_counter++;
                 }
                 if (!read_one("*")) {
-                    return std::unexpected<std::string>("Expected `*` after start of nesting block comment");
+                    return std::unexpected("Expected `*` after start of nesting block comment");
                 }
             }
             else {
-                return std::unexpected<std::string>("Unexpected `/`");
+                return std::unexpected("Unexpected `/`");
             }
         }
         else {
-            return std::unexpected<std::string>("Unexpected character");
+            return std::unexpected("Unexpected character");
         }
 
         // Read comment
@@ -1516,7 +1516,7 @@ private:
             if (block_comment) {
                 // Error
                 if (!next) {
-                    return std::unexpected<std::string>("Expected end of block comment, got end of input");
+                    return std::unexpected("Expected end of block comment, got end of input");
                 }
 
                 // End of block comment
@@ -1596,7 +1596,7 @@ private:
             }
             // Unexpected char
             else {
-                return std::unexpected<std::string>("Incorrect number of hexadecimal digits in unicode escape sequence");
+                return std::unexpected("Incorrect number of hexadecimal digits in unicode escape sequence");
             }
         }
 
@@ -1606,12 +1606,12 @@ private:
     std::expected<std::string, std::string> read_escape_sequence(std::optional<uint32_t> high_surrogate = std::nullopt) noexcept {
         std::optional<std::string> escape_char = read();
         if (!escape_char) {
-            return std::unexpected<std::string>("Expected escape sequence, got end of input");
+            return std::unexpected("Expected escape sequence, got end of input");
         }
 
         // Ensure high surrogates are completed
         if (high_surrogate && escape_char.value() != "u" && escape_char.value() != "x" && escape_char.value() != "U") {
-            return std::unexpected<std::string>("Expected low surrogate after high surrogate");
+            return std::unexpected("Expected low surrogate after high surrogate");
         }
 
         // Reverse solidus
@@ -1683,14 +1683,14 @@ private:
     std::expected<std::string, std::string> read_hex_escape_sequence(std::optional<uint32_t> high_surrogate) noexcept {
         std::expected<uint32_t, std::string> code_point = read_hex_sequence<LENGTH>();
         if (!code_point) {
-            return std::unexpected<std::string>(code_point.error());
+            return std::unexpected(code_point.error());
         }
 
         // Low surrogate
         if (high_surrogate) {
             std::expected<uint32_t, std::string> combined = utf16_surrogates_to_code_point(high_surrogate.value(), code_point.value());
             if (!combined) {
-                return std::unexpected<std::string>(combined.error());
+                return std::unexpected(combined.error());
             }
             return code_point_to_utf8(combined.value());
         }
@@ -1708,7 +1708,7 @@ private:
     static std::expected<std::string, std::string> code_point_to_utf8(uint32_t code_point) noexcept {
         // Invalid surrogate
         if (code_point >= 0xD800 && code_point <= 0xDFFF) {
-            return std::unexpected<std::string>("Invalid code point (surrogate half)");
+            return std::unexpected("Invalid code point (surrogate half)");
         }
         // 1-byte UTF-8
         else if (code_point <= 0x7F) {
@@ -1742,15 +1742,15 @@ private:
         }
         // Invalid UTF-8
         else {
-            return std::unexpected<std::string>("Invalid code point (out of range)");
+            return std::unexpected("Invalid code point (out of range)");
         }
     }
     static std::expected<uint32_t, std::string> utf16_surrogates_to_code_point(uint32_t high_surrogate, uint32_t low_surrogate) noexcept {
         if (!is_utf16_high_surrogate(high_surrogate)) {
-            return std::unexpected<std::string>("High surrogate out of range");
+            return std::unexpected("High surrogate out of range");
         }
         if (!is_utf16_low_surrogate(low_surrogate)) {
-            return std::unexpected<std::string>("Low surrogate out of range");
+            return std::unexpected("Low surrogate out of range");
         }
         return 0x10000 + (((high_surrogate - 0xD800) << 10) | (low_surrogate - 0xDC00));
     }

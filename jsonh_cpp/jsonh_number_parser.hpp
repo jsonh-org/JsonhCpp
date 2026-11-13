@@ -62,7 +62,7 @@ public:
         // Parse number with base digits
         std::expected<double, std::string> number = parse_fractional_number_with_exponent(digits, base_digits);
         if (!number) {
-            return std::unexpected<std::string>(number.error());
+            return std::unexpected(number.error());
         }
 
         // Apply sign
@@ -109,11 +109,11 @@ private:
         // Parse mantissa and exponent
         std::expected<double, std::string> mantissa = parse_fractional_number(mantissa_part, base_digits);
         if (!mantissa) {
-            return std::unexpected<std::string>(mantissa.error());
+            return std::unexpected(mantissa.error());
         }
         std::expected<double, std::string> exponent = parse_fractional_number(exponent_part, base_digits);
         if (!exponent) {
-            return std::unexpected<std::string>(exponent.error());
+            return std::unexpected(exponent.error());
         }
 
         // Multiply mantissa by 10 ^ exponent
@@ -142,7 +142,7 @@ private:
         // Parse parts of number
         std::expected<double, std::string> whole = parse_whole_number(whole_part, base_digits);
         if (!whole) {
-            return std::unexpected<std::string>(whole.error());
+            return std::unexpected(whole.error());
         }
 
         // Add each column of fraction digits
@@ -154,7 +154,7 @@ private:
 
             // Ensure digit is valid
             if (digit_int == std::string::npos) {
-                return std::unexpected<std::string>("Invalid digit");
+                return std::unexpected("Invalid digit");
             }
 
             // Add value of column
@@ -193,7 +193,7 @@ private:
 
             // Ensure digit is valid
             if (digit_int == std::string::npos) {
-                return std::unexpected<std::string>("Invalid digit");
+                return std::unexpected("Invalid digit");
             }
 
             // Add value of column
