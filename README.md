@@ -54,7 +54,7 @@ std::string jsonh = R"(
     this is: awesome
 }
 )";
-json_element::json_object element = jsonh_cpp::jsonh_reader::parse_element<json_element::json_object>(jsonh).value();
+json_element::json_object_t element = jsonh_cpp::jsonh_reader::parse_element<json_element::json_object_t>(jsonh).value();
 ```
 
 ## Dependencies
