@@ -60,6 +60,9 @@ json_element::json_object_t element = jsonh_cpp::jsonh_reader::parse_element<jso
 ## Dependencies
 
 - C++23
+
+### Test/Development Dependencies
+
 - [catchorg/Catch2](https://github.com/catchorg/Catch2) (v3.16.1)
 - [rindeal/Amalgamate](https://github.com/rindeal/Amalgamate) (v0.99.0)
 
