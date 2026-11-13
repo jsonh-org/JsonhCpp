@@ -20,37 +20,37 @@ enum struct json_element_type : uint8_t {
     *
     * Example: @c null
     **/
-    null,
+    null = 0,
     /**
     * @brief A boolean.
     *
     * Example: @c true
     **/
-    boolean,
+    boolean = 1,
     /**
     * @brief A number.
     *
     * Example: @c 10
     **/
-    number,
+    number = 2,
     /**
     * @brief A string.
     *
     * Example: @c "value"
     **/
-    string,
+    string = 3,
     /**
     * @brief An array.
     *
     * Example: @c [1,2,3]
     **/
-    array,
+    array = 4,
     /**
     * @brief An object.
     *
     * Example: @c {"a":"b"}
     **/
-    object
+    object = 5,
 };
 
 /**
@@ -100,12 +100,12 @@ public:
     * This variant's types match @ref json_element_type.
     **/
     using json_element_t = std::variant<
-        json_null_t,
-        json_boolean_t,
-        json_number_t,
-        json_string_t,
-        json_array_t,
-        json_object_t
+        json_null_t, // 0
+        json_boolean_t, // 1
+        json_number_t, // 2
+        json_string_t, // 3
+        json_array_t, // 4
+        json_object_t // 5
     >;
 
     /**
