@@ -1,5 +1,5 @@
 // JsonhCpp (JSON for Humans)
-// Version: 12.1
+// Version: 12.2
 // Link: https://github.com/jsonh-org/JsonhCpp
 // License: MIT
 
