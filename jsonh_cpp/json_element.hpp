@@ -128,7 +128,7 @@ public:
     * types like @ref std::vector.
     **/
     template<typename T>
-    json_element(const T& value) {
+    json_element(const T& value) noexcept {
         using U = std::decay_t<T>;
 
         // Cast from json_element
@@ -296,7 +296,7 @@ public:
     * @ref json_array_t, @ref json_object_t, arithmetic types, types like @ref std::map, and types like @ref std::vector.
     **/
     template<typename T>
-    T as() const {
+    T as() const noexcept {
         // Cast to json_element
         if constexpr (std::is_same_v<T, json_element>) {
             return *this;
