@@ -129,6 +129,7 @@ public:
     **/
     template<typename T>
     json_element(const T& value) noexcept {
+        // Get the underlying type of T
         using U = std::decay_t<T>;
 
         // Cast from json_element
